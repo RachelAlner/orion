@@ -1,4 +1,4 @@
-# Orion Domain Model
+# Orion - Domain Model
 
 ## 1. Overview
 
