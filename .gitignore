@@ -10,6 +10,10 @@ target/
 .env.*
 !.env.example
 
+# JWT keys
+backend/src/main/resources/keys/private.pem
+backend/src/main/resources/keys/*.pem
+
 # Java / Maven / Spring Boot
 
 target/
