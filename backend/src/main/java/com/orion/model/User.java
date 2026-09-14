@@ -2,8 +2,6 @@ package com.orion.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 
@@ -15,7 +13,6 @@ import java.time.OffsetDateTime;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true)
@@ -24,13 +21,19 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(nullable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(nullable = false)
     private OffsetDateTime updatedAt;
 
+    protected User() {
+        // required by JPA
+    }
+
     public User(String email, String passwordHash){
+        this.id = UUID.randomUUID();
+
         OffsetDateTime now = OffsetDateTime.now();
 
         this.email = email;
