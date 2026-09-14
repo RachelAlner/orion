@@ -2,6 +2,7 @@ package com.orion.service;
 
 import com.orion.model.Project;
 import com.orion.repository.ProjectRepository;
+import com.orion.exception.ProjectNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -121,13 +122,13 @@ class ProjectServiceTest {
 
         when(projectRepository.findByIdAndUserId(projectId, userId)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> projectService.findByIdForUser(projectId, userId));
+        assertThrows(ProjectNotFoundException.class, () -> projectService.findByIdForUser(projectId, userId));
 
         verify(projectRepository).findByIdAndUserId(projectId, userId);
     }
 
     @Test 
-    void shouldSaveProject() {
+    void shouldCreateProject() {
         UUID userId = UUID.randomUUID();
 
         Project project = new Project(
@@ -138,13 +139,19 @@ class ProjectServiceTest {
             5
         );
 
-        when(projectRepository.save(project)).thenReturn(project);
+        when(projectRepository.save(any(Project.class))).thenReturn(project);
 
-        Project result = projectService.save(project);
+        Project result = projectService.createProject(
+                userId, 
+                "Orion", 
+                "Scheduling app", 
+                LocalDate.of(2027, 6, 1), 
+                5
+        );
 
         assertEquals(project, result);
 
-        verify(projectRepository).save(project);
+        verify(projectRepository).save(any(Project.class));
     }
 
     @Test 
@@ -159,8 +166,73 @@ class ProjectServiceTest {
             5
         );
 
-        projectService.delete(project);
+        when(projectRepository.findByIdAndUserId(project.getId(), userId)).thenReturn(Optional.of(project));
+
+        projectService.deleteProject(project.getId(), userId);
+
+        verify(projectRepository).findByIdAndUserId(project.getId(), userId);
 
         verify(projectRepository).delete(project);
+    }
+
+    @Test 
+    void shouldUpdateProject() {
+        UUID userId = UUID.randomUUID();
+
+        Project project = new Project(
+                userId, 
+                "Old Name", 
+                "Old description", 
+                LocalDate.of(2027, 6, 1), 
+                3
+        );
+
+        when(projectRepository.findByIdAndUserId(project.getId(), userId)).thenReturn(Optional.of(project));
+
+        when(projectRepository.save(project)).thenReturn(project);
+
+        Project result = projectService.updateProject(
+                project.getId(), 
+                userId, 
+                "New Name", 
+                "New description", 
+                LocalDate.of(2027, 7, 1), 
+                5
+        );
+
+        assertEquals(project, result);
+        assertEquals("New Name", result.getName());
+        assertEquals("New description", result.getDescription());
+        assertEquals(
+                LocalDate.of(2027, 7, 1), 
+                result.getDeadline()
+        );
+        assertEquals(5, result.getPriority());
+
+        verify(projectRepository).findByIdAndUserId(project.getId(), userId);
+        verify(projectRepository).save(project);
+    }
+
+    @Test 
+    void shouldNotDeleteProjectWhenItDoesNotBelongToUser() {
+        UUID ownerId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+
+        Project project = new Project(
+            ownerId, 
+            "Orion", 
+            "Scheduling app", 
+            LocalDate.of(2027, 6, 1), 
+            5
+        );
+
+        when(projectRepository.findByIdAndUserId(project.getId(), otherUserId)).thenReturn(Optional.empty());
+
+        assertThrows(
+                ProjectNotFoundException.class, 
+                () -> projectService.deleteProject(project.getId(), otherUserId)
+        );
+
+        verify(projectRepository, never()).delete(any());
     }
 }

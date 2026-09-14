@@ -94,7 +94,7 @@ public class Project {
         return updatedAt;
     }
 
-    public void updated(
+    public void update(
             String name, 
             String description, 
             LocalDate deadline, 

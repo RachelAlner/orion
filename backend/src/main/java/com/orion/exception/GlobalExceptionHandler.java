@@ -39,4 +39,14 @@ public class GlobalExceptionHandler {
                 "The request contains invalid data."
             ));
     }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProjectNotFound(ProjectNotFoundException exception) {
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse(
+                "PROJECT_NOT_FOUND", 
+                exception.getMessage()
+            ));
+    }
 }
