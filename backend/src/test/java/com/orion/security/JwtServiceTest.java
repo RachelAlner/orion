@@ -31,7 +31,7 @@ class JwtServiceTest {
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService(jwtEncoder);
+        jwtService = new JwtService(jwtEncoder, "orion-api", 3600);
     }
 
     @Test 
@@ -43,7 +43,7 @@ class JwtServiceTest {
             .claim("sub", user.getId().toString())
             .build();
 
-        when(jwtEncoder.encode(org.mockito.ArgumentMatchers.any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
 
         String token = jwtService.generateToken(user);
 
@@ -63,7 +63,7 @@ class JwtServiceTest {
                 .claim("test", "value")
                 .build();
         
-        when(jwtEncoder.encode(org.mockito.ArgumentMatchers.any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
 
         jwtService.generateToken(user);
 
@@ -85,7 +85,7 @@ class JwtServiceTest {
                 .claim("test", "value")
                 .build();
         
-        when(jwtEncoder.encode(org.mockito.ArgumentMatchers.any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
 
         jwtService.generateToken(user);
 
@@ -99,6 +99,28 @@ class JwtServiceTest {
     }
 
     @Test
+    void shouldIncludeIssuer() {
+        User user = new User("test@example.com", "hashed-password");
+
+        Jwt encodedJwt = Jwt.withTokenValue("jwt-token")
+                .header("alg", "RS256")
+                .claim("test", "value")
+                .build();
+        
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
+
+        jwtService.generateToken(user);
+
+        ArgumentCaptor<JwtEncoderParameters> captor = ArgumentCaptor.forClass(JwtEncoderParameters.class);
+
+        verify(jwtEncoder).encode(captor.capture());
+
+        JwtClaimsSet claims = captor.getValue().getClaims();
+
+        assertEquals("orion-api", claims.getClaimAsString("iss"));
+    }
+
+    @Test
     void shouldSetIssuedAtTime() {
         User user = new User("test@example.com", "hashed-password");
 
@@ -107,7 +129,7 @@ class JwtServiceTest {
                 .claim("test", "value")
                 .build();
 
-        when(jwtEncoder.encode(org.mockito.ArgumentMatchers.any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
 
         Instant before = Instant.now();
 
@@ -135,7 +157,7 @@ class JwtServiceTest {
                 .claim("test", "value")
                 .build();
 
-        when(jwtEncoder.encode(org.mockito.ArgumentMatchers.any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(encodedJwt);
 
         jwtService.generateToken(user);
 
