@@ -24,6 +24,7 @@ import java.util.Base64;
 
 @Configuration
 public class JwtConfig {
+    // authorise 
     @Value("classpath:keys/private.pem")
     private Resource privateKeyResource;
 

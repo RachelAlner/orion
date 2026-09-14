@@ -40,7 +40,7 @@ public class AuthService {
         return new AuthResponse(user.getId(), user.getEmail(), token);
     }
 
-    public AuthResponse authenticate(String email, String password) {
+    public AuthResponse login(String email, String password) {
         
         String normalisedEmail = email.trim().toLowerCase();
 

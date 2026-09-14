@@ -27,6 +27,7 @@ class AuthServiceTest {
     private static final String HASH = "hashed-password";
     private static final String TOKEN = "jwt-token";
 
+    // authenticate 
     @Mock
     private UserService userService;
 
@@ -120,7 +121,7 @@ class AuthServiceTest {
 
         when(jwtService.generateToken(user)).thenReturn(TOKEN);
 
-        AuthResponse result = authService.authenticate(EMAIL, PASSWORD);
+        AuthResponse result = authService.login(EMAIL, PASSWORD);
 
         assertEquals(user.getId(), result.userId());
         assertEquals(EMAIL, result.email());
@@ -139,7 +140,7 @@ class AuthServiceTest {
         givenExistingUser(user);
         when(passwordEncoder.matches(PASSWORD, HASH)).thenReturn(false);
 
-        assertThrows(InvalidCredentialsException.class, () -> authService.authenticate(EMAIL, PASSWORD));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(EMAIL, PASSWORD));
 
         verify(jwtService, never()).generateToken(any(User.class));
     }
@@ -149,7 +150,7 @@ class AuthServiceTest {
 
         when(userService.findByEmail(EMAIL)).thenReturn(Optional.empty());
 
-        assertThrows(InvalidCredentialsException.class, () -> authService.authenticate(EMAIL, PASSWORD));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(EMAIL, PASSWORD));
 
         verify(passwordEncoder, never()).matches(anyString(), anyString());
 
@@ -166,7 +167,7 @@ class AuthServiceTest {
 
         when(jwtService.generateToken(user)).thenReturn(TOKEN);
 
-        authService.authenticate("  TEST@EXAMPLE.COM  ", PASSWORD);
+        authService.login("  TEST@EXAMPLE.COM  ", PASSWORD);
 
         verify(userService).findByEmail(EMAIL);
     }
@@ -179,7 +180,7 @@ class AuthServiceTest {
 
         when(passwordEncoder.matches(PASSWORD, HASH)).thenReturn(false);
 
-        assertThrows(InvalidCredentialsException.class, () -> authService.authenticate(EMAIL, PASSWORD));
+        assertThrows(InvalidCredentialsException.class, () -> authService.login(EMAIL, PASSWORD));
 
         verify(jwtService, never()).generateToken(any(User.class));
     }
