@@ -49,4 +49,14 @@ public class GlobalExceptionHandler {
                 exception.getMessage()
             ));
     }
+
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTaskNotFound(TaskNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(
+                        "TASK_NOT_FOUND", 
+                        exception.getMessage()
+                ));
+    }
 }
