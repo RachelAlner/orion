@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateEmailException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateEmila(DuplicateEmailException exception) {
+    public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException exception) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(
@@ -56,6 +56,54 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(
                         "TASK_NOT_FOUND", 
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(TaskDependencyNotFoundException.class) 
+    public ResponseEntity<ErrorResponse> handleTaskDependencyNotFound(
+            TaskDependencyNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(
+                        "TASK_DEPENDENCY_NOT_FOUND", 
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(TaskDependencyAlreadyExistsException.class) 
+    public ResponseEntity<ErrorResponse> handleTaskDependencyAlreadyExists(
+            TaskDependencyAlreadyExistsException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        "TASK_DEPENDENCY_ALREADY_EXISTS", 
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(DependencyCycleException.class) 
+    public ResponseEntity<ErrorResponse> handleDependencyCycle(
+            DependencyCycleException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        "DEPENDENCY_CYCLE", 
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(InvalidTaskDependencyException.class) 
+    public ResponseEntity<ErrorResponse> handleInvalidTaskDependency(
+            InvalidTaskDependencyException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(new ErrorResponse(
+                        "INVALID_TASK_DEPENDENCY", 
                         exception.getMessage()
                 ));
     }
