@@ -13,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -36,15 +37,25 @@ class TaskControllerTest {
     @MockitoBean
     private TaskService taskService;
 
+    @MockitoBean
+    private Authentication authentication;
+
+    private UUID userId;
     private UUID projectId;
     private UUID taskId;
+
 
     private Task task;
 
     @BeforeEach
     void setUp() {
+        userId = UUID.randomUUID();
         projectId = UUID.randomUUID();
         taskId = UUID.randomUUID();
+
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
 
         task = new Task(
                 projectId, 
@@ -58,6 +69,9 @@ class TaskControllerTest {
 
     @Test 
     void shouldGetTasks() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         Task task2 = new Task(
                 projectId, 
                 "Write tests", 
@@ -67,11 +81,12 @@ class TaskControllerTest {
                 4
         );
 
-        when(taskService.findAllForProject(projectId))
+        when(taskService.findAllForProject(userId, projectId))
                 .thenReturn(List.of(task, task2));
 
         mockMvc.perform(
                 get("/api/projects/{projectId}/tasks", projectId)
+                        .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(status().isOk())
@@ -81,35 +96,42 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$[0].projectId").value(projectId.toString()))
                 .andExpect(jsonPath("$[1].title").value("Write tests"));
 
-        verify(taskService).findAllForProject(projectId);
+        verify(taskService).findAllForProject(userId, projectId);
     }
 
     @Test 
     void shouldReturnEmptyListWhenProjectHasNoTasks() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
 
-        when(taskService.findAllForProject(projectId)).thenReturn(List.of());
+        when(taskService.findAllForProject(userId, projectId)).thenReturn(List.of());
 
         mockMvc.perform(
                 get("/api/projects/{projectId}/tasks", projectId)
+                        .principal(authentication)
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
         
-        verify(taskService).findAllForProject(projectId);
+        verify(taskService).findAllForProject(userId, projectId);
 
     }
 
     @Test 
     void shouldGetTask() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
 
         when(taskService.findByIdForProject(
+                userId, 
                 taskId, 
                 projectId
         )).thenReturn(task);
 
         mockMvc.perform(
                 get("/api/projects/{projectId}/tasks/{taskId}", projectId, taskId)
+                        .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(status().isOk())
@@ -122,6 +144,7 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.status").value("TODO"));
         
         verify(taskService).findByIdForProject(
+                    userId, 
                     taskId, 
                     projectId
         );
@@ -130,6 +153,9 @@ class TaskControllerTest {
 
     @Test 
     void shouldCreateTask() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         CreateTaskRequest request = 
                 new CreateTaskRequest(
                         "Implement scheduler", 
@@ -140,6 +166,7 @@ class TaskControllerTest {
                 );
         
         when(taskService.createTask(
+                eq(userId),
                 eq(projectId), 
                 eq("Implement scheduler"), 
                 eq("Implement algorithm"), 
@@ -150,6 +177,7 @@ class TaskControllerTest {
 
         mockMvc.perform(
                 post("/api/projects/{projectId}/tasks", projectId)
+                        .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                     {
@@ -171,6 +199,7 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.status").value("TODO"));
 
         verify(taskService).createTask(
+                userId, 
                 projectId, 
                 "Implement scheduler", 
                 "Implement algorithm", 
@@ -183,6 +212,9 @@ class TaskControllerTest {
 
     @Test 
     void shouldUpdateTask() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         UpdateTaskRequest request = 
                 new UpdateTaskRequest(
                         "Updated scheduler", 
@@ -202,6 +234,7 @@ class TaskControllerTest {
         );
 
         when(taskService.updateTask(
+                eq(userId),
                 eq(taskId), 
                 eq(projectId), 
                 eq("Updated scheduler"), 
@@ -214,6 +247,7 @@ class TaskControllerTest {
         
         mockMvc.perform(
                 put("/api/projects/{projectId}/tasks/{taskId}", projectId, taskId)
+                        .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                     {
@@ -232,6 +266,7 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.priority").value(5));
         
         verify(taskService).updateTask(
+                userId, 
                 taskId, 
                 projectId, 
                 "Updated scheduler", 
@@ -241,12 +276,13 @@ class TaskControllerTest {
                 5
         );
 
-        
-
     }
 
     @Test 
     void shouldCompleteTask() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         Task completedTask = new Task(
                 projectId, 
                 "Complete this task",
@@ -259,12 +295,14 @@ class TaskControllerTest {
         completedTask.complete();
 
         when(taskService.completeTask(
+                userId, 
                 taskId, 
                 projectId
         )).thenReturn(completedTask);
 
         mockMvc.perform(
                 post("/api/projects/{projectId}/tasks/{taskId}/complete", projectId, taskId)
+                        .principal(authentication)
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
@@ -272,6 +310,7 @@ class TaskControllerTest {
 
         verify(taskService)
                 .completeTask(
+                        userId, 
                         taskId, 
                         projectId
                 );
@@ -279,20 +318,26 @@ class TaskControllerTest {
 
     @Test 
     void shouldDeleteTask() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         doNothing()
                 .when(taskService)
                 .deleteTask(
+                        userId, 
                         taskId, 
                         projectId
                 );
 
         mockMvc.perform(
                 delete("/api/projects/{projectId}/tasks/{taskId}", projectId, taskId)
+                        .principal(authentication)
         )
                 .andExpect(status().isNoContent());
 
         verify(taskService)
                 .deleteTask(
+                        userId, 
                         taskId, 
                         projectId
                 );
@@ -300,6 +345,9 @@ class TaskControllerTest {
 
     @Test 
     void shouldRejectInvalidCreateRequest() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         CreateTaskRequest request = 
                 new CreateTaskRequest(
                         "", 
@@ -311,6 +359,7 @@ class TaskControllerTest {
         
         mockMvc.perform(
                 post("/api/projects/{projectId}/tasks", projectId)
+                        .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                     {
@@ -327,6 +376,7 @@ class TaskControllerTest {
 
         verify(taskService, never())
                 .createTask(
+                        any(UUID.class),
                         any(UUID.class), 
                         anyString(), 
                         anyString(), 
@@ -339,6 +389,9 @@ class TaskControllerTest {
 
     @Test 
     void shouldRejectInvalidUpdateRequest() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         UpdateTaskRequest request = 
                 new UpdateTaskRequest(
                         "", 
@@ -350,6 +403,7 @@ class TaskControllerTest {
 
         mockMvc.perform(
                 put("/api/projects/{projectId}/tasks/{taskId}", projectId, taskId)
+                        .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                     {
@@ -366,6 +420,7 @@ class TaskControllerTest {
 
         verify(taskService, never())
                 .updateTask(
+                        any(UUID.class),
                         any(UUID.class), 
                         any(UUID.class),
                         anyString(), 
@@ -378,7 +433,11 @@ class TaskControllerTest {
 
     @Test 
     void shouldReturnNotFoundWhenTaskDoesNotExist() throws Exception {
+        when(authentication.getName())
+                .thenReturn(userId.toString());
+
         when(taskService.findByIdForProject(
+                userId, 
                 taskId, 
                 projectId
         )).thenThrow(
@@ -389,6 +448,7 @@ class TaskControllerTest {
 
         mockMvc.perform(
                 get("/api/projects/{projectId}/tasks/{taskId}", projectId, taskId)
+                        .principal(authentication)
         )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("TASK_NOT_FOUND"))
@@ -396,6 +456,7 @@ class TaskControllerTest {
 
         verify(taskService)
                 .findByIdForProject(
+                        userId, 
                         taskId, 
                         projectId
                 );

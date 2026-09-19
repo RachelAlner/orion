@@ -3,6 +3,7 @@ package com.orion.service;
 import com.orion.exception.TaskNotFoundException;
 import com.orion.model.TaskStatus;
 import com.orion.model.Task;
+import com.orion.model.Project;
 import com.orion.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,16 +26,42 @@ class TaskServiceTest {
     @Mock 
     private TaskRepository taskRepository;
 
+    @Mock 
+    private ProjectService projectService;
+
     @InjectMocks
     private TaskService taskService;
 
+    private UUID userId;
     private UUID projectId;
     private UUID otherProjectId;
 
+    private Project project;
+    private Project otherProject;
+
     @BeforeEach
     void setUp() {
-        projectId = UUID.randomUUID();
-        otherProjectId = UUID.randomUUID();
+        userId = UUID.randomUUID();
+
+        project = new Project(
+                userId, 
+                "Test Project",
+                "Test description", 
+                LocalDate.of(2027, 9, 2),
+                4
+        );
+
+        projectId = project.getId();
+
+        otherProject = new Project(
+                userId, 
+                "Other Test Project",
+                "Test description", 
+                LocalDate.of(2027, 9, 2),
+                4
+        );
+
+        otherProjectId = otherProject.getId();
     }
 
     private Task createTask(String title) {
@@ -50,11 +77,14 @@ class TaskServiceTest {
 
     @Test 
     void shouldCreateTask() {
-        Task task = createTask("Implement scheduler");
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
 
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Task result = taskService.createTask(
+                userId, 
                 projectId, 
                 "Implement scheduler", 
                 "Test description", 
@@ -73,17 +103,21 @@ class TaskServiceTest {
                 result.getProjectId()
         );
 
+        verify(projectService).findByIdForUser(projectId, userId);
         verify(taskRepository).save(any(Task.class));
     }
 
     @Test 
     void shouldFindAllTasksForProject() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
         Task task1 = createTask("Design database");
         Task task2 = createTask("Implement API");
 
         when(taskRepository.findByProjectId(projectId)).thenReturn(List.of(task1, task2));
 
-        List<Task> result = taskService.findAllForProject(projectId);
+        List<Task> result = taskService.findAllForProject(userId, projectId);
 
         assertEquals(2, result.size());
         assertEquals(
@@ -100,9 +134,13 @@ class TaskServiceTest {
 
     @Test 
     void shouldReturnEmptyListWhenProjectHasNoTasks() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
+
         when(taskRepository.findByProjectId(projectId)).thenReturn(List.of());
 
-        List<Task> result = taskService.findAllForProject(projectId);
+        List<Task> result = taskService.findAllForProject(userId, projectId);
 
         assertTrue(result.isEmpty());
 
@@ -111,6 +149,9 @@ class TaskServiceTest {
 
     @Test 
     void shouldFindTaskForProject() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
         Task task = createTask("Find this task");
 
         when(taskRepository.findByIdAndProjectId(
@@ -119,6 +160,7 @@ class TaskServiceTest {
         )).thenReturn(Optional.of(task));
 
         Task result = taskService.findByIdForProject(
+                userId, 
                 task.getId(),
                 projectId
         );
@@ -136,6 +178,9 @@ class TaskServiceTest {
 
     @Test 
     void shouldRejectTaskThatDoesNotBelongToProject() {
+        when(projectService.findByIdForUser(otherProjectId, userId))
+                .thenReturn(otherProject);
+
         Task task = createTask("Task A");
 
         when(taskRepository.findByIdAndProjectId(
@@ -146,6 +191,7 @@ class TaskServiceTest {
         assertThrows(
                 TaskNotFoundException.class,
                 () -> taskService.findByIdForProject(
+                        userId, 
                         task.getId(), 
                         otherProjectId
                 )
@@ -159,6 +205,9 @@ class TaskServiceTest {
 
     @Test 
     void shouldRejectTaskThatDoesNotExist() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
         UUID taskId = UUID.randomUUID();
 
         when(taskRepository.findByIdAndProjectId(
@@ -169,6 +218,7 @@ class TaskServiceTest {
         assertThrows(
                 TaskNotFoundException.class, 
                 () -> taskService.findByIdForProject(
+                        userId, 
                         taskId, 
                         projectId
                 )
@@ -182,6 +232,9 @@ class TaskServiceTest {
 
     @Test 
     void shouldUpdateTask() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
         Task task = createTask("Old title");
 
         when(taskRepository.findByIdAndProjectId(
@@ -193,6 +246,7 @@ class TaskServiceTest {
 
         Task result = 
                 taskService.updateTask(
+                        userId, 
                         task.getId(), 
                         projectId, 
                         "Updated title", 
@@ -235,6 +289,9 @@ class TaskServiceTest {
 
     @Test 
     void shouldCompleteTask() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
         Task task = createTask("Complete this task");
 
         when(taskRepository.findByIdAndProjectId(
@@ -245,6 +302,7 @@ class TaskServiceTest {
         when(taskRepository.save(task)).thenReturn(task);
 
         Task result = taskService.completeTask(
+                userId, 
                 task.getId(), 
                 projectId
         );
@@ -265,6 +323,9 @@ class TaskServiceTest {
 
     @Test 
     void shouldDeleteTask() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
         Task task = createTask("Delete this task");
 
         when(taskRepository.findByIdAndProjectId(
@@ -273,6 +334,7 @@ class TaskServiceTest {
         )).thenReturn(Optional.of(task));
 
         taskService.deleteTask(
+                userId, 
                 task.getId(), 
                 projectId
         );
@@ -289,6 +351,9 @@ class TaskServiceTest {
     void shouldNotDeleteTaskWhenItDoesNotBelongToProject() {
         Task task = createTask("Protected task");
 
+        when(projectService.findByIdForUser(otherProjectId, userId))
+                .thenReturn(otherProject);
+
         when(taskRepository.findByIdAndProjectId(
                 task.getId(), 
                 otherProjectId
@@ -297,10 +362,17 @@ class TaskServiceTest {
         assertThrows(
                 TaskNotFoundException.class, 
                 () -> taskService.deleteTask(
+                    userId, 
                     task.getId(), 
                     otherProjectId
                 )
         );
+
+        verify(projectService, times(2))
+                .findByIdForUser(
+                        otherProjectId, 
+                        userId 
+                );
 
         verify(taskRepository)
                 .findByIdAndProjectId(

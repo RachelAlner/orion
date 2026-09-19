@@ -1,5 +1,6 @@
 package com.orion.service;
 
+import com.orion.service.ProjectService;
 import com.orion.exception.TaskNotFoundException;
 import com.orion.model.Task;
 import com.orion.repository.TaskRepository;
@@ -11,41 +12,52 @@ import java.util.UUID;
 
 @Service 
 public class TaskService {
+    private final ProjectService projectService;
 
     private final TaskRepository taskRepository;
 
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(ProjectService projectService, TaskRepository taskRepository) {
+        this.projectService = projectService;
         this.taskRepository = taskRepository;
     }
 
     public Task createTask(
-            UUID projectId, 
-            String title, 
-            String description, 
-            Integer estimatedMinutes, 
-            LocalDate deadline, 
-            Integer priority
+             UUID userId, 
+             UUID projectId, 
+             String title, 
+             String description, 
+             Integer estimatedMinutes, 
+             LocalDate deadline, 
+             Integer priority
     ) {
+        projectService.findByIdForUser(projectId, userId);
+
         Task task = new Task(
-                projectId, 
-                title, 
-                description, 
-                estimatedMinutes, 
-                deadline, 
-                priority
+             projectId, 
+             title, 
+             description, 
+             estimatedMinutes, 
+             deadline, 
+             priority
         );
 
         return taskRepository.save(task);
     }
 
-    public List<Task> findAllForProject(UUID projectId) {
+    public List<Task> findAllForProject(UUID userId, UUID projectId) {
+        projectService.findByIdForUser(projectId, userId);
+
         return taskRepository.findByProjectId(projectId);
     }
 
     public Task findByIdForProject(
+            UUID userId,
             UUID taskId, 
             UUID projectId
+
     ) {
+        projectService.findByIdForUser(projectId, userId);
+
         return taskRepository
                 .findByIdAndProjectId(taskId, projectId)
                 .orElseThrow(() -> 
@@ -55,6 +67,7 @@ public class TaskService {
     }
 
     public Task updateTask(
+            UUID userId,
             UUID taskId, 
             UUID projectId, 
             String title, 
@@ -63,7 +76,9 @@ public class TaskService {
             LocalDate deadline, 
             Integer priority
     ) {
-        Task task = findByIdForProject(taskId, projectId);
+        projectService.findByIdForUser(projectId, userId);
+
+        Task task = findByIdForProject(userId, taskId, projectId);
 
         task.update(
                 title, 
@@ -77,10 +92,14 @@ public class TaskService {
     }
 
     public Task completeTask(
+            UUID userId, 
             UUID taskId, 
             UUID projectId 
     ) {
+        projectService.findByIdForUser(projectId, userId);
+
         Task task = findByIdForProject(
+                userId, 
                 taskId, 
                 projectId
         );
@@ -91,10 +110,14 @@ public class TaskService {
     }
 
     public void deleteTask(
+            UUID userId, 
             UUID taskId, 
             UUID projectId
     ) {
+        projectService.findByIdForUser(projectId, userId);
+
         Task task = findByIdForProject(
+                userId, 
                 taskId, 
                 projectId
         );

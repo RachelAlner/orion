@@ -29,8 +29,10 @@ public class TaskController {
             @PathVariable UUID projectId, 
             Authentication authentication
     ) {
+        UUID userId = getUserId(authentication);
+
         List<TaskResponse> tasks = 
-                taskService.findAllForProject(projectId)
+                taskService.findAllForProject(userId, projectId)
                         .stream()
                         .map(this::toResponse)
                         .toList();
@@ -44,8 +46,11 @@ public class TaskController {
             @PathVariable UUID taskId, 
             Authentication authentication
     ) {
+        UUID userId = getUserId(authentication);
+
         Task task = 
                 taskService.findByIdForProject(
+                        userId, 
                         taskId, 
                         projectId
                 );
@@ -59,8 +64,11 @@ public class TaskController {
             @Valid @RequestBody CreateTaskRequest request, 
             Authentication authentication
     ) {
+        UUID userId = getUserId(authentication);
+
         Task task = 
                 taskService.createTask(
+                        userId, 
                         projectId, 
                         request.title(), 
                         request.description(), 
@@ -81,8 +89,11 @@ public class TaskController {
             @Valid @RequestBody UpdateTaskRequest request, 
             Authentication authentication
     ) {
+        UUID userId = getUserId(authentication);
+
         Task task = 
                 taskService.updateTask(
+                        userId, 
                         taskId, 
                         projectId, 
                         request.title(), 
@@ -101,7 +112,10 @@ public class TaskController {
             @PathVariable UUID taskId, 
             Authentication authentication
     ) {
+        UUID userId = getUserId(authentication);
+
         taskService.deleteTask(
+                userId, 
                 taskId, 
                 projectId
         );
@@ -115,8 +129,11 @@ public class TaskController {
             @PathVariable UUID taskId, 
             Authentication authentication
     ) {
+        UUID userId = getUserId(authentication);
+
         Task task = 
                 taskService.completeTask(
+                        userId, 
                         taskId, 
                         projectId
                 );
@@ -138,5 +155,9 @@ public class TaskController {
                 task.getUpdatedAt(), 
                 task.getCompletedAt()
         );
+    }
+
+    private UUID getUserId(Authentication authentication) {
+        return UUID.fromString(authentication.getName());
     }
 }

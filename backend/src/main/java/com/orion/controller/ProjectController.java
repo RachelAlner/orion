@@ -39,7 +39,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{projectId}")
-    public ResponseEntity<ProjectResponse> getProjetct(
+    public ResponseEntity<ProjectResponse> getProject(
             @PathVariable UUID projectId, 
             Authentication authentication
     ) {
@@ -103,7 +103,7 @@ public class ProjectController {
         projectService.deleteProject(
             projectId, 
             userId
-        );
+        );     
 
         return ResponseEntity.noContent().build();
 
