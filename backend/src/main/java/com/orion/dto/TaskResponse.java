@@ -15,7 +15,7 @@ public record TaskResponse(
         LocalDate deadline, 
         Integer priority, 
         TaskStatus status, 
-        OffsetDateTime createAt, 
+        OffsetDateTime createdAt, 
         OffsetDateTime updatedAt, 
         OffsetDateTime completedAt
 ) {}
