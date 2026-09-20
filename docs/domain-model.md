@@ -15,7 +15,7 @@ Represents an individual Orion user.
 #### Responsibilities:
 
 - Own projects, tasks, availability, and schedules.
-- Define available working periods.
+- Define recurring weekly availability.
 - Access only resources belonging to the user.
 
 ### Project
@@ -92,10 +92,15 @@ Represents a period during which a user is available to work.
 - Start time
 - End time
 
+#### Relationships: 
+
+- Belongs to one `User`. 
+
 #### Invariants:
 
 - Start time must precede end time.
-- Schedule blocks must fall entirely within an availability period.
+- Multiple availability periods may exist for the same day.
+- Availability periods for the same user must not overlap.
 
 ### Schedule
 

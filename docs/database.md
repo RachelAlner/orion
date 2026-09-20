@@ -281,7 +281,9 @@ This validation should reject circular dependencies.
 
 # 5.5 `availability`
 
-Represents recurring periods during which a user is available to work.
+Represents recurring weekly periods during which a user is available to work.
+
+Each row represents one available period for one day of the week. A user may have multiple availability periods on the same day.
 
 | Column | Type | Constraints | Description |
 | --- | --- | --- | --- |
@@ -296,6 +298,8 @@ Represents recurring periods during which a user is available to work.
 ```text
 availability.user_id → users.id
 ```
+
+Each availability record belongs to exactly one user.
 
 ### Constraints
 
@@ -319,6 +323,54 @@ The application may use:
 7 = Sunday
 ```
 
+The database should therefore enforce: 
+
+`day_of_week` BETWEEN 1 AND 7
+
+### Multiple periods 
+
+Multiple availability periods are permitted for the same user and day. 
+
+For example: 
+
+```text 
+User: ...
+
+Monday
+09:00 → 12:00
+14:00 → 17:00
+```
+
+These are represented as two seperate rows.
+
+### Overlapping periods 
+
+Availability periods belonging to the same user and day must not overlap. 
+
+For example, the following is invalid: 
+
+```text 
+Monday
+09:00 → 12:00
+11:00 → 14:00
+```
+
+Adjacent periods are permitted: 
+
+```text 
+Monday
+09:00 → 12:00
+11:00 → 14:00
+```
+
+The overlap condition is: 
+
+```text 
+new_start < existing_end
+AND 
+new_end > existing_start
+```
+
 ### Example
 
 ```text
@@ -330,11 +382,19 @@ end_time     = 17:00
 
 This represents availability from 09:00 to 17:00 every Monday.
 
-### Important design decision
+### Recurrence
 
 Availability represents a **recurring weekly pattern** in the initial implementation.
 
 Specific exceptions, such as holidays or one-off unavailable periods, will be introduced later in future versions.
+
+### Scheduling relationship 
+
+Availability defines when scheduling is permitted. 
+
+The scheduling algorithm uses availability to determine which periods can contain `schedule_blocks`. 
+
+The availability table does not contain schedule or task information and does not determine which tasks are selected. 
 
 # 5.6 `schedules`
 
@@ -601,6 +661,8 @@ actual_minutes > 0
 ## Temporal constraints
 
 ```text
+availability.day_of_week BETWEEN 1 AND 7
+
 availability.start_time < availability.end_time
 
 schedule.valid_from < schedule.valid_until
@@ -631,7 +693,9 @@ The following fields should not be nullable:
 - Task priority
 - Task status
 - Availability owner
-- Availability times
+- Availability day 
+- Availability start time 
+- Availability end time
 - Schedule owner
 - Schedule generation time
 - Schedule validity period
@@ -668,6 +732,7 @@ The application should enforce rules requiring domain logic, such as:
 
 - Dependency-cycle detection.
 - Whether a task's dependencies are satisfied.
+- Whether availability periods overlap.
 - Whether a schedule is feasible.
 - Whether schedule blocks overlap.
 - Whether a schedule respects availability.
@@ -692,7 +757,7 @@ For example, a request for:
 GET /api/tasks/{id}
 ```
 
-must not return a task belonging to another user.
+Must not return a task belonging to another user.
 
 Database relationships provide structural ownership, while the application layer performs authorisation checks.
 
@@ -722,11 +787,29 @@ This includes:
 
 Recurring availability uses:
 
+```text 
+SMALLINT
+```
+
+for the day of week and: 
+
 ```text
 TIME
 ```
 
-for the start and end of the recurring period, together with a day-of-week value.
+for the start and end of the recurring period.
+
+The day-of-week mapping is: 
+
+```text 
+1 = Monday 
+2 = Tuesday
+3 = Wednesday 
+4 = Thursday 
+5 = Friday
+6 = Saturday
+7 = Sunday
+```
 
 For example:
 
@@ -860,7 +943,7 @@ Initial indexes:
 | `tasks` | `project_id` | Retrieve project tasks |
 | `tasks` | `deadline` | Find urgent tasks |
 | `tasks` | `status` | Retrieve incomplete tasks |
-| `availability` | `user_id` | Retrieve user availability |
+| `availability` | `(user_id, day_of_week` | Retrieve and order a user's availability by day |
 | `schedules` | `user_id` | Retrieve user schedules |
 | `schedule_blocks` | `schedule_id` | Retrieve schedule blocks |
 | `schedule_blocks` | `task_id` | Retrieve blocks for a task |
@@ -1022,11 +1105,13 @@ The following invariants must hold:
 10. Priorities must be between 1 and 5.
 11. Task estimated durations must be positive.
 12. Completion durations must be positive.
-13. Availability periods must have a valid start and end time.
-14. Schedule validity periods must have a valid start and end time.
-15. Schedule blocks must have a positive duration.
-16. Foreign-key relationships must remain valid.
-17. User-owned data must remain isolated between users.
+13. Availability day values must be between 1 and 7.
+14. Availability periods must have a valid start and end time.
+15. Availability periods belonging to the same user and day must not overlap. 
+16. Schedule validity periods must have a valid start and end time.
+17. Schedule blocks must have a positive duration.
+18. Foreign-key relationships must remain valid.
+19. User-owned data must remain isolated between users.
 
 # 25. Future Review
 
