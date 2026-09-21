@@ -108,15 +108,15 @@ Represents a generated plan for allocating work to available time.
 
 #### Attributes:
 
-- Generation time
-- Validity period
-- Scheduling algorithm
-- Status
+- Scheduling period start 
+- Scheduling period end 
+- Generation timestamp
+- Schedule status
 
 #### Relationships:
 
 - Belongs to one `User`.
-- Contains multiple `ScheduleBlock` entities.
+- Contains one or more `ScheduleBlock` entities.
 
 #### Status:
 
@@ -125,15 +125,26 @@ Represents a generated plan for allocating work to available time.
 
 A newly generated schedule may supersede the currently active schedule.
 
+#### Invariants: 
+
+- A schedule belongs to exactly one user.
+- A schedule block belongs to exactly one schedule.
+- A schedule block belongs to exactly one task.
+- Schedule blocks must have a positive duration.
+- Schedule blocks for the same user must not overlap.
+- Schedule blocks must fall within the user's availability.
+- Schedule blocks must respect task dependencies.
+- Completed and cancelled tasks must not receive new schedule blocks.
+
 ### Schedule Block
 
-Represents a specific allocation of time to a task.
+Represents a contiguous period of scheduled work assigned to a task.
 
 #### Attributes:
 
 - Start time
 - End time
-- Task
+- Allocated duration 
 
 #### Relationships:
 
@@ -143,6 +154,7 @@ Represents a specific allocation of time to a task.
 #### Invariants:
 
 - Start time must precede end time.
+- The block must belong to the same user as its schedule.
 - The block must fall within user availability.
 - Blocks must not overlap.
 - The associated task must be schedulable.
@@ -234,6 +246,12 @@ The scheduler considers:
 - Existing schedule
 - Actual progress
 
+### Scheduling Outputs 
+
+- proposed schedule blocks
+- unscheduled work
+- scheduling conflicts where applicable
+
 ### Hard Constraints
 
 The following constraints must not be violated:
@@ -256,6 +274,27 @@ The scheduler may optimise for:
 - Schedule stability
 - Reduced context switching
 - Reduced fragmentation of work
+
+### Scheduling Responsibility 
+
+Scheduling decisions belong to the scheduling domain.
+
+Task management remains responsible for:
+
+- task creation
+- task modification
+- task status
+- task duration estimates
+- task deadlines
+- task priorities
+
+Availability remains responsible for:
+
+- recurring working periods
+- availability validation
+- availability ownership
+
+The scheduler is responsible only for determining how eligible work should be allocated within the available time.
 
 ## 6. Schedule State
 

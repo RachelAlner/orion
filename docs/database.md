@@ -407,9 +407,8 @@ A schedule contains the time allocations produced by the scheduling algorithm.
 | `id` | UUID | PK | Unique schedule identifier |
 | `user_id` | UUID | FK, NOT NULL | Owner of the schedule |
 | `generated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | Time the schedule was generated |
-| `valid_from` | TIMESTAMP WITH TIME ZONE | NOT NULL | Start of schedule validity |
-| `valid_until` | TIMESTAMP WITH TIME ZONE | NOT NULL | End of schedule validity |
-| `algorithm` | VARCHAR(50) | NOT NULL | Scheduling strategy used |
+| `period_start` | TIMESTAMP WITH TIME ZONE | NOT NULL | Start of schedule validity |
+| `period_end` | TIMESTAMP WITH TIME ZONE | NOT NULL | End of schedule validity |
 | `status` | VARCHAR(20) | NOT NULL | Schedule state |
 
 ### Foreign Keys
@@ -427,28 +426,25 @@ SUPERSEDED
 
 Only a valid generated schedule should be considered active.
 
-### Algorithm
+### Constraints 
 
-The `algorithm` field records which scheduling strategy generated the schedule.
+A schedule: 
+- belongs to exactly one user
+- must have a valid scheduling period
+- must have a generation timestamp
+- must have a valid status
 
-Examples include:
-
-```text
-EDF
-PRIORITY
-SPT
-COMBINED
-```
-
-This allows Orion to compare scheduling strategies and analyse their behaviour in future versions.
-
-### Validity
-
-The following must hold:
+The scheduling period must satisfy:
 
 ```text
-valid_from < valid_until
+period_start < period_end
 ```
+
+The user foreign key uses:
+
+ON DELETE CASCADE
+
+because schedules have no meaning without their owner.
 
 ### Schedule lifecycle
 
@@ -499,6 +495,9 @@ A block must have a positive duration.
 
 The application layer must additionally verify that:
 
+- Must belong to exactly one schedule. 
+- References exactly one task.
+- Must have a start time before its end time.
 - The block falls within user availability.
 - The task is not completed or cancelled.
 - Dependencies are satisfied.

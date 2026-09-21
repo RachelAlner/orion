@@ -4,9 +4,17 @@
 
 The scheduling system is responsible for generating and maintaining feasible task schedules based on deadlines, priorities, dependencies, available time, and task progress.
 
-The scheduler must prioritise completing work on time while producing stable and practical schedules. When circumstances change, the scheduler must be able to recalculate the remaining schedule without unnecessarily disrupting existing plans.
+The scheduler is responsible for deciding:
+- which tasks should be scheduled
+- when each task should be scheduled 
+- how much work should be allocated to each available period 
+- how tasks should be split across multiple periods when necessary 
+- how existing scheduled work should be preserved where possible 
+- when a schedule cannot satisfy all constraints. 
 
 The scheduling system is designed to be deterministic, explainable, testable, and independent of the API layer.
+
+The scheduler does not manage tasks or availability directly. It consumes those domains as inputs and produces scheduling decisions.
 
 ## 2. Scheduling Inputs
 
@@ -40,11 +48,82 @@ Estimated duration represents the initial expected amount of work.
 
 Remaining duration represents the amount of work that still needs to be scheduled and may differ from the original estimate following partial completion.
 
+Only tasks that are eligible for scheduling may be allocated work.
+
+### Task Eligibility 
+
+A task is eligible for scheduling when all required conditions are satisfied. 
+
+A task must: 
+- Not be completed. 
+- Not be cancelled. 
+- Have a positive remaining duration. 
+- Belong to the user. 
+- Have all required dependencies satisfied. 
+
+A task is blocked when one or more required dependencies remain incomplete. 
+
+For example: 
+
+```text
+A → B → C 
+```
+
+If A is incomplete: 
+
+```text
+A = eligible 
+B = blocked 
+C = blocked 
+```
+
+After A is completed: 
+
+```text
+A = completed
+B = eligible
+C = blocked 
+```
+
+The scheduler must never schedule a blocked task before its dependencies are satisfied. 
+
+### Dependencies 
+
+Dependencies define ordering constraints between tasks. 
+
+For a dependency:
+
+```text
+Task A → Task B
+```
+
+Task B cannot be scheduled before Task A has been completed sufficiently to satisfy the dependency. 
+
+A task with incomplete prerequisites is considered blocked.
+
 ### Availability
 
 Availability defines the periods during which work may be scheduled.
 
 The scheduler must only allocate work within these periods and must not create overlapping schedule blocks.
+
+### Exisitng Schedule 
+
+When replanning, the scheduler may recieve an existing schedule. 
+
+Existing work should be preserved where possible to avoid unnecessary changes. 
+
+### Current Progress 
+
+When replanning, the scheduler may recieve information about actual progress. 
+
+Examples include: 
+- Completed work. 
+- Remaining task duration. 
+- Work that took longer than estimated. 
+- Work that was missed. 
+
+This allows the scheduler to adjust future work rather than relying entirely on the original plan.
 
 ## 3. Scheduling Constraints
 
@@ -81,7 +160,71 @@ When multiple feasible schedules exist, the scheduler should optimise for:
 
 Soft constraints may be traded against one another when necessary.
 
-## 4. Task Prioritisation
+## 4. Available Time and Task Splitting
+
+### Available Time 
+
+The scheduler converts recurring availability into concrete scheduling windows for the period being scheduled. 
+
+For example, if the user has: 
+
+```text 
+Monday 09:00-12:00
+Monday 14:00-17:00
+``` 
+
+then the scheduler creates two independent windows: 
+
+```text 
+09:00-12:00
+14:00-17:00
+``` 
+
+Work must never cross an unavailable period. 
+
+The scheduler may divide a task accross multiple availability windows. 
+
+### Task Splitting 
+
+Tasks may be split across multiple schedule blocks. 
+
+For example: 
+
+Task duration: 150 minutes 
+
+Availability: 
+09:00-10:00
+14:00-16:00
+
+The scheduler may produce: 
+
+09:00-10:00     60 minutes
+14:00-15:30     90 minutes
+
+The total allocated duration is: 
+
+60 + 90 = 150 minutes 
+
+A task should only be split when necessary or when doing so produces a better schedule. 
+
+The scheduler should avoid creating unnecessarily small fragments. 
+
+## 5. Scheduling Strategy
+
+The initial scheduler will use a combination of established scheduling strategies rather than relying on a single ordering rule.
+
+Eligible tasks are ordered using a scheduling score. 
+
+The initial scheduler uses a deterministic score based on: 
+- deadline urgency
+- task priority
+- remaining duration 
+
+A task with an earlier deadline should generally recieve greater urgency. 
+
+This reduces the likelihood of missing imminent deadlines.
+
+A higher-priority task should generally recieve greater urgency when other factors are comparable. 
 
 Tasks are assigned a priority from 1 to 5, where:
 
@@ -95,35 +238,23 @@ Priority alone must not determine scheduling order. A lower-priority task with a
 
 The scheduler therefore considers multiple factors when determining which task should receive available time.
 
-## 5. Scheduling Strategy
-
-The initial scheduler will use a combination of established scheduling strategies rather than relying on a single ordering rule.
-
-### Earliest Deadline First
-
-Tasks with earlier deadlines are prioritised over tasks with later deadlines.
-
-This reduces the likelihood of missing imminent deadlines.
-
-### Priority Scheduling
-
-Tasks with higher priority receive greater scheduling preference.
-
 This allows users to identify work that is more important independently of its deadline.
 
-### Shortest Processing Time
+Remaining duration is considered so that large tasks are not repeatedly postponed until insufficient time remains. 
 
 When other factors are comparable, shorter tasks may be scheduled first.
 
 This can increase the number of completed tasks and reduce the amount of unfinished work.
 
-### Combined Strategy
+The score is an internal scheduling mechanism and is not exposed as a user-facing rating. 
 
-The initial production strategy will combine deadline urgency, task priority, remaining work, dependencies, and risk.
+When two tasks have equivalent scores, the scheduler uses deterministic tie-breaking rules. 
 
-The scheduler should use a consistent scoring or ordering mechanism so that scheduling decisions are deterministic and explainable.
-
-The exact weighting of these factors should remain configurable so that the strategy can be evaluated and improved without redesigning the scheduling system.
+Tie-breaking order: 
+1. earlier deadline 
+2. higher priority
+3. earlier task creation time 
+4. task ID as the final deterministic tie-breaker
 
 ## 6. Schedule Generation
 

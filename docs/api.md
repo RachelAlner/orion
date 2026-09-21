@@ -539,7 +539,7 @@ Returns the authenticated user's availability periods.
 [
   {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "dayOfWeek": 1,
+    "dayOfWeek": "MONDAY",
     "startTime": "09:00",
     "endTime": "17:00"
   }
@@ -558,7 +558,7 @@ Creates a recurring availability period.
 
 ```json
 {
-  "dayOfWeek": 1,
+  "dayOfWeek": "MONDAY",
   "startTime": "09:00",
   "endTime": "17:00"
 }
@@ -586,7 +586,7 @@ Updates an availability period.
 
 ```json
 {
-  "dayOfWeek": 1,
+  "dayOfWeek": "MONDAY",
   "startTime": "10:00",
   "endTime": "18:00"
 }
@@ -637,8 +637,10 @@ No request body is required initially.
 ```json
 {
   "scheduleId": "750e8400-e29b-41d4-a716-446655440000",
+  "periodStart": "2026-09-21T00:00:00",
+  "periodEnd" : "2026-09-28T00:00:00",
+  "generatedAt" : "2026-09-21T09:00:00",
   "status": "ACTIVE",
-  "algorithm": "COMBINED",
   "blocks": [
     {
       "id": "850e8400-e29b-41d4-a716-446655440000",
@@ -675,10 +677,9 @@ Returns the currently active schedule.
 {
   "scheduleId": "750e8400-e29b-41d4-a716-446655440000",
   "status": "ACTIVE",
-  "algorithm": "COMBINED",
   "generatedAt": "2026-09-10T17:00:00Z",
-  "validFrom": "2026-09-10T17:00:00Z",
-  "validUntil": "2026-09-20T23:59:00Z",
+  "periodStart": "2026-09-10T17:00:00Z",
+  "periodEnd": "2026-09-20T23:59:00Z",
   "blocks": [
     {
       "id": "850e8400-e29b-41d4-a716-446655440000",
