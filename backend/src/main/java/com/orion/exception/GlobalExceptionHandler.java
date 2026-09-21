@@ -107,4 +107,28 @@ public class GlobalExceptionHandler {
                         exception.getMessage()
                 ));
     }
+
+    @ExceptionHandler(AvailabilityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAvailabilityNotFound(
+                AvailabilityNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(
+                        "AVAILABILITY_NOT_FOUND", 
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(InvalidAvailabilityException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidAvailability(
+                InvalidAvailabilityException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        "INVALID_AVAILABILITY", 
+                        exception.getMessage()
+                ));
+    }
 }
