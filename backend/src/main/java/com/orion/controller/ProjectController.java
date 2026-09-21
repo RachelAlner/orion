@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,8 +67,12 @@ public class ProjectController {
                         request.priority()
         );
 
+        URI location = URI.create(
+                "/api/projects/" + project.getId()
+        );
+
         return ResponseEntity
-                .status(HttpStatus.CREATED)
+                .created(location)
                 .body(toResponse(project));
     }
 
