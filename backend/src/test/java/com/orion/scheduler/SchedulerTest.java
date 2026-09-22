@@ -100,13 +100,12 @@ class SchedulerTest {
     }
 
     @Test 
-    void reportsRemainingWorkWhenThereIsInsufficientAvailabilit() {
+    void reportsRemainingWorkWhenThereIsInsufficientAvailability() {
         UUID taskId = UUID.randomUUID();
 
-        SchedulingTask task = task(
+        SchedulingTask task = taskWithoutDeadline(
                 taskId, 
                 120, 
-                LocalDateTime.of(2026, 9, 21, 17, 0),
                 3, 
                 LocalDateTime.of(2026, 9, 20, 10, 0)
         );
@@ -529,7 +528,7 @@ class SchedulerTest {
 
         SchedulingTask task = task(
                 taskId, 
-                60, 
+                120, 
                 LocalDateTime.of(2026, 9, 21, 10, 0),
                 3, 
                 LocalDateTime.of(2026, 9, 20, 10, 0)
@@ -537,7 +536,7 @@ class SchedulerTest {
 
         AvailabilityWindow availability = new AvailabilityWindow(
                 LocalDateTime.of(2026, 9, 21, 9, 0),
-                LocalDateTime.of(2026, 9, 21, 10, 0)
+                LocalDateTime.of(2026, 9, 21, 12, 0)  // Ends after deadline to test deadline constraint
         );
 
         SchedulerInput input = input(
@@ -557,6 +556,44 @@ class SchedulerTest {
         assertEquals(60, unscheduled.remainingMinutes());
         assertEquals(
                 UnscheduledReason.DEADLINE_UNACHIEVABLE,
+                unscheduled.reason()
+        );
+    }
+
+    @Test 
+    void reportsInsufficientAvailabilityWhenDeadlineCannotBeMetAndNoAvailabilityAfter() {
+        UUID taskId = UUID.randomUUID();
+
+        SchedulingTask task = task(
+                taskId, 
+                120, 
+                LocalDateTime.of(2026, 9, 21, 10, 0),
+                3, 
+                LocalDateTime.of(2026, 9, 20, 10, 0)
+        );
+
+        AvailabilityWindow availability = new AvailabilityWindow(
+                LocalDateTime.of(2026, 9, 21, 9, 0),
+                LocalDateTime.of(2026, 9, 21, 10, 0)  // Ends at deadline - no availability after
+        );
+
+        SchedulerInput input = input(
+                List.of(task),
+                List.of(availability)
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(1, result.scheduledBlocks().size());
+        assertEquals(1, result.unscheduledTasks().size());
+
+        UnscheduledTask unscheduled = 
+                result.unscheduledTasks().getFirst();
+
+        assertEquals(taskId, unscheduled.taskId());
+        assertEquals(60, unscheduled.remainingMinutes());
+        assertEquals(
+                UnscheduledReason.INSUFFICIENT_AVAILABILITY,
                 unscheduled.reason()
         );
     }
@@ -694,6 +731,23 @@ class SchedulerTest {
                 remainingMinutes, 
                 remainingMinutes, 
                 deadline, 
+                priority, 
+                TaskStatus.TODO, 
+                createdAt
+        );
+    }
+
+    private SchedulingTask taskWithoutDeadline(
+            UUID taskId, 
+            int remainingMinutes, 
+            int priority, 
+            LocalDateTime createdAt
+    ) {
+        return new SchedulingTask(
+                taskId, 
+                remainingMinutes, 
+                remainingMinutes, 
+                null, 
                 priority, 
                 TaskStatus.TODO, 
                 createdAt

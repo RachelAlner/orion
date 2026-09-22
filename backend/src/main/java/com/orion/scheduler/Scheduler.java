@@ -5,15 +5,13 @@ import com.orion.model.TaskStatus;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map;
 import java.util.UUID;
-import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Comparator;
 
 
 public class Scheduler {
@@ -120,19 +118,17 @@ public class Scheduler {
     }
 
     private List<SchedulingTask> getEligibleTasks(
-            SchedulerInput input 
+            SchedulerInput input
     ) {
         return input.tasks().stream()
-                .filter(task -> 
-                        task.status() != TaskStatus.COMPLETED
-                )
-                .filter(task -> 
-                        task.status() != TaskStatus.CANCELLED
-                )
-                .filter(task -> 
-                        task.remainingMinutes() > 0
-                )
+                .filter(this::isEligibleForScheduling)
                 .toList();
+    }
+
+    private boolean isEligibleForScheduling(SchedulingTask task) {
+        return task.status() != TaskStatus.COMPLETED
+                && task.status() != TaskStatus.CANCELLED
+                && task.remainingMinutes() > 0;
     }
 
     private Map<UUID, List<UUID>> buildDependencies(
@@ -242,22 +238,25 @@ public class Scheduler {
     }
 
     private Set<UUID> initialiseSatisfiedTasks(
-            List<SchedulingTask> tasks, 
+            List<SchedulingTask> tasks,
             Map<UUID, Integer> remainingMinutes
     ) {
         return tasks.stream()
-                .filter(task -> {
-                    if (task.status() == TaskStatus.COMPLETED) {
-                        return true;
-                    }
-
-                    Integer remaining = 
-                            remainingMinutes.get(task.taskId());
-                    
-                    return remaining != null && remaining == 0;
-                })
+                .filter(task -> isTaskSatisfied(task, remainingMinutes))
                 .map(SchedulingTask::taskId)
                 .collect(Collectors.toCollection(HashSet::new));
+    }
+
+    private boolean isTaskSatisfied(
+            SchedulingTask task,
+            Map<UUID, Integer> remainingMinutes
+    ) {
+        if (task.status() == TaskStatus.COMPLETED) {
+            return true;
+        }
+
+        Integer remaining = remainingMinutes.get(task.taskId());
+        return remaining != null && remaining == 0;
     }
 
     private boolean dependenciesSatisfied(
@@ -272,32 +271,33 @@ public class Scheduler {
     }
 
     private SchedulingTask findNextTask(
-            List<SchedulingTask> orderedTasks, 
-            Map<UUID, Integer> remainingMinutes, 
-            Map<UUID, List<UUID>> dependencies, 
-            Set<UUID> satisfiedTasks, 
+            List<SchedulingTask> orderedTasks,
+            Map<UUID, Integer> remainingMinutes,
+            Map<UUID, List<UUID>> dependencies,
+            Set<UUID> satisfiedTasks,
             LocalDateTime currentTime
     ) {
         return orderedTasks.stream()
-                .filter(task -> {
-                    Integer remaining = 
-                            remainingMinutes.get(task.taskId());
-                    
-                    return remaining != null && remaining > 0;
-                })
-                .filter(task -> 
-                        dependenciesSatisfied(
-                                task.taskId(), 
-                                dependencies, 
-                                satisfiedTasks
-                        )
-                )
-                .filter(task -> 
-                        task.deadline() == null 
-                                || currentTime.isBefore(task.deadline())
-                )
+                .filter(task -> hasRemainingWork(task, remainingMinutes))
+                .filter(task -> dependenciesSatisfied(task.taskId(), dependencies, satisfiedTasks))
+                .filter(task -> canScheduleBeforeDeadline(task, currentTime))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private boolean hasRemainingWork(
+            SchedulingTask task,
+            Map<UUID, Integer> remainingMinutes
+    ) {
+        Integer remaining = remainingMinutes.get(task.taskId());
+        return remaining != null && remaining > 0;
+    }
+
+    private boolean canScheduleBeforeDeadline(
+            SchedulingTask task,
+            LocalDateTime currentTime
+    ) {
+        return task.deadline() == null || currentTime.isBefore(task.deadline());
     }
 
     private void allocateAvailabilityWindow(
@@ -427,6 +427,9 @@ public class Scheduler {
                     remaining, 
                     availabilityWindows, 
                     scheduledBlocks
+            ) && hasAvailabilityAfterDeadline(
+                    task, 
+                    availabilityWindows
             )) {
                 reason = UnscheduledReason.DEADLINE_UNACHIEVABLE;
             } else {
@@ -492,68 +495,53 @@ public class Scheduler {
     private void validateNoOverlaps(
             List<ScheduleCandidate> scheduledBlocks
     ) {
-        for (int i = 0; i < scheduledBlocks.size(); i++) {
+        List<ScheduleCandidate> sortedBlocks = scheduledBlocks.stream()
+                .sorted(Comparator.comparing(ScheduleCandidate::startTime))
+                .toList();
 
-            ScheduleCandidate first = 
-                    scheduledBlocks.get(i);
-            
-            for (int j = i + 1; j < scheduledBlocks.size(); j++) {
-                ScheduleCandidate second = 
-                        scheduledBlocks.get(j);
+        for (int i = 0; i < sortedBlocks.size() - 1; i++) {
+            ScheduleCandidate current = sortedBlocks.get(i);
+            ScheduleCandidate next = sortedBlocks.get(i + 1);
 
-                if (first.taskId().equals(second.taskId())
-                        && first.startTime().equals(second.startTime())
-                        && first.endTime().equals(second.endTime())) {
-                    continue;
-                }
+            if (isDuplicateBlock(current, next)) {
+                continue;
+            }
 
-                boolean overlaps = 
-                        first.startTime().isBefore(second.endTime())
-                                && first.endTime()
-                                .isAfter(second.startTime());
-                
-                if (overlaps) {
-                    throw new IllegalStateException(
-                            "Schedule blocks must not overlap"
-                    );
-                }
+            if (blocksOverlap(current, next)) {
+                throw new IllegalStateException("Schedule blocks must not overlap");
             }
         }
+    }
+
+    private boolean isDuplicateBlock(
+            ScheduleCandidate current,
+            ScheduleCandidate next
+    ) {
+        return current.taskId().equals(next.taskId())
+                && current.startTime().equals(next.startTime())
+                && current.endTime().equals(next.endTime());
+    }
+
+    private boolean blocksOverlap(
+            ScheduleCandidate current,
+            ScheduleCandidate next
+    ) {
+        return current.startTime().isBefore(next.endTime())
+                && current.endTime().isAfter(next.startTime());
     }
 
     private List<AvailabilityWindow> removeOccupiedTime(
             AvailabilityWindow availability,
             List<ScheduleCandidate> scheduledBlocks
     ) {
-        List<AvailabilityWindow> result = 
-                new ArrayList<>();
-        
-        LocalDateTime cursor = 
-                availability.startTime();
-        
-        List<ScheduleCandidate> overlappingBlocks = 
-                scheduledBlocks.stream()
-                        .filter(block -> 
-                                block.startTime()
-                                        .isBefore(availability.endTime())
-                                        && block.endTime()
-                                        .isAfter(availability.startTime())
-                        )
-                        .sorted(
-                                Comparator.comparing(
-                                        ScheduleCandidate::startTime
-                                )
-                        )
-                        .toList();
+        List<AvailabilityWindow> result = new ArrayList<>();
+        LocalDateTime cursor = availability.startTime();
+
+        List<ScheduleCandidate> overlappingBlocks = getOverlappingBlocks(availability, scheduledBlocks);
 
         for (ScheduleCandidate block : overlappingBlocks) {
             if (cursor.isBefore(block.startTime())) {
-                result.add(
-                        new AvailabilityWindow(
-                                cursor, 
-                                block.startTime()
-                        )
-                );
+                result.add(new AvailabilityWindow(cursor, block.startTime()));
             }
 
             if (cursor.isBefore(block.endTime())) {
@@ -562,15 +550,28 @@ public class Scheduler {
         }
 
         if (cursor.isBefore(availability.endTime())) {
-            result.add(
-                new AvailabilityWindow(
-                        cursor, 
-                        availability.endTime()
-                )
-            );
+            result.add(new AvailabilityWindow(cursor, availability.endTime()));
         }
 
         return result;
+    }
+
+    private List<ScheduleCandidate> getOverlappingBlocks(
+            AvailabilityWindow availability,
+            List<ScheduleCandidate> scheduledBlocks
+    ) {
+        return scheduledBlocks.stream()
+                .filter(block -> blocksOverlapWithAvailability(block, availability))
+                .sorted(Comparator.comparing(ScheduleCandidate::startTime))
+                .toList();
+    }
+
+    private boolean blocksOverlapWithAvailability(
+            ScheduleCandidate block,
+            AvailabilityWindow availability
+    ) {
+        return block.startTime().isBefore(availability.endTime())
+                && block.endTime().isAfter(availability.startTime());
     }
 
     private boolean cannotMeetDeadline(
@@ -583,72 +584,63 @@ public class Scheduler {
             return false;
         }
 
-        long availableMinutes = 0;
-
-        for (AvailabilityWindow availability : availabilityWindows) {
-
-            LocalDateTime availableEnd =
-                    availability.endTime().isBefore(task.deadline())
-                            ? availability.endTime()
-                            : task.deadline();
-
-            if (!availability.startTime().isBefore(availableEnd)) {
-                continue;
-            }
-
-            List<ScheduleCandidate> blocks =
-                    scheduledBlocks.stream()
-                            .filter(block ->
-                                    block.startTime()
-                                            .isBefore(availableEnd)
-                                            && block.endTime()
-                                            .isAfter(
-                                                    availability.startTime()
-                                            )
-                            )
-                            .sorted(
-                                    Comparator.comparing(
-                                            ScheduleCandidate::startTime
-                                    )
-                            )
-                            .toList();
-
-            LocalDateTime cursor =
-                    availability.startTime();
-
-            for (ScheduleCandidate block : blocks) {
-
-                LocalDateTime blockStart =
-                        block.startTime().isBefore(availableEnd)
-                                ? block.startTime()
-                                : availableEnd;
-
-                if (blockStart.isAfter(cursor)) {
-                    availableMinutes +=
-                            Duration.between(
-                                    cursor,
-                                    blockStart
-                            ).toMinutes();
-                }
-
-                if (block.endTime().isAfter(cursor)) {
-                    cursor = block.endTime();
-                }
-
-                if (!cursor.isBefore(availableEnd)) {
-                    break;
-                }
-            }
-
-            if (cursor.isBefore(availableEnd)) {
-                availableMinutes +=
-                        Duration.between(
-                                cursor,
-                                availableEnd
-                        ).toMinutes();
-            }
-        }
+        long availableMinutes = calculateAvailableMinutesBefore(
+                task.deadline(),
+                availabilityWindows,
+                scheduledBlocks
+        );
 
         return availableMinutes < remainingMinutes;
     }
+
+    private long calculateAvailableMinutesBefore(
+            LocalDateTime deadline,
+            List<AvailabilityWindow> availabilityWindows,
+            List<ScheduleCandidate> scheduledBlocks
+    ) {
+        long availableMinutes = 0;
+
+        for (AvailabilityWindow availability : availabilityWindows) {
+            LocalDateTime windowEnd = availability.endTime().isBefore(deadline)
+                    ? availability.endTime()
+                    : deadline;
+
+            if (!availability.startTime().isBefore(windowEnd)) {
+                continue;
+            }
+
+            AvailabilityWindow truncatedWindow = 
+                    new AvailabilityWindow(
+                            availability.startTime(),
+                            windowEnd
+                    );
+
+            List<AvailabilityWindow> freeWindows = 
+                    removeOccupiedTime(truncatedWindow, scheduledBlocks);
+
+            for (AvailabilityWindow freeWindow : freeWindows) {
+                availableMinutes += Duration.between(
+                        freeWindow.startTime(),
+                        freeWindow.endTime()
+                ).toMinutes();
+            }
+        }
+
+        return availableMinutes;
+    }
+
+    private boolean hasAvailabilityAfterDeadline(
+            SchedulingTask task, 
+            List<AvailabilityWindow> availabilityWindows
+    ) {
+        if (task.deadline() == null) {
+            return false;
+        }
+
+        return availabilityWindows.stream()
+                .anyMatch(window -> 
+                        window.endTime().isAfter(task.deadline())
+                );
+    }
+
 }

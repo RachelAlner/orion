@@ -101,9 +101,9 @@ public class GlobalExceptionHandler {
             InvalidTaskDependencyException exception
     ) {
         return ResponseEntity
-                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .status(HttpStatus.valueOf(422))
                 .body(new ErrorResponse(
-                        "INVALID_TASK_DEPENDENCY", 
+                        "INVALID_TASK_DEPENDENCY",
                         exception.getMessage()
                 ));
     }
