@@ -2,7 +2,7 @@ package com.orion.model;
 
 import jakarta.persistence.*; 
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -24,7 +24,7 @@ public class Task {
     @Column(name = "estimated_minutes", nullable = false)
     private Integer estimatedMinutes; 
 
-    private LocalDate deadline; 
+    private LocalDateTime deadline; 
 
     @Column(nullable = false)
     private Integer priority;
@@ -48,7 +48,7 @@ public class Task {
             String title, 
             String description, 
             Integer estimatedMinutes, 
-            LocalDate deadline, 
+            LocalDateTime deadline, 
             Integer priority
     ) {
         this.id = UUID.randomUUID();
@@ -85,7 +85,7 @@ public class Task {
         return estimatedMinutes;
     }
 
-    public LocalDate getDeadline() {
+    public LocalDateTime getDeadline() {
         return deadline;
     }
 
@@ -113,7 +113,7 @@ public class Task {
             String title, 
             String description, 
             Integer estimatedMinutes,
-            LocalDate deadline, 
+            LocalDateTime deadline, 
             Integer priority
     ) {
         this.title = title;

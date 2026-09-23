@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -49,7 +48,7 @@ class ScheduleBlockRepositoryTest {
                 user.getId(), 
                 "Project",
                 "Project description",
-                LocalDate.of(2026, 10, 1),
+                LocalDateTime.of(2026, 10, 1, 0, 0),
                 2
         );
 
@@ -60,7 +59,7 @@ class ScheduleBlockRepositoryTest {
                 "Implement authentication",
                 "Finish JWT authentication",
                 120, 
-                LocalDate.of(2026, 9, 25),
+                LocalDateTime.of(2026, 9, 25, 0, 0),
                 2
         );
 
@@ -116,7 +115,7 @@ class ScheduleBlockRepositoryTest {
                 user.getId(), 
                 "Project",
                 "Project description",
-                LocalDate.of(2026, 10, 1),
+                LocalDateTime.of(2026, 10, 1, 0, 0),
                 2
         );
 
@@ -127,7 +126,7 @@ class ScheduleBlockRepositoryTest {
                 "First task", 
                 "First scheduled task",
                 60, 
-                LocalDate.of(2026, 9, 25),
+                LocalDateTime.of(2026, 9, 25, 0, 0),
                 1
         );
 
@@ -136,7 +135,7 @@ class ScheduleBlockRepositoryTest {
                 "Second task", 
                 "Second scheduled task",
                 60, 
-                LocalDate.of(2026, 9, 25),
+                LocalDateTime.of(2026, 9, 25, 0, 0),
                 1
         );
 
@@ -193,7 +192,7 @@ class ScheduleBlockRepositoryTest {
                 user.getId(), 
                 "Project",
                 "Project description",
-                LocalDate.of(2026, 10, 1),
+                LocalDateTime.of(2026, 10, 1, 0, 0),
                 2
         );
 
@@ -204,7 +203,7 @@ class ScheduleBlockRepositoryTest {
                 "First task",
                 "Task for first schedule",
                 60,
-                LocalDate.of(2026, 9, 25),
+                LocalDateTime.of(2026, 9, 25, 0, 0),
                 1
         );
 
@@ -213,7 +212,7 @@ class ScheduleBlockRepositoryTest {
                 "Second task",
                 "Task for second schedule",
                 60,
-                LocalDate.of(2026, 9, 25),
+                LocalDateTime.of(2026, 9, 25, 0, 0),
                 1
         );
 

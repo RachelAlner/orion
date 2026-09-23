@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -46,7 +46,7 @@ class ProjectControllerTest {
                 userId, 
                 "Orion", 
                 "Scheduling app", 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 5
         );
     }
@@ -93,7 +93,7 @@ class ProjectControllerTest {
                 eq(userId), 
                 eq("Orion"),
                 eq("Scheduling app"),
-                eq(LocalDate.of(2027, 6, 1)),
+                eq(LocalDateTime.of(2027, 6, 1, 0, 0)),
                 eq(5)
         )).thenReturn(project);
 
@@ -101,7 +101,7 @@ class ProjectControllerTest {
                 {
                     "name": "Orion", 
                     "description": "Scheduling app",
-                    "deadline": "2027-06-01", 
+                    "deadline": "2027-06-01T00:00:00", 
                     "priority": 5
                 }
                 """;
@@ -123,7 +123,7 @@ class ProjectControllerTest {
                         userId, 
                         "Orion", 
                         "Scheduling app", 
-                        LocalDate.of(2027, 6, 1),
+                        LocalDateTime.of(2027, 6, 1, 0, 0),
                         5
                 );
 
@@ -161,7 +161,7 @@ class ProjectControllerTest {
                 eq(userId), 
                 eq("Updated Orion"), 
                 eq("Updated description"),
-                eq(LocalDate.of(2027, 7, 1)), 
+                eq(LocalDateTime.of(2027, 7, 1, 0, 0)), 
                 eq(4)
         )).thenReturn(project);
 
@@ -169,7 +169,7 @@ class ProjectControllerTest {
                 {
                     "name": "Updated Orion", 
                     "description": "Updated description", 
-                    "deadline": "2027-07-01",
+                    "deadline": "2027-07-01T00:00:00",
                     "priority": 4
                 }
                 """;
@@ -188,7 +188,7 @@ class ProjectControllerTest {
                         userId, 
                         "Updated Orion", 
                         "Updated description", 
-                        LocalDate.of(2027, 7, 1), 
+                        LocalDateTime.of(2027, 7, 1, 0, 0), 
                         4
                 );
     }

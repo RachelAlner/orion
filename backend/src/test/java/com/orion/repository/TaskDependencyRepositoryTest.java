@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,7 +48,7 @@ class TaskDependencyRepositoryTest {
                 user.getId(), 
                 "Test Project", 
                 "Project for dependency tests", 
-                LocalDate.now().plusDays(30), 
+                LocalDateTime.now().plusDays(30), 
                 3
         );
 
@@ -208,7 +208,7 @@ class TaskDependencyRepositoryTest {
                 title, 
                 "Test task", 
                 60, 
-                LocalDate.now().plusDays(7), 
+                LocalDateTime.now().plusDays(7), 
                 3
         );
 

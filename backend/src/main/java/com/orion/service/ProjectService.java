@@ -5,7 +5,7 @@ import com.orion.model.Project;
 import com.orion.repository.ProjectRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +32,7 @@ public class ProjectService {
             UUID userId, 
             String name, 
             String description, 
-            LocalDate deadline, 
+            LocalDateTime deadline, 
             Integer priority
     ) {
         Project project = new Project(
@@ -51,7 +51,7 @@ public class ProjectService {
             UUID userId, 
             String name, 
             String description, 
-            LocalDate deadline, 
+            LocalDateTime deadline, 
             Integer priority
     ) {
         Project project = findByIdForUser(projectId, userId);

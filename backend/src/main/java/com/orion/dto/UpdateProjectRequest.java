@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record UpdateProjectRequest(
         @NotBlank 
@@ -15,7 +15,7 @@ public record UpdateProjectRequest(
         @Size(max = 2000)
         String description, 
 
-        LocalDate deadline, 
+        LocalDateTime deadline, 
 
         @Min(1)
         @Max(5)

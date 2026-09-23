@@ -12,7 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,7 +47,7 @@ class TaskServiceTest {
                 userId, 
                 "Test Project",
                 "Test description", 
-                LocalDate.of(2027, 9, 2),
+                LocalDateTime.of(2027, 9, 2, 0, 0),
                 4
         );
 
@@ -57,7 +57,7 @@ class TaskServiceTest {
                 userId, 
                 "Other Test Project",
                 "Test description", 
-                LocalDate.of(2027, 9, 2),
+                LocalDateTime.of(2027, 9, 2, 0, 0),
                 4
         );
 
@@ -70,7 +70,7 @@ class TaskServiceTest {
                 title, 
                 "Test description", 
                 60, 
-                LocalDate.of(2027, 5, 1), 
+                LocalDateTime.of(2027, 5, 1, 0, 0), 
                 3
         );
     }
@@ -89,7 +89,7 @@ class TaskServiceTest {
                 "Implement scheduler", 
                 "Test description", 
                 60, 
-                LocalDate.of(2027, 5, 1), 
+                LocalDateTime.of(2027, 5, 1, 0, 0), 
                 3
         );
 
@@ -252,7 +252,7 @@ class TaskServiceTest {
                         "Updated title", 
                         "Updated description", 
                         120, 
-                        LocalDate.of(2027, 6, 1), 
+                        LocalDateTime.of(2027, 6, 1, 0, 0), 
                         5
                 );
 
@@ -271,7 +271,7 @@ class TaskServiceTest {
                 result.getEstimatedMinutes()
         );
         assertEquals(
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 result.getDeadline()
         );
         assertEquals(

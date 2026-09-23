@@ -6,7 +6,7 @@ import com.orion.model.Task;
 import com.orion.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,7 +27,7 @@ public class TaskService {
              String title, 
              String description, 
              Integer estimatedMinutes, 
-             LocalDate deadline, 
+             LocalDateTime deadline, 
              Integer priority
     ) {
         projectService.findByIdForUser(projectId, userId);
@@ -73,7 +73,7 @@ public class TaskService {
             String title, 
             String description, 
             Integer estimatedMinutes, 
-            LocalDate deadline, 
+            LocalDateTime deadline, 
             Integer priority
     ) {
         projectService.findByIdForUser(projectId, userId);

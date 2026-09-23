@@ -93,7 +93,7 @@ class ResourceOwnershipIntegrationTest {
                                 {
                                     "name": "Hijacked project",
                                     "description": "Should not be allowed", 
-                                    "deadline": "2027-05-01", 
+                                    "deadline": "2027-05-01T00:00:00", 
                                     "priority": 1
                                 }
                                 """
@@ -144,7 +144,7 @@ class ResourceOwnershipIntegrationTest {
                                     "title": "Hijacked task",
                                     "description": "Should not be allowed", 
                                     "estimatedMinutes": 60,
-                                    "deadline": "2027-05-01", 
+                                    "deadline": "2027-05-01T00:00:00", 
                                     "priority": 1
                                 }
                                 """
@@ -256,7 +256,7 @@ class ResourceOwnershipIntegrationTest {
                                 {
                                     "name": "%s", 
                                     "description": "Integration test project", 
-                                    "deadline": "2027-05-01", 
+                                    "deadline": "2027-05-01T00:00:00", 
                                     "priority": 3
                                 }
                                 """.formatted(name)))
@@ -268,7 +268,7 @@ class ResourceOwnershipIntegrationTest {
         JsonNode json = objectMapper.readTree(response);
         
         return UUID.fromString(
-                json.get("id").asText()
+                json.get("id").asString()
         );
     }
 
@@ -286,7 +286,7 @@ class ResourceOwnershipIntegrationTest {
                                     "title": "%s", 
                                     "description": "Integration test task", 
                                     "estimatedMinutes": 60, 
-                                    "deadline": "2027-05-01", 
+                                    "deadline": "2027-05-01T00:00:00", 
                                     "priority": 3
                                 }
                                 """.formatted(title)))
@@ -298,7 +298,7 @@ class ResourceOwnershipIntegrationTest {
         JsonNode json = objectMapper.readTree(response);
         
         return UUID.fromString(
-                json.get("id").asText()
+                json.get("id").asString()
         );
     }
 

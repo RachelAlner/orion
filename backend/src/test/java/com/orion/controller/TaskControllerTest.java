@@ -17,7 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -62,7 +62,7 @@ class TaskControllerTest {
                 "Implement scheduler", 
                 "Implement algorithm", 
                 120, 
-                LocalDate.of(2027, 5, 1), 
+                LocalDateTime.of(2027, 5, 1, 0, 0), 
                 3
         );
     }
@@ -77,7 +77,7 @@ class TaskControllerTest {
                 "Write tests", 
                 "Writer scheduler tests", 
                 60, 
-                LocalDate.of(2027, 5, 1), 
+                LocalDateTime.of(2027, 5, 1, 0, 0), 
                 4
         );
 
@@ -161,7 +161,7 @@ class TaskControllerTest {
                         "Implement scheduler", 
                         "Implement algorithm", 
                         120, 
-                        LocalDate.of(2027, 5, 1), 
+                        LocalDateTime.of(2027, 5, 1, 0, 0), 
                         3
                 );
         
@@ -171,7 +171,7 @@ class TaskControllerTest {
                 eq("Implement scheduler"), 
                 eq("Implement algorithm"), 
                 eq(120), 
-                eq(LocalDate.of(2027, 5, 1)),
+                eq(LocalDateTime.of(2027, 5, 1, 0, 0)),
                 eq(3)
         )).thenReturn(task);
 
@@ -184,7 +184,7 @@ class TaskControllerTest {
                         "title": "Implement scheduler",
                         "description": "Implement algorithm",
                         "estimatedMinutes": 120,
-                        "deadline": "2027-05-01",
+                        "deadline": "2027-05-01T00:00:00",
                         "priority": 3
                     }
                 """)
@@ -204,7 +204,7 @@ class TaskControllerTest {
                 "Implement scheduler", 
                 "Implement algorithm", 
                 120, 
-                LocalDate.of(2027, 5, 1), 
+                LocalDateTime.of(2027, 5, 1, 0, 0), 
                 3
         );
 
@@ -220,7 +220,7 @@ class TaskControllerTest {
                         "Updated scheduler", 
                         "Updated description", 
                         180, 
-                        LocalDate.of(2027, 6, 1), 
+                        LocalDateTime.of(2027, 6, 1, 0, 0), 
                         5
                 );
 
@@ -229,7 +229,7 @@ class TaskControllerTest {
                 "Updated scheduler", 
                 "Updated description", 
                 180, 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 5
         );
 
@@ -240,7 +240,7 @@ class TaskControllerTest {
                 eq("Updated scheduler"), 
                 eq("Updated description"), 
                 eq(180), 
-                eq(LocalDate.of(2027, 6, 1)), 
+                eq(LocalDateTime.of(2027, 6, 1, 0, 0)), 
                 eq(5)
         )).thenReturn(updatedTask);
 
@@ -254,7 +254,7 @@ class TaskControllerTest {
                         "title": "Updated scheduler",
                         "description": "Updated description",
                         "estimatedMinutes": 180,
-                        "deadline": "2027-06-01",
+                        "deadline": "2027-06-01T00:00:00",
                         "priority": 5
                     }
                 """)
@@ -272,7 +272,7 @@ class TaskControllerTest {
                 "Updated scheduler", 
                 "Updated description", 
                 180, 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 5
         );
 
@@ -288,7 +288,7 @@ class TaskControllerTest {
                 "Complete this task",
                 "Test description", 
                 60, 
-                LocalDate.of(2027, 5, 1), 
+                LocalDateTime.of(2027, 5, 1, 0, 0), 
                 3 
         );
 
@@ -353,7 +353,7 @@ class TaskControllerTest {
                         "", 
                         "Invalid task", 
                         0, 
-                        LocalDate.of(2027, 5, 1), 
+                        LocalDateTime.of(2027, 5, 1, 0, 0), 
                         6
                 );
         
@@ -366,7 +366,7 @@ class TaskControllerTest {
                         "title": "",
                         "description": "Invalid task",
                         "estimatedMinutes": 0,
-                        "deadline": "2027-05-01",
+                        "deadline": "2027-05-01T00:00:00",
                         "priority": 6
                     }
                 """)
@@ -381,7 +381,7 @@ class TaskControllerTest {
                         anyString(), 
                         anyString(), 
                         anyInt(), 
-                        any(LocalDate.class), 
+                        any(LocalDateTime.class), 
                         anyInt()
                 );
 
@@ -397,7 +397,7 @@ class TaskControllerTest {
                         "", 
                         "Invalid task", 
                         0, 
-                        LocalDate.of(2027, 5, 1), 
+                        LocalDateTime.of(2027, 5, 1, 0, 0), 
                         6
                 );
 
@@ -410,7 +410,7 @@ class TaskControllerTest {
                         "title": "",
                         "description": "Invalid task",
                         "estimatedMinutes": 0,
-                        "deadline": "2027-05-01",
+                        "deadline": "2027-05-01T00:00:00",
                         "priority": 6
                     }
                 """)
@@ -426,7 +426,7 @@ class TaskControllerTest {
                         anyString(), 
                         anyString(), 
                         anyInt(), 
-                        any(LocalDate.class), 
+                        any(LocalDateTime.class), 
                         anyInt()
                 );
     }

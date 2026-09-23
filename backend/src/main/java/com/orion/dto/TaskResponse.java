@@ -2,7 +2,7 @@ package com.orion.dto;
 
 import com.orion.model.TaskStatus;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -12,7 +12,7 @@ public record TaskResponse(
         String title, 
         String description, 
         Integer estimatedMinutes, 
-        LocalDate deadline, 
+        LocalDateTime deadline, 
         Integer priority, 
         TaskStatus status, 
         OffsetDateTime createdAt, 

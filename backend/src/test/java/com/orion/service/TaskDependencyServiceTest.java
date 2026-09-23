@@ -18,7 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -769,7 +769,7 @@ class TaskDependencyServiceTest {
                 title, 
                 "Test task", 
                 60, 
-                LocalDate.now().plusDays(7), 
+                LocalDateTime.now().plusDays(7), 
                 3
         );
 

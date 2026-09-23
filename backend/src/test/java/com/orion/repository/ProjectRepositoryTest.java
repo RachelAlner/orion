@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,7 +35,7 @@ class ProjectRepositoryTest {
             user.getId(), 
             "Orion", 
             "Adaptive scheduling app", 
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 1, 0, 0), 
             5
         );
 
@@ -51,7 +51,7 @@ class ProjectRepositoryTest {
         assertEquals(user.getId(), savedProject.getUserId());
         assertEquals("Orion", savedProject.getName());
         assertEquals("Adaptive scheduling app", savedProject.getDescription());
-        assertEquals(LocalDate.of(2027, 6, 1), savedProject.getDeadline());
+        assertEquals(LocalDateTime.of(2027, 6, 1, 0, 0), savedProject.getDeadline());
         assertEquals(5, savedProject.getPriority());
         assertEquals(ProjectStatus.ACTIVE, savedProject.getStatus());
     }
@@ -66,7 +66,7 @@ class ProjectRepositoryTest {
             user.getId(), 
             "Orion", 
             "Scheduling app",
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 1, 0, 0), 
             5
         );
 
@@ -74,7 +74,7 @@ class ProjectRepositoryTest {
             user.getId(), 
             "Database", 
             "Database project", 
-            LocalDate.of(2027, 5, 20), 
+            LocalDateTime.of(2027, 5, 20, 0, 0), 
             4
         );
 
@@ -106,7 +106,7 @@ class ProjectRepositoryTest {
             owner.getId(), 
             "Orion", 
             "Scheduling app", 
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 1, 0, 0), 
             5
         );
 
@@ -143,7 +143,7 @@ class ProjectRepositoryTest {
                 firstUser.getId(), 
                 "First Project", 
                 "Owned by first user", 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 3
         ); 
 
@@ -151,7 +151,7 @@ class ProjectRepositoryTest {
                 secondUser.getId(), 
                 "Second Project", 
                 "Owned by second user", 
-                LocalDate.of(2027, 6, 2), 
+                LocalDateTime.of(2027, 6, 2, 0, 0), 
                 4
         );
 
@@ -175,7 +175,7 @@ class ProjectRepositoryTest {
             user.getId(), 
             "Project to Delete", 
             "Temporary project", 
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 1, 0, 0), 
             3
         ); 
 

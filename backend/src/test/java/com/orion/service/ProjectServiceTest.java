@@ -12,7 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.UUID;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -37,7 +37,7 @@ class ProjectServiceTest {
                 userId, 
                 "Orion", 
                 "Scheduling app", 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 5
         );
 
@@ -45,7 +45,7 @@ class ProjectServiceTest {
                 userId, 
                 "Database", 
                 "Database project", 
-                LocalDate.of(2027, 5, 20), 
+                LocalDateTime.of(2027, 5, 20, 0, 0), 
                 4
         ); 
 
@@ -81,7 +81,7 @@ class ProjectServiceTest {
                 userId, 
                 "Orion", 
                 "Scheduling app", 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 5
         );
 
@@ -104,7 +104,7 @@ class ProjectServiceTest {
             ownerId, 
             "Orion", 
             "Scheduling app", 
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 2, 0, 0), 
             5
         );
 
@@ -135,7 +135,7 @@ class ProjectServiceTest {
             userId, 
             "Orion", 
             "Scheduling app", 
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 2, 0, 0), 
             5
         );
 
@@ -145,7 +145,7 @@ class ProjectServiceTest {
                 userId, 
                 "Orion", 
                 "Scheduling app", 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 5
         );
 
@@ -162,7 +162,7 @@ class ProjectServiceTest {
             userId, 
             "Orion", 
             "Scheduling app", 
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 2, 0, 0), 
             5
         );
 
@@ -183,7 +183,7 @@ class ProjectServiceTest {
                 userId, 
                 "Old Name", 
                 "Old description", 
-                LocalDate.of(2027, 6, 1), 
+                LocalDateTime.of(2027, 6, 1, 0, 0), 
                 3
         );
 
@@ -196,7 +196,7 @@ class ProjectServiceTest {
                 userId, 
                 "New Name", 
                 "New description", 
-                LocalDate.of(2027, 7, 1), 
+                LocalDateTime.of(2027, 7, 1, 0, 0), 
                 5
         );
 
@@ -204,7 +204,7 @@ class ProjectServiceTest {
         assertEquals("New Name", result.getName());
         assertEquals("New description", result.getDescription());
         assertEquals(
-                LocalDate.of(2027, 7, 1), 
+                LocalDateTime.of(2027, 7, 1, 0, 0), 
                 result.getDeadline()
         );
         assertEquals(5, result.getPriority());
@@ -222,7 +222,7 @@ class ProjectServiceTest {
             ownerId, 
             "Orion", 
             "Scheduling app", 
-            LocalDate.of(2027, 6, 1), 
+            LocalDateTime.of(2027, 6, 2, 0, 0), 
             5
         );
 
