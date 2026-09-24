@@ -6,7 +6,6 @@ import com.orion.dto.UpdateProjectRequest;
 import com.orion.model.Project;
 import com.orion.service.ProjectService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
