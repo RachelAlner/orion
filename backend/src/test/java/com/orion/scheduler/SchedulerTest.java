@@ -4,6 +4,7 @@ import com.orion.model.TaskStatus;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -703,6 +704,183 @@ class SchedulerTest {
                 secondResult.unscheduledTasks()
         );
 
+    }
+
+    @Test 
+    void scheduleOnlyRemainingWork() {
+        UUID taskId = UUID.randomUUID();
+
+        LocalDateTime start = LocalDateTime.of(2026, 1, 5, 9, 0);
+
+        LocalDateTime end = LocalDateTime.of(2026, 1, 5, 11, 0);
+
+        SchedulingTask task = new SchedulingTask(
+                taskId, 
+                120, 
+                60, 
+                end, 
+                1, 
+                TaskStatus.IN_PROGRESS,
+                start.minusDays(1)
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(task),
+                List.of(),
+                List.of(
+                        new AvailabilityWindow(start, end)
+                ),
+                List.of(),
+                start, 
+                end
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(1, result.scheduledBlocks().size());
+
+        ScheduleCandidate block = 
+                result.scheduledBlocks().get(0);
+        
+        assertEquals(
+                taskId,
+                block.taskId()
+        );
+
+        assertEquals(
+                60, 
+                Duration.between(
+                        block.startTime(),
+                        block.endTime()
+                ).toMinutes()
+        );
+
+        assertTrue(result.unscheduledTasks().isEmpty());
+    }
+
+    @Test 
+    void doesNotScheduleTaskWithNoRemainingWork() {
+        UUID taskId = UUID.randomUUID();
+
+        LocalDateTime start = LocalDateTime.of(2026, 1, 5, 9, 0);
+
+        LocalDateTime end = LocalDateTime.of(2026, 1, 5, 11, 0);
+
+        SchedulingTask task = new SchedulingTask(
+                taskId, 
+                120, 
+                0, 
+                end, 
+                1, 
+                TaskStatus.IN_PROGRESS,
+                start.minusDays(1)
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(task),
+                List.of(),
+                List.of(
+                        new AvailabilityWindow(start, end)
+                ),
+                List.of(),
+                start, 
+                end
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertTrue(result.scheduledBlocks().isEmpty());
+
+        assertTrue(result.unscheduledTasks().isEmpty());
+    }
+
+    @Test 
+    void reportsRemainingWorkWhenRemainingWorkExceedsAvailability() {
+        UUID taskId = UUID.randomUUID();
+
+        LocalDateTime start = LocalDateTime.of(2026, 1, 5, 9, 0);
+
+        LocalDateTime end = LocalDateTime.of(2026, 1, 5, 10, 0);
+
+        SchedulingTask task = new SchedulingTask(
+                taskId, 
+                120, 
+                90, 
+                LocalDateTime.of(2026, 1, 5, 12, 0), 
+                1, 
+                TaskStatus.IN_PROGRESS,
+                start.minusDays(1)
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(task),
+                List.of(),
+                List.of(
+                        new AvailabilityWindow(start, end)
+                ),
+                List.of(),
+                start, 
+                LocalDateTime.of(2026, 1, 5, 12, 0)
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(1, result.scheduledBlocks().size());
+
+        assertEquals(1, result.unscheduledTasks().size());
+
+        UnscheduledTask unscheduled = 
+                result.unscheduledTasks().get(0);
+
+        assertEquals(
+                taskId, 
+                unscheduled.taskId()
+        );
+
+        assertEquals(
+                30, 
+                unscheduled.remainingMinutes()
+        );
+
+        assertEquals(
+                UnscheduledReason.INSUFFICIENT_AVAILABILITY,
+                unscheduled.reason()
+        );
+    }
+
+    @Test 
+    void doesNotScheduleCompletedTaskEvenIfRemainingWorkExists() {
+        UUID taskId = UUID.randomUUID();
+
+        LocalDateTime start = LocalDateTime.of(2026, 1, 5, 9, 0);
+
+        LocalDateTime end = LocalDateTime.of(2026, 1, 5, 11, 0);
+
+        SchedulingTask task = new SchedulingTask(
+                taskId, 
+                120, 
+                60, 
+                end, 
+                1, 
+                TaskStatus.COMPLETED,
+                start.minusDays(1)
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(task),
+                List.of(),
+                List.of(
+                        new AvailabilityWindow(start, end)
+                ),
+                List.of(),
+                start, 
+                end
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertTrue(result.scheduledBlocks().isEmpty());
+        assertTrue(result.unscheduledTasks().isEmpty());
     }
 
     private SchedulerInput input(

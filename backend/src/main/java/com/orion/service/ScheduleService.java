@@ -154,7 +154,7 @@ public class ScheduleService {
                     return new SchedulingTask(
                             task.getId(),
                             task.getEstimatedMinutes() != null ? task.getEstimatedMinutes() : 0,
-                            task.getEstimatedMinutes() != null ? task.getEstimatedMinutes() : 0,
+                            task.getRemainingMinutes() != null ? task.getRemainingMinutes() : 0,
                             task.getDeadline(),
                             task.getPriority() != null ? task.getPriority() : 0,
                             task.getStatus(),

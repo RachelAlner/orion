@@ -24,6 +24,9 @@ public class Task {
     @Column(name = "estimated_minutes", nullable = false)
     private Integer estimatedMinutes; 
 
+    @Column(name = "remaining_minutes", nullable = false)
+    private Integer remainingMinutes;
+
     private LocalDateTime deadline; 
 
     @Column(nullable = false)
@@ -56,6 +59,7 @@ public class Task {
         this.title = title;
         this.description = description;
         this.estimatedMinutes = estimatedMinutes;
+        this.remainingMinutes = estimatedMinutes;
         this.deadline = deadline;
         this.priority = priority;
         this.status = TaskStatus.TODO;
@@ -83,6 +87,10 @@ public class Task {
 
     public Integer getEstimatedMinutes() {
         return estimatedMinutes;
+    }
+
+    public Integer getRemainingMinutes() {
+        return remainingMinutes;
     }
 
     public LocalDateTime getDeadline() {
@@ -124,14 +132,43 @@ public class Task {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public void complete() {
-        this.status = TaskStatus.COMPLETED;
-        this.completedAt = OffsetDateTime.now();
+    public void setStatus(TaskStatus status) {
+        this.status = status;
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public void setStatus(TaskStatus status) {
-        this.status = status;
+    public void recordProgress(int minutesWorked) {
+        if (minutesWorked <= 0) {
+            throw new IllegalArgumentException(
+                    "Minutes worked must be greater than zero"
+            );
+        }
+
+        if (status == TaskStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Completed task cannot recieve additional progress"
+            );
+        }
+
+        remainingMinutes = Math.max(
+                0, 
+                remainingMinutes - minutesWorked
+        );
+
+        updatedAt = OffsetDateTime.now();
+
+        if (remainingMinutes == 0) {
+            status = TaskStatus.COMPLETED;
+            completedAt = OffsetDateTime.now();
+        } else {
+            status = TaskStatus.IN_PROGRESS;
+        }
+    }
+
+    public void complete() {
+        this.remainingMinutes = 0;
+        this.status = TaskStatus.COMPLETED;
+        this.completedAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
     }
 }

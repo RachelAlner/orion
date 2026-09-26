@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -381,5 +382,153 @@ class TaskServiceTest {
                 );
         
         verify(taskRepository, never()).delete(any(Task.class));
+    }
+
+    @Test 
+    void recordProgressUpdateTask() {
+        Task task = createTask("Progress task");
+
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+        
+        when(taskRepository.findByIdAndProjectId(
+                task.getId(), 
+                projectId
+        )).thenReturn(Optional.of(task));
+
+        when(taskRepository.save(task)).thenReturn(task);
+
+        Task result = taskService.recordProgress(
+                userId, 
+                task.getId(), 
+                projectId, 
+                30
+        );
+
+        assertSame(task, result);
+
+        assertEquals(
+                30, 
+                task.getRemainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.IN_PROGRESS,
+                task.getStatus()
+        );
+
+        verify(taskRepository).save(task);
+    }
+
+    @Test 
+    void recordProgressCompletesTaskWhenRemainingReachesZero() {
+        Task task = createTask("Progress task");
+
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+        
+        when(taskRepository.findByIdAndProjectId(
+                task.getId(), 
+                projectId
+        )).thenReturn(Optional.of(task));
+
+        when(taskRepository.save(task)).thenReturn(task);
+
+        Task result = taskService.recordProgress(
+                userId, 
+                task.getId(), 
+                projectId, 
+                60
+        );
+
+        assertSame(task, result);
+
+        assertEquals(
+                0, 
+                task.getRemainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.COMPLETED,
+                task.getStatus()
+        );
+
+        assertNotNull(task.getCompletedAt());
+
+        verify(taskRepository).save(task);
+    }
+
+    @Test 
+    void recordProgressRejectsCompletedTask() {
+        Task task = createTask("Progress task");
+
+        task.complete();
+
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+        
+        when(taskRepository.findByIdAndProjectId(
+                task.getId(), 
+                projectId
+        )).thenReturn(Optional.of(task));
+
+        assertThrows(
+                IllegalStateException.class, 
+                () -> taskService.recordProgress(
+                        userId, 
+                        task.getId(), 
+                        projectId, 
+                        30
+                )
+        );
+
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test 
+    void recordProgressUsesCorrectUserAndProject() {
+        Task task = createTask("Progress task");
+
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+
+        when(taskRepository.findByIdAndProjectId(
+                task.getId(),
+                projectId
+        )).thenReturn(Optional.of(task));
+        
+        when(taskRepository.save(task)).thenReturn(task);
+        
+
+        Task result = taskService.recordProgress(
+                userId, 
+                task.getId(), 
+                projectId, 
+                20
+        );
+
+        assertSame(task, result);
+
+        assertEquals(
+                projectId, 
+                task.getProjectId()
+        );
+
+        assertEquals(
+                40, 
+                task.getRemainingMinutes()
+        );
+
+        verify(projectService).findByIdForUser(
+                projectId, 
+                userId
+        );
+
+        verify(taskRepository).findByIdAndProjectId(
+                task.getId(),
+                projectId
+        );
+
+        verify(taskRepository).save(task);
     }
 }

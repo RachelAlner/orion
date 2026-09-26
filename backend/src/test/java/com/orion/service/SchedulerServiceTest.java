@@ -242,6 +242,11 @@ class SchedulerServiceTest {
         );
 
         assertEquals(
+                90, 
+                schedulingTask.remainingMinutes()
+        );
+
+        assertEquals(
                 2, 
                 schedulingTask.priority()
         );
@@ -254,6 +259,194 @@ class SchedulerServiceTest {
         assertEquals(
                 LocalDateTime.of(2026, 9, 25, 17, 0),
                 schedulingTask.deadline()
+        );
+    }
+
+    @Test 
+    void passesRemainingMinutesToScheduler() {
+        defaultTask();
+
+        when(task.getEstimatedMinutes())
+                .thenReturn(120);
+        
+        when(task.getRemainingMinutes())
+                .thenReturn(60);
+        
+        when(scheduleRepository.save(
+                any(Schedule.class)))
+                .thenAnswer(invocation -> 
+                        invocation.getArgument(0)
+                );
+        
+        when(scheduler.generate(
+                any(SchedulerInput.class)))
+                .thenReturn(
+                        new ScheduleResult(
+                                List.of(),
+                                List.of()
+                        )
+                );
+        
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );
+        
+        scheduleService.generateSchedule(
+                userId, 
+                periodStart, 
+                periodEnd
+        );
+
+        verify(scheduler).generate(inputCaptor.capture());
+
+        SchedulerInput input = inputCaptor.getValue();
+
+        assertEquals(
+                1, 
+                input.tasks().size()
+        );
+
+        SchedulingTask schedulingTask = 
+                input.tasks().get(0);
+        
+        assertEquals(
+                taskId, 
+                schedulingTask.taskId()
+        );
+
+        assertEquals(
+                120, 
+                schedulingTask.estimatedMinutes()
+        );
+
+        assertEquals(
+                60, 
+                schedulingTask.remainingMinutes()
+        );
+    }
+
+    @Test 
+    void passesZeroRemainingMinutesForCompletedTask() {
+        defaultTask();
+
+        when(task.getEstimatedMinutes())
+                .thenReturn(120);
+        
+        when(task.getRemainingMinutes())
+                .thenReturn(0);
+        
+        when(task.getStatus())
+                .thenReturn(TaskStatus.COMPLETED);
+        
+        when(scheduleRepository.save(
+                any(Schedule.class)))
+                .thenAnswer(invocation -> 
+                        invocation.getArgument(0)
+                );
+        
+        when(scheduler.generate(
+                any(SchedulerInput.class)))
+                .thenReturn(
+                        new ScheduleResult(
+                                List.of(),
+                                List.of()
+                        )
+                );
+        
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );
+        
+        scheduleService.generateSchedule(
+                userId, 
+                periodStart, 
+                periodEnd
+        );
+
+        verify(scheduler).generate(inputCaptor.capture());
+
+        SchedulerInput input = inputCaptor.getValue();
+
+        SchedulingTask schedulingTask = 
+                input.tasks().get(0);
+
+        assertEquals(
+                120, 
+                schedulingTask.estimatedMinutes()
+        );
+
+        assertEquals(
+                0, 
+                schedulingTask.remainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.COMPLETED,
+                schedulingTask.status()
+        );
+    }
+
+    @Test 
+    void passesInProgressTaskWithRemainingMinutesToScheduler() {
+        defaultTask();
+
+        when(task.getEstimatedMinutes())
+                .thenReturn(180);
+        
+        when(task.getRemainingMinutes())
+                .thenReturn(120);
+
+        when(task.getStatus())
+                .thenReturn(TaskStatus.IN_PROGRESS);
+        
+        when(scheduleRepository.save(
+                any(Schedule.class)))
+                .thenAnswer(invocation -> 
+                        invocation.getArgument(0)
+                );
+        
+        when(scheduler.generate(
+                any(SchedulerInput.class)))
+                .thenReturn(
+                        new ScheduleResult(
+                                List.of(),
+                                List.of()
+                        )
+                );
+        
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );
+        
+        scheduleService.generateSchedule(
+                userId, 
+                periodStart, 
+                periodEnd
+        );
+
+        verify(scheduler).generate(inputCaptor.capture());
+
+        SchedulerInput input = inputCaptor.getValue();
+
+        SchedulingTask schedulingTask = 
+                input.tasks().get(0);
+
+        assertEquals(
+                180, 
+                schedulingTask.estimatedMinutes()
+        );
+
+        assertEquals(
+                120, 
+                schedulingTask.remainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.IN_PROGRESS,
+                schedulingTask.status()
         );
     }
 
@@ -771,6 +964,9 @@ class SchedulerServiceTest {
         when(task.getId()).thenReturn(taskId);
 
         when(task.getEstimatedMinutes())
+                .thenReturn(90);
+        
+        when(task.getRemainingMinutes())
                 .thenReturn(90);
         
         when(task.getDeadline())

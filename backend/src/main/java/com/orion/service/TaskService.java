@@ -124,4 +124,21 @@ public class TaskService {
 
         taskRepository.delete(task);
     }
+
+    public Task recordProgress(
+            UUID userId, 
+            UUID taskId, 
+            UUID projectId, 
+            int minutesWorked
+    ) {
+        Task task = findByIdForProject(
+                userId, 
+                taskId, 
+                projectId
+        );
+
+        task.recordProgress(minutesWorked);
+
+        return taskRepository.save(task);
+    }
 }

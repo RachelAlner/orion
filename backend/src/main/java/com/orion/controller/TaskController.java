@@ -1,5 +1,6 @@
 package com.orion.controller;
 
+import com.orion.dto.UpdateTaskProgressRequest;
 import com.orion.dto.CreateTaskRequest;
 import com.orion.dto.TaskResponse;
 import com.orion.dto.UpdateTaskRequest;
@@ -123,6 +124,25 @@ public class TaskController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{taskId}/progress")
+    public ResponseEntity<TaskResponse> updateProgress(
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId,
+            @Valid @RequestBody UpdateTaskProgressRequest request,
+            Authentication authentication
+    ) {
+        UUID userId = getUserId(authentication);
+
+        Task task = taskService.recordProgress(
+                userId, 
+                taskId, 
+                projectId, 
+                request.minutesWorked()
+        );
+
+        return ResponseEntity.ok(toResponse(task));
+    }
+
     @PostMapping("/{taskId}/complete")
     public ResponseEntity<TaskResponse> completeTask(
             @PathVariable UUID projectId, 
@@ -147,7 +167,8 @@ public class TaskController {
                 task.getProjectId(), 
                 task.getTitle(), 
                 task.getDescription(), 
-                task.getEstimatedMinutes(), 
+                task.getEstimatedMinutes(),
+                task.getRemainingMinutes(), 
                 task.getDeadline(), 
                 task.getPriority(), 
                 task.getStatus(), 

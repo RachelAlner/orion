@@ -461,4 +461,124 @@ class TaskControllerTest {
                         projectId
                 );
     }
+
+    @Test 
+    void updatesTaskProgressSuccessfully() throws Exception {
+        task.recordProgress(30);
+
+        when(taskService.recordProgress(
+                userId, 
+                taskId, 
+                projectId,
+                30
+        )).thenReturn(task);
+
+        mockMvc.perform(
+                patch("/api/projects/{projectId}/tasks/{taskId}/progress", projectId, taskId)
+                        .principal(authentication)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                        "minutesWorked": 30
+                    }
+                """)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id")
+                        .value(task.getId().toString()))
+                .andExpect(jsonPath("$.projectId")
+                        .value(projectId.toString()))
+                .andExpect(jsonPath("$.title")
+                        .value("Implement scheduler"))
+                .andExpect(jsonPath("$.estimatedMinutes")
+                        .value(120))
+                .andExpect(jsonPath("$.remainingMinutes")
+                        .value(90))
+                .andExpect(jsonPath("$.status")
+                        .value("IN_PROGRESS"))
+                ;
+
+        verify(taskService).recordProgress(
+                userId,
+                taskId,
+                projectId,
+                30
+        );
+    }
+
+    @Test 
+    void rejectsZeroMinutesWorked() throws Exception {
+
+        mockMvc.perform(
+                patch("/api/projects/{projectId}/tasks/{taskId}/progress", projectId, taskId)
+                        .principal(authentication)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                        "minutesWorked": 0
+                    }
+                """)
+        )
+                .andExpect(status().isBadRequest());
+
+        verify(taskService, never()).recordProgress(
+                any(),
+                any(),
+                any(),
+                anyInt()
+        );
+    }
+
+    @Test 
+    void updatesTaskProgressSuccessfully() throws Exception {
+        mockMvc.perform(
+                patch("/api/projects/{projectId}/tasks/{taskId}/progress", projectId, taskId)
+                        .principal(authentication)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                        "minutesWorked": -30
+                    }
+                """)
+        )
+                .andExpect(status().isBadRequest());
+
+        verify(taskService, never()).recordProgress(
+                any(),
+                any(),
+                any(),
+                anyInt()
+        );
+    }
+
+    @Test 
+    void passesAuthenticatedUserToService() throws Exception {
+        task.recordProgress(30);
+
+        when(taskService.recordProgress(
+                userId, 
+                taskId, 
+                projectId,
+                30
+        )).thenReturn(task);
+
+        mockMvc.perform(
+                patch("/api/projects/{projectId}/tasks/{taskId}/progress", projectId, taskId)
+                        .principal(authentication)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {
+                        "minutesWorked": 30
+                    }
+                """)
+        )
+                .andExpect(status().isOk());
+
+        verify(taskService).recordProgress(
+                userId,
+                taskId,
+                projectId,
+                30
+        );
+    }
 }

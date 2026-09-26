@@ -12,6 +12,7 @@ public record TaskResponse(
         String title, 
         String description, 
         Integer estimatedMinutes, 
+        Integer remainingMinutes,
         LocalDateTime deadline, 
         Integer priority, 
         TaskStatus status, 
