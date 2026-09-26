@@ -1,0 +1,125 @@
+@token = YOUR_TOKEN_HERE
+
+### Register user
+
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+    "email": "orion.test@example.com",
+    "password": "TestPassword123!"
+}
+
+### Login
+
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "orion.test@example.com",
+    "password": "TestPassword123!"
+}
+
+### Create project
+
+POST http://localhost:8080/api/projects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "name": "Orion API Test",
+    "description": "Testing the backend against PostgreSQL",
+    "deadline": "2026-10-02T17:00:00",
+    "priority": 2
+}
+
+### Create task
+
+POST http://localhost:8080/api/projects/c1387a35-9cb7-4fd4-b6ea-acb755a861fc/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "title": "Test scheduling integration",
+    "description": "Test Orion against PostgreSQL",
+    "estimatedMinutes": 120,
+    "deadline": "2026-09-30T17:00:00",
+    "priority": 2
+}
+
+### Create second task
+
+POST http://localhost:8080/api/projects/c1387a35-9cb7-4fd4-b6ea-acb755a861fc/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "title": "Test task progress",
+    "description": "Test remaining task time",
+    "estimatedMinutes": 90,
+    "deadline": "2026-10-01T17:00:00",
+    "priority": 1
+}
+
+### Record task progress
+
+PATCH http://localhost:8080/api/projects/c1387a35-9cb7-4fd4-b6ea-acb755a861fc/tasks/256ba627-dcdf-4f86-85d1-faeec567f735/progress
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "minutesWorked": 30
+}
+
+### Create availability
+
+POST http://localhost:8080/api/availability
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "dayOfWeek": "MONDAY",
+    "startTime": "09:00",
+    "endTime": "12:00"
+}
+
+### Get availability
+
+GET http://localhost:8080/api/availability
+Authorization: Bearer {{token}}
+
+### Create dependency
+
+POST http://localhost:8080/api/projects/c1387a35-9cb7-4fd4-b6ea-acb755a861fc/tasks/256ba627-dcdf-4f86-85d1-faeec567f735/dependencies
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "dependsOnTaskId": "9dd7187a-a25b-4a4f-b580-d3b994bf8a55"
+}
+
+### Get availability
+
+GET http://localhost:8080/api/projects/c1387a35-9cb7-4fd4-b6ea-acb755a861fc/tasks/256ba627-dcdf-4f86-85d1-faeec567f735/dependencies
+Authorization: Bearer {{token}}
+
+### Generate schedule
+
+POST http://localhost:8080/api/schedules/generate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "periodStart": "2026-09-21T00:00:00",
+    "periodEnd": "2026-09-28T00:00:00"
+}
+
+### Get current schedule
+
+GET http://localhost:8080/api/schedules/current
+Authorization: Bearer {{token}}
+
+### Get current schedule after restart
+
+GET http://localhost:8080/api/schedules/current
+Authorization: Bearer {{token}}
