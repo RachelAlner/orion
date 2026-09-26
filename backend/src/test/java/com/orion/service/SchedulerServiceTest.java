@@ -988,4 +988,161 @@ class SchedulerServiceTest {
         when(availabilityRepository.findByUserIdOrderByDayOfWeekAscStartTimeAsc(userId)).thenReturn(List.of());
         when(scheduleRepository.findAllByUserIdOrderByGeneratedAtDesc(userId)).thenReturn(List.of());
     }
+
+    @Test 
+    void generatesScheduleUsingRemainingTaskTimeAndPersistsScheduledBlocks() {
+        defaultTask();
+
+        when(task.getEstimatedMinutes())
+                .thenReturn(120);
+
+        when(task.getRemainingMinutes())
+                .thenReturn(60);
+        
+        when(task.getStatus())
+                .thenReturn(TaskStatus.IN_PROGRESS);
+        
+        LocalDateTime blockStart = LocalDateTime.of(2026, 9, 21, 9, 0);
+        LocalDateTime blockEnd = LocalDateTime.of(2026, 9, 21, 10, 0);
+
+        ScheduleCandidate candidate = 
+                new ScheduleCandidate(
+                        taskId, 
+                        blockStart,
+                        blockEnd
+                );
+        
+        when(scheduler.generate(any(SchedulerInput.class)))
+                .thenReturn(
+                        new ScheduleResult(
+                                List.of(candidate),
+                                List.of()
+                        )
+                );
+        
+        when(scheduleRepository.save(any(Schedule.class)))
+                .thenAnswer(invocation -> 
+                        invocation.getArgument(0)
+                );
+
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );
+        
+        ArgumentCaptor<Schedule> scheduleCaptor = 
+                ArgumentCaptor.forClass(
+                        Schedule.class
+                );
+        
+        ScheduleResult result = 
+                scheduleService.generateSchedule(
+                        userId, 
+                        periodStart,
+                        periodEnd
+                );
+        
+        verify(scheduler)
+                .generate(inputCaptor.capture());
+        
+        SchedulerInput input = 
+                inputCaptor.getValue();
+        
+        assertEquals(
+                1, 
+                input.tasks().size()
+        );
+
+        SchedulingTask schedulingTask = 
+                input.tasks().get(0);
+        
+        assertEquals(
+                taskId, 
+                schedulingTask.taskId()
+        );
+
+        assertEquals(
+                120, 
+                schedulingTask.estimatedMinutes()
+        );
+
+        assertEquals(
+                60, 
+                schedulingTask.remainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.IN_PROGRESS,
+                schedulingTask.status()
+        );
+
+        assertEquals(
+                1, 
+                result.scheduledBlocks().size()
+        );
+
+        ScheduleCandidate returnedCandidate = 
+                result.scheduledBlocks().get(0);
+        
+        assertEquals(
+                taskId, 
+                returnedCandidate.taskId()
+        );
+
+        assertEquals(
+                blockStart,
+                returnedCandidate.startTime()
+        );
+
+        assertEquals(
+                blockEnd,
+                returnedCandidate.endTime()
+        );
+
+
+        verify(scheduleRepository)
+                .save(scheduleCaptor.capture());
+        
+        Schedule savedSchedule = scheduleCaptor.getValue();
+
+        assertEquals(
+                user, 
+                savedSchedule.getUser()
+        );
+
+        assertEquals(
+                periodStart, 
+                savedSchedule.getPeriodStart()
+        );
+
+        assertEquals(
+                periodEnd,
+                savedSchedule.getPeriodEnd()
+        );
+
+        assertEquals(
+                1, 
+                savedSchedule.getBlocks().size()
+        );
+
+        ScheduleBlock savedBlock = 
+                savedSchedule.getBlocks().get(0);
+        
+        assertEquals(
+                task, 
+                savedBlock.getTask()
+        );
+
+        assertEquals(
+                blockStart,
+                savedBlock.getStartTime()
+        );
+
+        assertEquals(
+                blockEnd,
+                savedBlock.getEndTime()
+        );
+        
+
+    }
 }
