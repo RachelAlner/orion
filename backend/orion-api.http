@@ -1,4 +1,7 @@
 @token = YOUR_TOKEN_HERE
+@baseUrl = http://localhost:8080
+@tokenA = TOKENA
+@tokenB = TOKENB
 
 ### Register user
 
@@ -123,3 +126,168 @@ Authorization: Bearer {{token}}
 
 GET http://localhost:8080/api/schedules/current
 Authorization: Bearer {{token}}
+
+
+### Register User A
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+    "email": "orion.user.a@example.com",
+    "password": "TestPassword123!"
+}
+
+
+### Register User B
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+    "email": "orion.user.b@example.com",
+    "password": "TestPassword123!"
+}
+
+
+### User B creates project
+POST {{baseUrl}}/api/projects
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{
+    "name": "User B Private Project",
+    "description": "Should not be accessible by User A",
+    "deadline": "2026-10-10T17:00:00",
+    "priority": 2
+}
+
+
+### User B creates task
+POST {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/tasks
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{
+    "title": "User B Private Task",
+    "description": "Private",
+    "estimatedMinutes": 60,
+    "deadline": "2026-10-05T17:00:00",
+    "priority": 2
+}
+
+
+### User A tries to access User B's project
+GET {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0
+Authorization: Bearer {{tokenA}}
+
+
+### User B gets project
+GET {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0
+Authorization: Bearer {{tokenB}}
+
+
+### User A tries to access User B's task
+GET {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/tasks/c58ed75a-06bb-4299-8d84-b01c682c58f3
+Authorization: Bearer {{tokenA}}
+
+
+### User B gets task
+GET {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/tasks/c58ed75a-06bb-4299-8d84-b01c682c58f3
+Authorization: Bearer {{tokenB}}
+
+
+### User B creates availability
+POST {{baseUrl}}/api/availability
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{
+    "dayOfWeek": "MONDAY",
+    "startTime": "09:00:00",
+    "endTime": "12:00:00"
+}
+
+
+### User A tries to access User B's availability
+GET {{baseUrl}}/api/availability
+Authorization: Bearer {{tokenA}}
+
+### User A tries to delete User B's availability
+DELETE {{baseUrl}}/api/availability/215ff2de-af50-470a-821c-78a498a8f293
+Authorization: Bearer {{tokenA}}
+
+
+### User B can still access their availability
+GET {{baseUrl}}/api/availability
+Authorization: Bearer {{tokenB}}
+
+
+### User B creates second task
+POST {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/tasks
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{
+    "title": "User B Dependency Task",
+    "description": "Second private task",
+    "estimatedMinutes": 60,
+    "deadline": "2026-10-06T17:00:00",
+    "priority": 2
+}
+
+### User B gets task
+GET {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/tasks/8d39bcab-a8ac-4e27-88e8-ea6cd32b05eb
+Authorization: Bearer {{tokenB}}
+
+
+### User B creates dependency
+POST {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/tasks/8d39bcab-a8ac-4e27-88e8-ea6cd32b05eb/dependencies
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{
+    "dependsOnTaskId": "43bd9af0-517f-4029-aaab-47dbb9814aaa"
+}
+
+### User B gets dependencies
+GET {{baseUrl}}/api/projects/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/tasks/8d39bcab-a8ac-4e27-88e8-ea6cd32b05eb/dependencies
+Authorization: Bearer {{tokenB}}
+
+
+### User A tries to create dependency using User B's task
+POST {{baseUrl}}/api/tasks/ef9ba85a-51a6-483c-8d63-3b47fd73b2a0/dependencies
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{
+    "dependsOnTaskId": "c58ed75a-06bb-4299-8d84-b01c682c58f3"
+}
+
+
+### User B generates schedule
+POST {{baseUrl}}/api/schedules/generate
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{
+    "periodStart": "2026-09-28T00:00:00",
+    "periodEnd": "2026-10-05T00:00:00"
+}
+
+### User B gets current schedule
+GET {{baseUrl}}/api/schedules/current
+Authorization: Bearer {{tokenB}}
+
+
+### User A generates schedule
+POST {{baseUrl}}/api/schedules/generate
+Authorization: Bearer {{tokenA}}
+Content-Type: application/json
+
+{
+    "periodStart": "2026-09-28T00:00:00",
+    "periodEnd": "2026-10-05T00:00:00"
+}
+
+### User A gets current schedule
+GET {{baseUrl}}/api/schedules/current
+Authorization: Bearer {{tokenA}}
