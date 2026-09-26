@@ -440,6 +440,49 @@ Completing a task must prevent it from being scheduled again.
 
 The completion record should preserve the actual work performed.
 
+## 7.7 Record Task Progress
+
+```http
+POST /api/tasks/{taskId}/progress
+```
+
+Records time spent working on a task.
+
+### Request
+
+```json
+{
+  "minutesWorked": 30
+}
+```
+
+`minutesWorked` must be greater than zero.
+
+### Response
+
+**200 OK**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "projectId": "550e8400-e29b-41d4-a716-446655440001",
+  "title": "Complete database coursework",
+  "description": "Finish the SQL exercises",
+  "estimatedMinutes": 120, 
+  "remainingMinutes": 90,
+  "deadline": "2026-09-25T17:00:00",
+  "priority": 2,
+  "status": "IN_PROGRESS",
+  "createdAt": "2026-09-20T10:00:00Z",
+  "updatedAt": "2026-09-21T11:00:00Z",
+  "completedAt": null
+}
+```
+
+Completing a task must prevent it from being scheduled again.
+
+The completion record should preserve the actual work performed.
+
 # 8. Task Dependencies
 
 Dependencies define prerequisite relationships between tasks.
