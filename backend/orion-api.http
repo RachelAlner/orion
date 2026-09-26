@@ -291,3 +291,13 @@ Content-Type: application/json
 ### User A gets current schedule
 GET {{baseUrl}}/api/schedules/current
 Authorization: Bearer {{tokenA}}
+
+
+### Test user 
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "orion.test@example.com",
+  "password": "TestPassword123!"
+}

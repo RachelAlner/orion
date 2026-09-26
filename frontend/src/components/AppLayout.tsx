@@ -1,10 +1,24 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../hooks/AuthContext";
 
 function AppLayout() {
+    const { logout } = useAuth();
+    const navigate = useNavigate();
+
+    function handleLogout() {
+        logout();
+        navigate("/login", { replace: true });
+    }
+
     return (
         <div className="app-layout">
             <header className="app-header">
                 <h1>Orion</h1>
+
+                <button onClick={handleLogout}>
+                    Log out
+                </button>
             </header>
 
             <div className="app-body">
