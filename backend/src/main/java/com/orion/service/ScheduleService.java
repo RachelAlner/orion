@@ -11,6 +11,7 @@ import com.orion.repository.TaskRepository;
 import com.orion.repository.AvailabilityRepository;
 import com.orion.repository.ProjectRepository;
 import com.orion.repository.TaskDependencyRepository;
+import com.orion.repository.UserRepository;
 import com.orion.scheduler.*;
 import com.orion.scheduler.SchedulerInput;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class ScheduleService {
     private final ProjectRepository projectRepository;
     private final TaskDependencyRepository dependencyRepository;
     private final AvailabilityRepository availabilityRepository;
+    private final UserRepository userRepository;
     private final Scheduler scheduler;
 
     public ScheduleService(
@@ -41,6 +43,7 @@ public class ScheduleService {
             TaskRepository taskRepository, 
             TaskDependencyRepository dependencyRepository,
             AvailabilityRepository availabilityRepository,
+            UserRepository userRepository,
             Scheduler scheduler
     ) {
         this.scheduleRepository = scheduleRepository;
@@ -48,18 +51,22 @@ public class ScheduleService {
         this.projectRepository = projectRepository;
         this.dependencyRepository = dependencyRepository;
         this.availabilityRepository = availabilityRepository;
+        this.userRepository = userRepository;
         this.scheduler = scheduler;
     }
 
     public ScheduleResult generateSchedule(
-            User user, 
-            LocalDateTime periodStart, 
+            UUID userId,
+            LocalDateTime periodStart,
             LocalDateTime periodEnd
     ) {
         validatePeriod(periodStart, periodEnd);
 
-        List<Task> taskEntities = 
-                getAllUserTasks(user);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        List<Task> taskEntities =
+                getAllUserTasks(userId);
 
         List<SchedulingTask> tasks = 
                 loadSchedulingTasks(taskEntities);
@@ -69,13 +76,13 @@ public class ScheduleService {
         
         List<AvailabilityWindow> availabilityWindows = 
                 loadAvailabilityWindows(
-                        user, 
+                        userId, 
                         periodStart, 
                         periodEnd
                 );
         
         List<ExistingScheduleBlock> existingScheduleBlocks = 
-                loadExistingScheduleBlocks(user);
+                loadExistingScheduleBlocks(userId);
         
         SchedulerInput input = new SchedulerInput(
                 tasks, 
@@ -100,6 +107,17 @@ public class ScheduleService {
         return result;
     }
 
+    @Transactional
+    public Schedule getCurrentSchedule(UUID userId) {
+        return scheduleRepository
+                .findFirstByUserIdOrderByGeneratedAtDesc(userId)
+                .orElseThrow(() -> 
+                        new IllegalStateException(
+                                "No schedule found for userId"
+                        )
+                );
+    }
+
     private void validatePeriod(
             LocalDateTime periodStart, 
             LocalDateTime periodEnd
@@ -117,8 +135,8 @@ public class ScheduleService {
         }
     } 
 
-    private List<Task> getAllUserTasks(User user) {
-        List<Project> projects = projectRepository.findByUserId(user.getId());
+    private List<Task> getAllUserTasks(UUID userId) {
+        List<Project> projects = projectRepository.findByUserId(userId);
         List<Task> allUserTasks = new ArrayList<>();
 
         for (Project project : projects) {
@@ -165,12 +183,12 @@ public class ScheduleService {
     }
 
     private List<AvailabilityWindow> loadAvailabilityWindows(
-            User user,
+            UUID userId,
             LocalDateTime periodStart,
             LocalDateTime periodEnd
     ) {
         List<Availability> availabilityPatterns = 
-                availabilityRepository.findByUserIdOrderByDayOfWeekAscStartTimeAsc(user.getId());
+                availabilityRepository.findByUserIdOrderByDayOfWeekAscStartTimeAsc(userId);
 
         List<AvailabilityWindow> windows = new ArrayList<>();
         LocalDateTime currentDay = periodStart; 
@@ -201,11 +219,11 @@ public class ScheduleService {
     }
 
     private List<ExistingScheduleBlock> loadExistingScheduleBlocks(
-            User user
+            UUID userId
     ) {
         List<Schedule> schedules = 
                 scheduleRepository
-                        .findAllByUserOrderByGeneratedAtDesc(user);
+                        .findAllByUserIdOrderByGeneratedAtDesc(userId);
         
         if (schedules.isEmpty()) {
             return List.of();
@@ -250,7 +268,7 @@ public class ScheduleService {
 
             if (task == null) {
                 throw new IllegalStateException(
-                        "Scheduled task does not belong to user"
+                        "Scheduled task does not belong to userId"
                 );
             }
             

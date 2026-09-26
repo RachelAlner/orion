@@ -122,12 +122,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidAvailabilityException.class)
     public ResponseEntity<ErrorResponse> handleInvalidAvailability(
-                InvalidAvailabilityException exception
+            InvalidAvailabilityException exception
     ) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(
-                        "INVALID_AVAILABILITY", 
+                        "INVALID_AVAILABILITY",
+                        exception.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException exception
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(new ErrorResponse(
+                        "INVALID_ARGUMENT",
                         exception.getMessage()
                 ));
     }

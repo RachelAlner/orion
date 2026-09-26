@@ -13,6 +13,7 @@ import com.orion.repository.ProjectRepository;
 import com.orion.repository.ScheduleRepository;
 import com.orion.repository.TaskDependencyRepository;
 import com.orion.repository.TaskRepository;
+import com.orion.repository.UserRepository;
 import com.orion.scheduler.*;
 import com.orion.scheduler.SchedulerInput;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,13 +30,14 @@ import java.time.LocalTime;
 import java.time.DayOfWeek;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ScheduleServiceTest {
+class SchedulerServiceTest {
 
     @Mock 
     private ScheduleRepository scheduleRepository;
@@ -53,9 +55,12 @@ class ScheduleServiceTest {
     private AvailabilityRepository availabilityRepository;
 
     @Mock 
-    private Scheduler scheduler;
+    private UserRepository userRepository;
 
     @Mock 
+    private Scheduler scheduler;
+
+    @Mock
     private User user;
 
     @Mock 
@@ -90,7 +95,10 @@ class ScheduleServiceTest {
     @Test 
     void generatesAndSavesSchedule() {
         defaultTask();
-        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(scheduleRepository.save(
+                any(Schedule.class)))
+                .thenAnswer(invocation 
+                        -> invocation.getArgument(0));
 
         ScheduleCandidate candidate = 
                 new ScheduleCandidate(
@@ -110,7 +118,7 @@ class ScheduleServiceTest {
 
         ScheduleResult result = 
                 scheduleService.generateSchedule(
-                        user, 
+                        userId, 
                         periodStart, 
                         periodEnd
                 );
@@ -119,6 +127,70 @@ class ScheduleServiceTest {
 
         verify(scheduler).generate(any(SchedulerInput.class));
         verify(scheduleRepository).save(any(Schedule.class));
+    }
+
+    @Test 
+    void returnsCurrentScheduleForUser() {
+        Schedule schedule = new Schedule(
+                user, 
+                periodStart, 
+                periodEnd, 
+                LocalDateTime.of(2026, 9, 24, 8, 0)
+        );
+
+        when(scheduleRepository
+                .findFirstByUserIdOrderByGeneratedAtDesc(userId))
+                .thenReturn(Optional.of(schedule));
+
+        Schedule result = 
+                scheduleService.getCurrentSchedule(userId);
+        
+        assertSame(schedule, result);
+
+        verify(scheduleRepository)
+                .findFirstByUserIdOrderByGeneratedAtDesc(userId);
+    }
+
+    @Test 
+    void returnsLatestScheduleForUser() {
+        Schedule latestSchedule = new Schedule(
+                user, 
+                periodStart, 
+                periodEnd, 
+                LocalDateTime.of(2026, 9, 24, 10, 0)
+        );
+
+        when(scheduleRepository
+                .findFirstByUserIdOrderByGeneratedAtDesc(userId))
+                .thenReturn(Optional.of(latestSchedule));
+        
+        Schedule result = scheduleService.getCurrentSchedule(userId);
+
+        assertEquals(
+                latestSchedule.getGeneratedAt(),
+                result.getGeneratedAt()
+        );
+    }
+
+    @Test 
+    void throwsExceptionWhenCurrentScheduleDoesNotExist() {
+        when(scheduleRepository
+                .findFirstByUserIdOrderByGeneratedAtDesc(userId))
+                .thenReturn(Optional.empty());
+        
+        IllegalStateException exception = 
+                assertThrows(
+                        IllegalStateException.class, 
+                        () -> scheduleService.getCurrentSchedule(userId)
+                );
+        
+        assertEquals(
+                "No schedule found for userId",
+                exception.getMessage()
+        );
+
+        verify(scheduleRepository)
+                .findFirstByUserIdOrderByGeneratedAtDesc(userId);
     }
 
     @Test 
@@ -141,7 +213,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -204,7 +276,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -233,7 +305,7 @@ class ScheduleServiceTest {
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> invocation.getArgument(0));
         
         when(scheduleRepository
-                .findAllByUserOrderByGeneratedAtDesc(user))
+                .findAllByUserIdOrderByGeneratedAtDesc(userId))
                 .thenReturn(List.of());
         
         when(scheduler.generate(any(SchedulerInput.class)))
@@ -250,7 +322,7 @@ class ScheduleServiceTest {
                 );
 
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -298,7 +370,7 @@ class ScheduleServiceTest {
                 .thenReturn(List.of(previousBlock));
         
         when(scheduleRepository
-                .findAllByUserOrderByGeneratedAtDesc(user))
+                .findAllByUserIdOrderByGeneratedAtDesc(userId))
                 .thenReturn(List.of(previousSchedule));
         
         when(scheduler.generate(any(SchedulerInput.class)))
@@ -315,7 +387,7 @@ class ScheduleServiceTest {
                 );
 
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -373,7 +445,7 @@ class ScheduleServiceTest {
                 .thenReturn(schedulerResult);
         
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -413,7 +485,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -460,7 +532,7 @@ class ScheduleServiceTest {
         
         ScheduleResult result = 
                 scheduleService.generateSchedule(
-                        user, 
+                        userId, 
                         periodStart, 
                         periodEnd
                 );
@@ -524,7 +596,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -557,7 +629,7 @@ class ScheduleServiceTest {
         assertThrows(
                 IllegalArgumentException.class, 
                 () -> scheduleService.generateSchedule(
-                        user, 
+                        userId, 
                         null, 
                         periodEnd
                 )
@@ -578,7 +650,7 @@ class ScheduleServiceTest {
         assertThrows(
                 IllegalArgumentException.class, 
                 () -> scheduleService.generateSchedule(
-                        user, 
+                        userId, 
                         periodStart, 
                         null
                 )
@@ -605,7 +677,7 @@ class ScheduleServiceTest {
         assertThrows(
                 IllegalArgumentException.class, 
                 () -> scheduleService.generateSchedule(
-                    user, 
+                    userId, 
                     invalidStart, 
                     invalidEnd
                 )
@@ -643,7 +715,7 @@ class ScheduleServiceTest {
                 .thenReturn(schedulerResult);
         
         scheduleService.generateSchedule(
-                user, 
+                userId, 
                 periodStart, 
                 periodEnd
         );
@@ -684,7 +756,7 @@ class ScheduleServiceTest {
         assertThrows(
                 IllegalStateException.class, 
                 () -> scheduleService.generateSchedule(
-                        user, 
+                        userId, 
                         periodStart, 
                         periodEnd
                 )
@@ -695,7 +767,6 @@ class ScheduleServiceTest {
     }
 
     private void defaultTask() {
-        when(user.getId()).thenReturn(userId);
         when(project.getId()).thenReturn(projectId);
         when(task.getId()).thenReturn(taskId);
 
@@ -714,10 +785,11 @@ class ScheduleServiceTest {
         when(task.getCreatedAt())
                 .thenReturn(OffsetDateTime.of(2026, 9, 20, 10, 0, 0, 0, java.time.ZoneOffset.UTC));
 
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(projectRepository.findByUserId(userId)).thenReturn(List.of(project));
         when(taskRepository.findByProjectId(projectId)).thenReturn(List.of(task));
         when(dependencyRepository.findByIdTaskId(taskId)).thenReturn(List.of());
         when(availabilityRepository.findByUserIdOrderByDayOfWeekAscStartTimeAsc(userId)).thenReturn(List.of());
-        when(scheduleRepository.findAllByUserOrderByGeneratedAtDesc(user)).thenReturn(List.of());
+        when(scheduleRepository.findAllByUserIdOrderByGeneratedAtDesc(userId)).thenReturn(List.of());
     }
 }

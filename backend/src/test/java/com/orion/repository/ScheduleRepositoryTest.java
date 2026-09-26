@@ -94,7 +94,7 @@ class ScheduleRepositoryTest {
 
         List<Schedule> schedules = 
                 scheduleRepository
-                        .findAllByUserOrderByGeneratedAtDesc(user);
+                        .findAllByUserIdOrderByGeneratedAtDesc(user.getId());
         
         assertEquals(schedules.size(), 2);
         assertEquals(schedules.get(0).getId(), newerSchedule.getId());
@@ -135,7 +135,7 @@ class ScheduleRepositoryTest {
 
         List<Schedule> schedules = 
                 scheduleRepository
-                        .findAllByUserOrderByGeneratedAtDesc(firstUser);
+                        .findAllByUserIdOrderByGeneratedAtDesc(firstUser.getId());
                 
         assertEquals(schedules.size(), 1);
 
