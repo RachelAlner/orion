@@ -301,3 +301,15 @@ Content-Type: application/json
   "email": "orion.test@example.com",
   "password": "TestPassword123!"
 }
+
+### User creates project
+POST {{baseUrl}}/api/projects
+Authorization: Bearer {{tokenB}}
+Content-Type: application/json
+
+{
+    "name": "Test project",
+    "description": "Description",
+    "deadline": "2026-10-10T17:00:00",
+    "priority": 2
+}

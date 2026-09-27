@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 public record CreateProjectRequest(
         @NotBlank 
-        @Size(max = 255)
+        @Size(max = 200)
         String name, 
 
         @Size(max = 2000)

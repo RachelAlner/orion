@@ -22,6 +22,42 @@ body {
   min-height: 100vh;
 }
 
+button, 
+input, 
+textarea,
+select {
+  font: inherit;
+  margin: 5px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 0;
+  padding: 5px;
+}
+
+button {
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 0;
+  background: #e8e8e8;
+  color: #111
+}
+
+button:hover {
+  background: #d6d6d6;
+}
+
+a {
+  padding: 10px 12px;
+  color: #444;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #111;
+}
+
 .app-layout {
   min-height: 100vh;
 }
@@ -77,5 +113,6 @@ body {
 
 .app-main {
   flex: 1;
+  min-width: 0;
   padding: 32px;
 }

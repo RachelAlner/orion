@@ -8,6 +8,7 @@ import RegisterPage from "./pages/RegisterPage";
 import SchedulePage from "./pages/SchedulePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomeRedirect from "./components/HomeRedirect";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
 
 function App() {
   return (
@@ -38,6 +39,11 @@ function App() {
                     <Route 
                         path="/projects"
                         element={<ProjectsPage />}
+                    />
+
+                    <Route 
+                        path="/projects/:projectId"
+                        element={<ProjectDetailPage />}
                     />
 
                     <Route 

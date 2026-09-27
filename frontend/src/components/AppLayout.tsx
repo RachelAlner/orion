@@ -16,7 +16,10 @@ function AppLayout() {
             <header className="app-header">
                 <h1>Orion</h1>
 
-                <button onClick={handleLogout}>
+                <button 
+                    type="button"
+                    onClick={handleLogout}
+                >
                     Log out
                 </button>
             </header>
@@ -46,11 +49,11 @@ function AppLayout() {
                         </NavLink>
                     </nav>
                 </aside>
-            </div>
 
-            <main className="app-main">
-                <Outlet />
-            </main>
+                <main className="app-main">
+                    <Outlet />
+                </main>
+            </div>
         </div>
     );
 }
