@@ -133,11 +133,11 @@ public class TaskController {
     ) {
         UUID userId = getUserId(authentication);
 
-        Task task = taskService.recordProgress(
+        Task task = taskService.updateProgress(
                 userId, 
                 taskId, 
                 projectId, 
-                request.minutesWorked()
+                request.workedMinutes()
         );
 
         return ResponseEntity.ok(toResponse(task));
@@ -168,6 +168,7 @@ public class TaskController {
                 task.getTitle(), 
                 task.getDescription(), 
                 task.getEstimatedMinutes(),
+                task.getWorkedMinutes(),
                 task.getRemainingMinutes(), 
                 task.getDeadline(), 
                 task.getPriority(), 

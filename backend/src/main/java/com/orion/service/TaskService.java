@@ -125,11 +125,11 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
-    public Task recordProgress(
+    public Task updateProgress(
             UUID userId, 
             UUID taskId, 
             UUID projectId, 
-            int minutesWorked
+            int workedMinutes
     ) {
         Task task = findByIdForProject(
                 userId, 
@@ -137,7 +137,7 @@ public class TaskService {
                 projectId
         );
 
-        task.recordProgress(minutesWorked);
+        task.updateProgress(workedMinutes);
 
         return taskRepository.save(task);
     }

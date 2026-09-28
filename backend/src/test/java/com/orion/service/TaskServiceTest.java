@@ -238,6 +238,8 @@ class TaskServiceTest {
 
         Task task = createTask("Old title");
 
+        task.updateProgress(30);
+
         when(taskRepository.findByIdAndProjectId(
                 task.getId(), 
                 projectId
@@ -270,6 +272,18 @@ class TaskServiceTest {
         assertEquals(
                 120, 
                 result.getEstimatedMinutes()
+        );
+        assertEquals(
+                30, 
+                result.getWorkedMinutes()
+        );
+        assertEquals(
+                90, 
+                result.getRemainingMinutes()
+        );
+        assertEquals(
+                TaskStatus.IN_PROGRESS, 
+                result.getStatus()
         );
         assertEquals(
                 LocalDateTime.of(2027, 6, 1, 0, 0), 
@@ -385,7 +399,7 @@ class TaskServiceTest {
     }
 
     @Test 
-    void recordProgressUpdateTask() {
+    void updateProgressUpdatesTask() {
         Task task = createTask("Progress task");
 
         when(projectService.findByIdForUser(projectId, userId))
@@ -398,7 +412,7 @@ class TaskServiceTest {
 
         when(taskRepository.save(task)).thenReturn(task);
 
-        Task result = taskService.recordProgress(
+        Task result = taskService.updateProgress(
                 userId, 
                 task.getId(), 
                 projectId, 
@@ -406,6 +420,11 @@ class TaskServiceTest {
         );
 
         assertSame(task, result);
+
+        assertEquals(
+                30, 
+                task.getWorkedMinutes()
+        );
 
         assertEquals(
                 30, 
@@ -421,7 +440,7 @@ class TaskServiceTest {
     }
 
     @Test 
-    void recordProgressCompletesTaskWhenRemainingReachesZero() {
+    void updateProgressCompletesTaskWhenRemainingReachesZero() {
         Task task = createTask("Progress task");
 
         when(projectService.findByIdForUser(projectId, userId))
@@ -434,7 +453,7 @@ class TaskServiceTest {
 
         when(taskRepository.save(task)).thenReturn(task);
 
-        Task result = taskService.recordProgress(
+        Task result = taskService.updateProgress(
                 userId, 
                 task.getId(), 
                 projectId, 
@@ -442,6 +461,11 @@ class TaskServiceTest {
         );
 
         assertSame(task, result);
+
+        assertEquals(
+                60, 
+                task.getWorkedMinutes()
+        );
 
         assertEquals(
                 0, 
@@ -459,34 +483,7 @@ class TaskServiceTest {
     }
 
     @Test 
-    void recordProgressRejectsCompletedTask() {
-        Task task = createTask("Progress task");
-
-        task.complete();
-
-        when(projectService.findByIdForUser(projectId, userId))
-                .thenReturn(project);
-        
-        when(taskRepository.findByIdAndProjectId(
-                task.getId(), 
-                projectId
-        )).thenReturn(Optional.of(task));
-
-        assertThrows(
-                IllegalStateException.class, 
-                () -> taskService.recordProgress(
-                        userId, 
-                        task.getId(), 
-                        projectId, 
-                        30
-                )
-        );
-
-        verify(taskRepository, never()).save(any(Task.class));
-    }
-
-    @Test 
-    void recordProgressUsesCorrectUserAndProject() {
+    void updateProgressUsesCorrectUserAndProject() {
         Task task = createTask("Progress task");
 
         when(projectService.findByIdForUser(projectId, userId))
@@ -500,7 +497,7 @@ class TaskServiceTest {
         when(taskRepository.save(task)).thenReturn(task);
         
 
-        Task result = taskService.recordProgress(
+        Task result = taskService.updateProgress(
                 userId, 
                 task.getId(), 
                 projectId, 
@@ -528,6 +525,142 @@ class TaskServiceTest {
                 task.getId(),
                 projectId
         );
+
+        verify(taskRepository).save(task);
+    }
+
+    @Test 
+    void updateProgressCanCorrectPreviouslyRecordedWorkedTime() {
+        Task task = createTask("Progress task");
+
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+        
+        when(taskRepository.findByIdAndProjectId(
+                task.getId(),
+                projectId
+        )).thenReturn(Optional.of(task));
+
+        when(taskRepository.save(task)).thenReturn(task);
+
+        taskService.updateProgress(
+                userId, 
+                task.getId(), 
+                projectId, 
+                40
+        );
+
+        Task result = taskService.updateProgress(
+                userId, 
+                task.getId(), 
+                projectId,
+                25
+        );
+
+        assertSame(task, result);
+
+        assertEquals(
+                25, 
+                result.getWorkedMinutes()
+        );
+
+        assertEquals(
+                35, 
+                result.getRemainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.IN_PROGRESS,
+                result.getStatus()
+        );
+
+        verify(taskRepository, times(2)).save(task);
+    }
+
+    @Test 
+    void updateProgressAllowsZeroWorkedMinutes() {
+        Task task = createTask("Progress task");
+
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+        
+        when(taskRepository.findByIdAndProjectId(
+                task.getId(),
+                projectId
+        )).thenReturn(Optional.of(task));
+
+        when(taskRepository.save(task)).thenReturn(task);
+
+        Task result = taskService.updateProgress(
+                userId, 
+                task.getId(), 
+                projectId, 
+                0
+        );
+
+        assertEquals(
+                0, 
+                result.getWorkedMinutes()
+        );
+
+        assertEquals(
+                60, 
+                result.getRemainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.TODO, 
+                result.getStatus()
+        );
+
+        verify(taskRepository).save(task);
+    }
+
+    @Test 
+    void shouldReopenCompletedTaskWhenEstimateIncreases() {
+        when(projectService.findByIdForUser(projectId, userId))
+                .thenReturn(project);
+        
+        Task task = createTask("Completed task");
+
+        task.updateProgress(60);
+
+        assertEquals(TaskStatus.COMPLETED, task.getStatus());
+
+        when(taskRepository.findByIdAndProjectId(
+                task.getId(), 
+                projectId
+        )).thenReturn(Optional.of(task));
+
+        when(taskRepository.save(task)).thenReturn(task);
+
+        Task result = taskService.updateTask(
+                userId, 
+                task.getId(), 
+                projectId, 
+                "Completed task",
+                "Test description",
+                120, 
+                LocalDateTime.of(2027, 5, 1, 0, 0),
+                3
+        );
+
+        assertEquals(
+                60, 
+                result.getWorkedMinutes()
+        );
+
+        assertEquals(
+                60, 
+                result.getRemainingMinutes()
+        );
+
+        assertEquals(
+                TaskStatus.IN_PROGRESS, 
+                result.getStatus()
+        );
+
+        assertNull(result.getCompletedAt());
 
         verify(taskRepository).save(task);
     }

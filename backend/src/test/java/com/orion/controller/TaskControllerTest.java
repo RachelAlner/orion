@@ -195,6 +195,8 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.title").value("Implement scheduler"))
                 .andExpect(jsonPath("$.description").value("Implement algorithm"))
                 .andExpect(jsonPath("$.estimatedMinutes").value(120))
+                .andExpect(jsonPath("$.workedMinutes").value(0))
+                .andExpect(jsonPath("$.remainingMinutes").value(120))
                 .andExpect(jsonPath("$.priority").value(3))
                 .andExpect(jsonPath("$.status").value("TODO"));
 
@@ -263,6 +265,8 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.title").value("Updated scheduler"))
                 .andExpect(jsonPath("$.description").value("Updated description"))
                 .andExpect(jsonPath("$.estimatedMinutes").value(180))
+                .andExpect(jsonPath("$.workedMinutes").value(0))
+                .andExpect(jsonPath("$.remainingMinutes").value(180))
                 .andExpect(jsonPath("$.priority").value(5));
         
         verify(taskService).updateTask(
@@ -306,6 +310,9 @@ class TaskControllerTest {
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.estimatedMinutes").value(60))
+                .andExpect(jsonPath("$.workedMinutes").value(60))
+                .andExpect(jsonPath("$.remainingMinutes").value(0))
                 .andExpect(jsonPath("$.completedAt").exists());
 
         verify(taskService)
@@ -464,9 +471,9 @@ class TaskControllerTest {
 
     @Test 
     void updatesTaskProgressSuccessfully() throws Exception {
-        task.recordProgress(30);
+        task.updateProgress(30);
 
-        when(taskService.recordProgress(
+        when(taskService.updateProgress(
                 userId, 
                 taskId, 
                 projectId,
@@ -479,7 +486,7 @@ class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                     {
-                        "minutesWorked": 30
+                        "workedMinutes": 30
                     }
                 """)
         )
@@ -492,13 +499,15 @@ class TaskControllerTest {
                         .value("Implement scheduler"))
                 .andExpect(jsonPath("$.estimatedMinutes")
                         .value(120))
+                .andExpect(jsonPath("$.workedMinutes")
+                        .value(30))
                 .andExpect(jsonPath("$.remainingMinutes")
                         .value(90))
                 .andExpect(jsonPath("$.status")
                         .value("IN_PROGRESS"))
                 ;
 
-        verify(taskService).recordProgress(
+        verify(taskService).updateProgress(
                 userId,
                 taskId,
                 projectId,
@@ -507,43 +516,20 @@ class TaskControllerTest {
     }
 
     @Test 
-    void rejectsZeroMinutesWorked() throws Exception {
-
+    void rejectsNegativeWorkedMinutes() throws Exception {
         mockMvc.perform(
                 patch("/api/projects/{projectId}/tasks/{taskId}/progress", projectId, taskId)
                         .principal(authentication)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                     {
-                        "minutesWorked": 0
+                        "workedMinutes": -30
                     }
                 """)
         )
                 .andExpect(status().isBadRequest());
 
-        verify(taskService, never()).recordProgress(
-                any(),
-                any(),
-                any(),
-                anyInt()
-        );
-    }
-
-    @Test 
-    void updatesTaskProgressSuccessfully() throws Exception {
-        mockMvc.perform(
-                patch("/api/projects/{projectId}/tasks/{taskId}/progress", projectId, taskId)
-                        .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                    {
-                        "minutesWorked": -30
-                    }
-                """)
-        )
-                .andExpect(status().isBadRequest());
-
-        verify(taskService, never()).recordProgress(
+        verify(taskService, never()).updateProgress(
                 any(),
                 any(),
                 any(),
@@ -553,9 +539,9 @@ class TaskControllerTest {
 
     @Test 
     void passesAuthenticatedUserToService() throws Exception {
-        task.recordProgress(30);
+        task.updateProgress(30);
 
-        when(taskService.recordProgress(
+        when(taskService.updateProgress(
                 userId, 
                 taskId, 
                 projectId,
@@ -568,13 +554,13 @@ class TaskControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                     {
-                        "minutesWorked": 30
+                        "workedMinutes": 30
                     }
                 """)
         )
                 .andExpect(status().isOk());
 
-        verify(taskService).recordProgress(
+        verify(taskService).updateProgress(
                 userId,
                 taskId,
                 projectId,

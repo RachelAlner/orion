@@ -1,8 +1,8 @@
 package com.orion.dto;
 
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Min;
 
 public record UpdateTaskProgressRequest(
-        @Positive
-        int minutesWorked
+        @Min(0)
+        int workedMinutes
 ) {}
