@@ -21,15 +21,15 @@ public class Task {
 
     private String description;
 
-    @Column(name = "estimated_minutes", nullable = false)
+    @Column(name = "estimated_minutes")
     private Integer estimatedMinutes; 
 
-    @Column(name = "remaining_minutes", nullable = false)
+    @Column(name = "remaining_minutes")
     private Integer remainingMinutes;
 
     private LocalDateTime deadline; 
 
-    @Column(nullable = false)
+    @Column
     private Integer priority;
 
     @Enumerated(EnumType.STRING)
@@ -127,6 +127,7 @@ public class Task {
         this.title = title;
         this.description = description;
         this.estimatedMinutes = estimatedMinutes;
+        this.remainingMinutes = estimatedMinutes;
         this.deadline = deadline;
         this.priority = priority;
         this.updatedAt = OffsetDateTime.now();
@@ -147,6 +148,12 @@ public class Task {
         if (status == TaskStatus.COMPLETED) {
             throw new IllegalStateException(
                     "Completed task cannot recieve additional progress"
+            );
+        }
+
+        if (remainingMinutes == null) {
+            throw new IllegalStateException(
+                "Cannot record progress for a task without an estimated duration"
             );
         }
 
