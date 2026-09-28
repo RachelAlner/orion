@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import TaskForm from "../components/TaskForm";
+import TaskList from "../components/TaskList";
+
+import {
+    deleteTask,
+    getTasks,
+} from "../services/taskService";
+
+import type { Task } from "../types/task";
+
 import { getProject } from "../services/projectService";
 import type { Project } from "../types/project";
 
@@ -13,6 +23,40 @@ export default function ProjectDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [isLoadingTasks, setIsLoadingTasks] = 
+        useState(true);
+    const [taskError, setTaskError] = 
+        useState<string | null>(null);
+    const [showCreateTaskForm, setShowCreateTaskForm] =
+        useState(false);
+    const [editingTask, setEditingTask] = 
+        useState<Task | null>(null);
+    const [deletingTaskId, setDeletingTaskId] = 
+        useState<string | null>(null);
+
+    async function loadTasks() {
+        if (!projectId) {
+            return;
+        }
+
+        try {
+            setTaskError(error);
+
+            const data = await getTasks(projectId);
+
+            setTasks(data);
+        } catch (error) {
+            console.error(error);
+
+            setTaskError(
+                "Unable to load the tasks. Please try again."
+            );
+        } finally {
+            setIsLoadingTasks(false);
+        }
+    }
+    
     useEffect(() => {
         async function loadProject() {
             if (!projectId) {
@@ -40,7 +84,58 @@ export default function ProjectDetailPage() {
         }
 
         loadProject();
+        loadTasks();
     }, [projectId]);
+
+    async function handleDeleteTask(task: Task) {
+        const confirmed = window.confirm(
+            `Are you sure you want to delete "${task.title}?`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        if (!projectId) {
+            return;
+        }
+
+        setDeletingTaskId(task.id);
+        setTaskError(null);
+
+        try {
+            await deleteTask(
+                projectId, 
+                task.id
+            );
+
+            setTasks((currentTasks) =>
+                currentTasks.filter(
+                    (currentTask) =>
+                        currentTask.id !== task.id
+                )
+            );
+        } catch (error) {
+            console.error(error);
+
+            setTaskError(
+                "Unable to delete the task. Please try again."
+            );
+        } finally {
+            setDeletingTaskId(null);
+        }
+    }
+
+    function handleTaskCreated() {
+        setShowCreateTaskForm(false);
+        loadTasks();
+    }
+
+    function handleTaskUpdated() {
+        setEditingTask(null);
+        loadTasks();
+
+    }
 
     if (isLoading) {
         return (
@@ -131,8 +226,61 @@ export default function ProjectDetailPage() {
 
             <section>
                 <h2>Tasks</h2>
+                
+                {taskError && (
+                    <p role="alert">
+                        {taskError}
+                    </p>
+                )}
 
-                <p>Tasks...</p>
+                {!showCreateTaskForm && 
+                    editingTask === null && (
+                        <button 
+                            type="button"
+                            onClick={() =>
+                                setShowCreateTaskForm(true)
+                            }
+                        >
+                            New task
+                        </button>
+                    )}
+                
+                {showCreateTaskForm && 
+                    projectId && (
+                    <TaskForm 
+                        projectId={projectId}
+                        onSaved={handleTaskCreated}
+                        onCancel={() =>
+                            setShowCreateTaskForm(false)
+                        }
+                    />
+                
+                )}
+
+                {editingTask && projectId && (
+                    <TaskForm 
+                        projectId={projectId}
+                        task={editingTask}
+                        onSaved={handleTaskUpdated}
+                        onCancel={() =>
+                            setEditingTask(null)
+                        }
+                    />
+                )}
+
+                {isLoadingTasks ? (
+                    <p>Loading tasks...</p>
+                ) : (
+                    <TaskList 
+                        tasks={tasks}
+                        onEdit={(task) => {
+                            setShowCreateTaskForm(false);;
+                            setEditingTask(task);
+                        }}
+                        onDelete={handleDeleteTask}
+                        deletingTaskId={deletingTaskId}
+                    />
+                )}
             </section>
         </div>
     );
