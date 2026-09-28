@@ -1,9 +1,16 @@
 import type { Task } from "../types/task";
 
+import ProgressForm from "../components/ProgressForm";
+
 interface TaskListProps {
     tasks: Task[];
     onEdit: (task: Task) => void;
     onDelete: (task: Task) => void;
+    onProgress: (task: Task) => void;
+    onProgressSaved: (task: Task) => void;
+    onCancelProgress: () => void;
+    onComplete: (task: Task) => void;
+    progressTask: Task | null;
     deletingTaskId: string | null;
 }
 
@@ -11,7 +18,12 @@ export default function TaskList({
     tasks, 
     onEdit, 
     onDelete,
-    deletingTaskId
+    onProgress,
+    onProgressSaved,
+    onCancelProgress,
+    onComplete,
+    progressTask,
+    deletingTaskId,
 }: TaskListProps) {
     if (tasks.length === 0) {
         return (
@@ -37,20 +49,20 @@ export default function TaskList({
 
                     <p>
                         Estimated:{" "}
-                        {task.estimatedMinutes ??
-                            "No estimate"}{" "}
-                        {task.estimatedMinutes
-                            ? "minutes"
-                            : ""}
+                        {task.estimatedMinutes !== null
+                            ? `${task.estimatedMinutes} minutes`
+                            : "No estimate"}
+                    </p>
+
+                    <p>
+                        Worked: {task.workedMinutes} minutes
                     </p>
 
                     <p>
                         Remaining:{" "}
-                        {task.remainingMinutes ??
-                            "No estimate"}{" "}
                         {task.remainingMinutes !== null
-                            ? "minutes"
-                            : ""}
+                            ? `${task.remainingMinutes} minutes`
+                            : "No estimate"}
                     </p>
 
                     <p>
@@ -64,6 +76,29 @@ export default function TaskList({
                         {task.priority ?? 
                             "No priority"}
                     </p>
+
+                    {task.status !== "COMPLETED" && 
+                        task.status !== "CANCELLED" && (
+                            <button 
+                                type="button"
+                                onClick={() => 
+                                    onComplete(task)
+                                }
+                            >
+                                Complete
+                            </button>
+                        )}
+
+                    {task.estimatedMinutes !== null && 
+                        task.status !== "COMPLETED" && 
+                        task.status !== "CANCELLED" && (
+                            <button 
+                                type="button"
+                                onClick={() => onProgress(task)}
+                            >
+                                Update progress
+                            </button>
+                        )}
 
                     <button
                         type="button"
@@ -84,6 +119,17 @@ export default function TaskList({
                                 ? "Deleting..."
                                 : "Delete"}
                     </button>
+
+                    {progressTask?.id === task.id && (
+                    <ProgressForm 
+                        projectId={task.projectId}
+                        task={task}
+                        onSaved={onProgressSaved}
+                        onCancel={() => {
+                            {onCancelProgress}
+                        }}
+                    />
+                )}
                 </article>
             ))}
         </div>

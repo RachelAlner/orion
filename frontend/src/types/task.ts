@@ -10,6 +10,7 @@ export interface Task {
     title: string;
     description: string | null;
     estimatedMinutes: number | null;
+    workedMinutes: number;
     remainingMinutes: number | null;
     deadline: string | null;
     priority: number | null;
@@ -33,4 +34,8 @@ export interface UpdateTaskRequest {
     estimatedMinutes: number | null;
     deadline: string | null;
     priority: number | null;
+}
+
+export interface UpdateTaskProgressRequest {
+    workedMinutes: number;
 }

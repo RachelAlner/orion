@@ -7,6 +7,7 @@ import TaskList from "../components/TaskList";
 import {
     deleteTask,
     getTasks,
+    completeTask,
 } from "../services/taskService";
 
 import type { Task } from "../types/task";
@@ -34,6 +35,8 @@ export default function ProjectDetailPage() {
         useState<Task | null>(null);
     const [deletingTaskId, setDeletingTaskId] = 
         useState<string | null>(null);
+    const [progressTask, setProgressTask] = 
+        useState<Task | null>(null);
 
     async function loadTasks() {
         if (!projectId) {
@@ -41,7 +44,7 @@ export default function ProjectDetailPage() {
         }
 
         try {
-            setTaskError(error);
+            setTaskError(null);
 
             const data = await getTasks(projectId);
 
@@ -126,6 +129,25 @@ export default function ProjectDetailPage() {
         }
     }
 
+    async function handleCompleteTask(task: Task) {
+        try {
+            const updatedTask = await completeTask(
+                task.projectId,
+                task.id
+            );
+
+            setTasks((currentTasks) => 
+                currentTasks.map((currentTask) => 
+                    currentTask.id === updatedTask.id 
+                        ? updatedTask 
+                        : currentTask
+                )
+            );
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     function handleTaskCreated() {
         setShowCreateTaskForm(false);
         loadTasks();
@@ -136,6 +158,18 @@ export default function ProjectDetailPage() {
         loadTasks();
 
     }
+    
+    function handleProgressSaved(updatedTask: Task) {
+        setTasks((currentTasks) => 
+            currentTasks.map((task) => 
+                task.id === updatedTask.id
+                    ? updatedTask 
+                    : task
+            )
+        );
+
+        setProgressTask(null);
+    }       
 
     if (isLoading) {
         return (
@@ -278,6 +312,13 @@ export default function ProjectDetailPage() {
                             setEditingTask(task);
                         }}
                         onDelete={handleDeleteTask}
+                        onProgress={(task) => setProgressTask(task)}
+                        onProgressSaved={handleProgressSaved}
+                        onCancelProgress={() => 
+                            setProgressTask(null)
+                        }
+                        onComplete={handleCompleteTask}
+                        progressTask={progressTask}
                         deletingTaskId={deletingTaskId}
                     />
                 )}

@@ -3,6 +3,7 @@ import type {
     CreateTaskRequest,
     Task,
     UpdateTaskRequest,
+    UpdateTaskProgressRequest,
 } from "../types/task";
 
 export function getTasks(
@@ -57,6 +58,32 @@ export function deleteTask(
         `/api/projects/${projectId}/tasks/${taskId}`,
         {
             method: "DELETE",
+        }
+    );
+}
+
+export function updateTaskProgress(
+    projectId: string,
+    taskId: string, 
+    request: UpdateTaskProgressRequest
+): Promise<Task> {
+    return apiRequest<Task>(
+        `/api/projects/${projectId}/tasks/${taskId}/progress`,
+        {
+            method: "PATCH",
+            body: JSON.stringify(request),
+        }
+    );
+}
+
+export function completeTask(
+    projectId: string, 
+    taskId: string
+): Promise<Task> {
+    return apiRequest<Task>(
+        `/api/projects/${projectId}/tasks/${taskId}/complete`,
+        {
+            method: "POST",
         }
     );
 }
