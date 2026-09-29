@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { SubmitEvent } from "react";
 
-import { createProject, updateProject } from "../services/projectService";
-import type { Project } from "../types/project";
+import { createProject, updateProject } from "../../services/projectService";
+import type { Project } from "../../types/project";
 
 interface ProjectFormProps {
     project?: Project;
@@ -114,13 +114,25 @@ export default function ProjectForm({
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2> 
-                {isEditing
-                    ? "Edit project"
-                    : "New project"
-                }
-            </h2>
+        <form 
+            onSubmit={handleSubmit}
+            className="project-form"
+        >
+            <div className="project-form-header">
+                <h2> 
+                    {isEditing
+                        ? "Edit project"
+                        : "New project"
+                    }
+                </h2>
+
+                <p>
+                    {isEditing
+                        ? "Update the details for this project."
+                        : "Create a project to organise your work."
+                    }
+                </p>    
+            </div>
 
             <div>
                 <label htmlFor="project-name">
@@ -199,27 +211,30 @@ export default function ProjectForm({
                 </p>
             )}
 
-            <button 
-                type="submit"
-                disabled={isSubmitting}
-            >
-                {isSubmitting
-                    ? isEditing 
-                        ? "Saving..."
-                        : "Creating..."
-                    : isEditing 
-                        ? "Save changes"
-                        : "Create project"
-                }
-            </button>
 
-            <button 
-                type="button"
-                onClick={onCancel}
-                disabled={isSubmitting}
-            >
-                Cancel
-            </button>
+            <div className="project-form-actions">
+                <button 
+                    type="submit"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting
+                        ? isEditing 
+                            ? "Saving..."
+                            : "Creating..."
+                        : isEditing 
+                            ? "Save changes"
+                            : "Create project"
+                    }
+                </button>
+
+                <button 
+                    type="button"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                >
+                    Cancel
+                </button>
+            </div>
         </form>
     );
 }

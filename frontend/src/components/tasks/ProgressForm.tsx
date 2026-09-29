@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { SubmitEvent } from "react";
 
-import { updateTaskProgress } from "../services/taskService";
-import type { Task } from "../types/task";
+import { updateTaskProgress } from "../../services/taskService";
+import type { Task } from "../../types/task";
 
 interface ProgressFormProps {
     projectId: string;
@@ -68,31 +68,35 @@ export default function ProgressForm({
     }
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form 
+            className="progress-form"
+            onSubmit={handleSubmit}>
             <h3>Update progress</h3>
+            <div className="progress-summary">
+                <div>
+                    <span>Estimated:</span>
+                    <strong>
+                        {task.estimatedMinutes !== null 
+                            ? `${task.estimatedMinutes} min`
+                            : "No estimate"}
+                    </strong>
+                </div>
 
-            <p>
-                <strong>{task.title}</strong>
-            </p>
-            <div>
-                <p>
-                    Estimated: {" "}
-                    {task.estimatedMinutes !== null 
-                        ? `${task.estimatedMinutes} minutes`
-                        : "No estimate"}
-                </p>
+                <div>
+                    <span>Worked</span>
+                    <strong>
+                        {task.workedMinutes} min
+                    </strong>
+                </div>
 
-                <p>
-                    Worked: {task.workedMinutes} minutes
-                </p>
-
-                <p>
-                    Remaining:{" "}
-                    {task.remainingMinutes !== null 
-                        ? `${task.remainingMinutes} minutes`
-                        : "No estimate"
-                    }
-                </p>
+                <div>
+                    <span>Remaining</span>
+                    <strong>
+                        {task.remainingMinutes !== null
+                            ? `${task.remainingMinutes} min`
+                            : "No estimate"}
+                    </strong>
+                </div>
             </div>
 
             <div>

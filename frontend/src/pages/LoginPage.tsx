@@ -42,65 +42,75 @@ export default function LoginPage() {
     }
 
     return (
-        <main>
-            <h1>Login</h1>
+            <div className="auth-page">
+                <div className="auth-container">
+                    <div className="auth-header">
+                        <h1>Orion</h1>
+                        <p>Sign in to continue</p>
+                    </div>
+                    
+                
 
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="email">
-                        Email
-                    </label>
+            
 
-                    <input 
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(event) =>
-                            setEmail(event.target.value)
-                        }
-                        required
-                    />
-                </div>
+                    <form className="auth-form" onSubmit={handleSubmit}>
+                        <div>
+                            <label htmlFor="email">
+                                Email
+                            </label>
 
-                <div>
-                    <label htmlFor="password">
-                        Password
-                    </label>
+                            <input 
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(event) =>
+                                    setEmail(event.target.value)
+                                }
+                                required
+                            />
+                        </div>
 
-                    <input 
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(event) =>
-                            setPassword(event.target.value)
-                        }
-                        required
-                    />
-                </div>
+                        <div>
+                            <label htmlFor="password">
+                                Password
+                            </label>
 
-                {error && (
-                    <p role="alert">
-                        {error}
+                            <input 
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(event) =>
+                                    setPassword(event.target.value)
+                                }
+                                required
+                            />
+                        </div>
+
+                        {error && (
+                            <p className="auth-error" role="alert">
+                                {error}
+                            </p>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="auth-submit"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting
+                                ? "Signing in..."
+                                : "Sign in"
+                            }
+                        </button>
+                    </form>
+                
+                    <p className="auth-footer">
+                        Don't have an account?{" "}
+                        <Link to="/register">
+                            Create an account
+                        </Link>
                     </p>
-                )}
-
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting
-                        ? "Logging in..."
-                        : "Log in"
-                    }
-                </button>
-            </form>
-
-            <p>
-                Don't have an account?{" "}
-                <Link to="/register">
-                    Create an account
-                </Link>
-            </p>
-        </main>
+                </div>
+            </div>
     );
 }

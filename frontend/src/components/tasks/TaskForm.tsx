@@ -4,9 +4,9 @@ import type { SubmitEvent } from "react";
 import {
     createTask, 
     updateTask,
-} from "../services/taskService";
+} from "../../services/taskService";
 
-import type { Task } from "../types/task";
+import type { Task } from "../../types/task";
 
 interface TaskFormProps {
     projectId: string;
@@ -155,12 +155,16 @@ export default function TaskForm({
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>
-                {isEditing
-                    ? "Edit task"
-                    : "New task"}
-            </h2>
+        <form 
+            className="task-form"
+            onSubmit={handleSubmit}>
+            <div className="task-form-header">
+                <h3>
+                    {isEditing
+                        ? "Edit task"
+                        : "New task"}
+                </h3>
+            </div>
 
             <div>
                 <label htmlFor="task-title">

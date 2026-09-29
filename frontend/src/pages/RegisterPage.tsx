@@ -53,85 +53,90 @@ export default function RegisterPage() {
 
     return (
         <div className="auth-page">
-            <div className="auth-card">
-                <h1>Create your account</h1>
-
-                <form onSubmit={handleSubmit}>
-                    <div>
-                        <label htmlFor="email">
-                            Email
-                        </label>
-
-                        <input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(event) =>
-                                setEmail(event.target.value)
-                            }
-                            required 
-                        />
+                <div className="auth-container">
+                    <div className="auth-header">
+                        <h1>Orion</h1>
+                        <p>Create your account</p>
                     </div>
 
-                    <div>
-                        <label htmlFor="password">
-                            Password
-                        </label>
-
-                        <input 
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(event) =>
-                                setPassword(event.target.value)
-                            }
-                            required
-                        />
-                    </div>
-                    
-                    <div>
-                        <label htmlFor="confirm-password">
-                            Confirm password
-                        </label>
-
-                        <input 
-                            id="confirm-password"
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(event) => 
-                                setConfirmPassword(
-                                    event.target.value
-                                )
-                            }
-                            required 
-                        />
-                    </div>
-
-                    {error && (
-                        <p role="alert">
-                            {error}
-                        </p>
-                    )}
-
-                    <button 
-                        type="submit"
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting
-                            ? "Creating account..."
-                            : "Create account"
-                        }
-                    </button>
-                </form>
-
-                <p>
-                    Already have an account?{" "}
-                    <Link to="/login">
-                        Log in
-                    </Link>
-                </p>
-            </div>
             
-        </div>
+
+                    <form className="auth-form" onSubmit={handleSubmit}>
+                        <div>
+                            <label htmlFor="email">
+                                Email
+                            </label>
+
+                            <input 
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(event) =>
+                                    setEmail(event.target.value)
+                                }
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="password">
+                                Password
+                            </label>
+
+                            <input 
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(event) =>
+                                    setPassword(event.target.value)
+                                }
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="confirm-password">
+                                Confirm password
+                            </label>
+
+                            <input 
+                                id="confirm-password"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(event) => 
+                                    setConfirmPassword(
+                                        event.target.value
+                                    )
+                                }
+                                required 
+                            />
+                        </div>
+
+                        {error && (
+                            <p className="auth-error" role="alert">
+                                {error}
+                            </p>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="auth-submit"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting
+                                ? "Signing in..."
+                                : "Sign in"
+                            }
+                        </button>
+                    </form>
+                
+                    <p className="auth-footer">
+                        Already have an account?{" "}
+                        <Link to="/login">
+                            Sign in
+                        </Link>
+                    </p>
+                </div>
+            </div>
     );
 }

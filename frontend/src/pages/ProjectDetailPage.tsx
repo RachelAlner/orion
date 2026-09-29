@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import TaskForm from "../components/TaskForm";
-import TaskList from "../components/TaskList";
-
 import {
-    deleteTask,
-    getTasks,
+    deleteTask, 
+    getTasks, 
     completeTask,
 } from "../services/taskService";
+
+import TaskForm from "../components/tasks/TaskForm";
+import TaskList from "../components/tasks/TaskList";
+import TaskDetails from "../components/tasks/TaskDetails";
 
 import type { Task } from "../types/task";
 
@@ -29,13 +30,9 @@ export default function ProjectDetailPage() {
         useState(true);
     const [taskError, setTaskError] = 
         useState<string | null>(null);
-    const [showCreateTaskForm, setShowCreateTaskForm] =
+    const [showCreateTaskForm, setShowCreateTaskForm] = 
         useState(false);
-    const [editingTask, setEditingTask] = 
-        useState<Task | null>(null);
-    const [deletingTaskId, setDeletingTaskId] = 
-        useState<string | null>(null);
-    const [progressTask, setProgressTask] = 
+    const [selectedTask, setSelectedTask] = 
         useState<Task | null>(null);
 
     async function loadTasks() {
@@ -90,9 +87,35 @@ export default function ProjectDetailPage() {
         loadTasks();
     }, [projectId]);
 
+    async function handleTaskSaved() {
+        if (!projectId) {
+            return;
+        }
+
+        try {
+            const updatedTasks = await getTasks(projectId);
+
+            setTasks(updatedTasks);
+
+            const updatedTask = updatedTasks.find(
+                (task) => task.id === selectedTask?.id
+            );
+
+            if (updatedTask) {
+                setSelectedTask(updatedTask);
+            }
+        } catch (error) {
+            console.error(error);
+
+            setTaskError(
+                "Unable to reload the task. Please try again."
+            );
+        }
+    }
+
     async function handleDeleteTask(task: Task) {
         const confirmed = window.confirm(
-            `Are you sure you want to delete "${task.title}?`
+            `Are you sure you want to delete "${task.title}"?`
         );
 
         if (!confirmed) {
@@ -103,7 +126,6 @@ export default function ProjectDetailPage() {
             return;
         }
 
-        setDeletingTaskId(task.id);
         setTaskError(null);
 
         try {
@@ -118,15 +140,15 @@ export default function ProjectDetailPage() {
                         currentTask.id !== task.id
                 )
             );
+
+            setSelectedTask(null);
         } catch (error) {
             console.error(error);
 
             setTaskError(
                 "Unable to delete the task. Please try again."
             );
-        } finally {
-            setDeletingTaskId(null);
-        }
+        } 
     }
 
     async function handleCompleteTask(task: Task) {
@@ -143,20 +165,24 @@ export default function ProjectDetailPage() {
                         : currentTask
                 )
             );
+
+            setSelectedTask(updatedTask);
         } catch (error) {
             console.error(error);
         }
     }
 
+    function handleTaskClick(task: Task) {
+        setSelectedTask(task);
+    }
+
+    function handleCloseTaskDetails() {
+        setSelectedTask(null);
+    }
+
     function handleTaskCreated() {
         setShowCreateTaskForm(false);
         loadTasks();
-    }
-
-    function handleTaskUpdated() {
-        setEditingTask(null);
-        loadTasks();
-
     }
     
     function handleProgressSaved(updatedTask: Task) {
@@ -168,7 +194,7 @@ export default function ProjectDetailPage() {
             )
         );
 
-        setProgressTask(null);
+        setSelectedTask(updatedTask);
     }       
 
     if (isLoading) {
@@ -198,28 +224,38 @@ export default function ProjectDetailPage() {
     }
 
     return (
-        <div>
-            <Link to="/projects">
-                ← Back to projects
+        <div className="project-page">
+            <Link 
+                to="/projects"
+                className="project-back-link"
+            >
+                ← Projects
             </Link>
 
-            <header>
-                <h1>{project.name}</h1>
+            <section className="project-overview">
 
-                {project.description && (
-                    <p>{project.description}</p>
-                )}
-            </header>
+                <header className="project-header">
+                    <h1>{project.name}</h1>
 
-            <section>
-                <h2>Project details</h2>
+                    {project.description && (
+                        <p>{project.description}</p>
+                    )}
 
-                <dl>
+                </header>
+
+                <dl className="project-details">
                     <div>
-                        <dt>Status</dt>
-                        <dd>{project.status}</dd>
+                        <dt>Deadline</dt>
+                        <dd>
+                            {project.deadline 
+                                ? new Date(
+                                    project.deadline
+                                ).toLocaleDateString()
+                                : "No deadline"
+                            }
+                        </dd>
                     </div>
-
+                
                     <div>
                         <dt>Priority</dt>
                         <dd>
@@ -230,76 +266,40 @@ export default function ProjectDetailPage() {
                     </div>
 
                     <div>
-                        <dt>Deadline</dt>
-                        <dd>
-                            {project.deadline ??
-                                "No deadline"
-                            }
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt>Created</dt>
-                        <dd>
-                            {new Date(
-                                project.createdAt
-                            ).toLocaleString()}
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt>Last updated</dt>
-                        <dd>
-                            {new Date(
-                                project.updatedAt
-                            ).toLocaleString()}
-                        </dd>
+                        <dt>Status</dt>
+                        <dd>{project.status.replace("_", " ")}</dd>
                     </div>
                 </dl>
             </section>
 
-            <section>
-                <h2>Tasks</h2>
-                
-                {taskError && (
-                    <p role="alert">
-                        {taskError}
-                    </p>
-                )}
+            <section className="project-tasks">
+                <div className="project-tasks-header">
+                    <h2>Tasks</h2>
 
-                {!showCreateTaskForm && 
-                    editingTask === null && (
-                        <button 
+                    {!showCreateTaskForm && (
+                        <button
                             type="button"
-                            onClick={() =>
-                                setShowCreateTaskForm(true)
-                            }
+                            onClick={() => setShowCreateTaskForm(true)}
                         >
-                            New task
+                            + New task
                         </button>
                     )}
-                
-                {showCreateTaskForm && 
-                    projectId && (
-                    <TaskForm 
-                        projectId={projectId}
-                        onSaved={handleTaskCreated}
-                        onCancel={() =>
-                            setShowCreateTaskForm(false)
-                        }
-                    />
-                
+                </div>
+
+                {showCreateTaskForm && projectId && (
+                    <div className="new-task-form">
+                        <TaskForm 
+                            projectId={projectId}
+                            onSaved={handleTaskCreated}
+                            onCancel={() => setShowCreateTaskForm(false)}
+                        />
+                    </div>
                 )}
 
-                {editingTask && projectId && (
-                    <TaskForm 
-                        projectId={projectId}
-                        task={editingTask}
-                        onSaved={handleTaskUpdated}
-                        onCancel={() =>
-                            setEditingTask(null)
-                        }
-                    />
+                {taskError && (
+                    <p className="task-error" role="alert">
+                        {taskError}
+                    </p>
                 )}
 
                 {isLoadingTasks ? (
@@ -307,19 +307,18 @@ export default function ProjectDetailPage() {
                 ) : (
                     <TaskList 
                         tasks={tasks}
-                        onEdit={(task) => {
-                            setShowCreateTaskForm(false);;
-                            setEditingTask(task);
-                        }}
-                        onDelete={handleDeleteTask}
-                        onProgress={(task) => setProgressTask(task)}
+                        onTaskClick={handleTaskClick}
+                    />
+                )}
+
+                {selectedTask && (
+                    <TaskDetails
+                        task={selectedTask}
+                        onClose={handleCloseTaskDetails}
+                        onSaved={handleTaskSaved}
                         onProgressSaved={handleProgressSaved}
-                        onCancelProgress={() => 
-                            setProgressTask(null)
-                        }
                         onComplete={handleCompleteTask}
-                        progressTask={progressTask}
-                        deletingTaskId={deletingTaskId}
+                        onDelete={handleDeleteTask}
                     />
                 )}
             </section>

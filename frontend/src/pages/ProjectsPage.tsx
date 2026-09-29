@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import ProjectForm from "../components/ProjectForm";
+import ProjectForm from "../components/projects/ProjectForm";
 import { deleteProject, getProjects } from "../services/projectService";
 import type { Project } from "../types/project";
 
@@ -81,120 +81,169 @@ export default function ProjectsPage() {
 
     if (isLoading) {
         return (
-            <div>
-                <h1>Projects</h1>
-                <p>Loading projects...</p>
+            <div className="projects-page">
+                <div>
+                    <h1>Projects</h1>
+                    <p>Loading projects...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div>
-            <h1>Projects</h1>
+        <div className="projects-page">
+            <header className="projects-header">
+                <div>
+                    <h1>Projects</h1>
+                    <p>
+                        Organise your work and track your progress.
+                    </p>
+                </div>
+
+                {!showCreateForm && 
+                    editingProject === null && (
+                        <button 
+                            type="button"
+                            className="projects-new-button"
+                            onClick={() => 
+                                setShowCreateForm(true)
+                            }
+                        >
+                            + New Project 
+                        </button>
+                    )}
+            </header>        
 
             {error && (
-                <p role="alert">
+                <p className="projects-error" role="alert">
                     {error}
                 </p>
             )}
 
-            {!showCreateForm && 
-                editingProject === null && (
-                    <button 
-                        type="button"
-                        onClick={() => 
-                            setShowCreateForm(true)
-                        }
-                    >
-                        New project
-                    </button>
-                )}
-            
             {showCreateForm && (
-                <ProjectForm 
-                    onSaved={handleCreateSaved}
-                    onCancel={() => 
-                        setShowCreateForm(false)
-                    }
-                />
+                <section className="project-form-section">
+                    <ProjectForm 
+                        onSaved={handleCreateSaved}
+                        onCancel={() => 
+                            setShowCreateForm(false)
+                        }
+                    />
+                </section>
             )}
 
             {editingProject && (
-                <ProjectForm 
-                    project={editingProject}
-                    onSaved={handleEditSaved}
-                    onCancel={() => 
-                        setEditingProject(null)
-                    }
-                />
+                <section className="project-form-section">
+                    <ProjectForm
+                        project={editingProject}
+                        onSaved={handleEditSaved}
+                        onCancel={() =>
+                            setEditingProject(null)
+                        }
+                    />
+                </section>
             )}
 
-            {projects.length === 0 ? (
-                <p>
-                    You don't have any projects yet.
-                </p>
-            ) : (
-                <div>
-                    {projects.map((project) => (
-                        <article key={project.id}>
-                            <h2>
-                                <Link to={`/projects/${project.id}`}>
-                                    {project.name}
-                                </Link>
-                            </h2>
-
-                            {project.description && (
-                                <p>{project.description}</p>
-                            )}
-
-                            <p>
-                                Deadline: {" "}
-                                {project.deadline ?? 
-                                    "No deadline"}
-                            </p>
-
-                            <p>
-                                Priority:{" "}
-                                {project.priority ?? 
-                                    "No priority"}
-                            </p>
-
-                            <p>
-                                Status: {project.status}
-                            </p>
+            {!showCreateForm && editingProject === null && (
+                <>
+                    {projects.length === 0 ? (
+                        <div className="projects-empty">
+                            <p>No projects yet.</p>
 
                             <button 
                                 type="button"
-                                onClick={() => {
-                                    setShowCreateForm(false);
-                                    setEditingProject(project);
-                                }}
+                                onClick={() =>
+                                    setShowCreateForm(true)
+                                }
                             >
-                                Edit 
+                                Create your first project
                             </button>
+                        </div>
+                    ) : (
+                        <div className="project-list">
+                            {projects.map((project) => (
+                                <div
+                                    key={project.id}
+                                    className="project-list-item"
+                                >
+                                    <div className="project-list-main">
+                                        <Link
+                                            to={`/projects/${project.id}`}
+                                            className="project-list-link"
+                                        >
+                                            <h2>{project.name}</h2>
 
-                            <button 
-                                type="button"
-                                onClick={() => 
-                                    handleDelete(project)
-                                }
-                                disabled={
-                                    deletingProjectId === 
-                                    project.id
-                                }
-                            >
-                                {deletingProjectId ===
-                                project.id 
-                                    ? "Deleting..."
-                                    : "Delete"
-                                }
-                            </button>
-                        </article>
-                    ))}
-                </div>
-            )
-            
-            }
+                                            {project.description && (
+                                                <p>{project.description}</p>
+                                            )}
+                                        </Link>
+
+                                        <div className="project-list-details">
+                                            <span>
+                                                <strong>
+                                                    Deadline
+                                                </strong>
+
+                                                {project.deadline
+                                                    ? new Date(
+                                                        project.deadline
+                                                    ).toLocaleDateString()
+                                                    : "No deadline"
+                                                }
+                                            </span>
+
+                                            <span>
+                                                <strong>
+                                                    Status
+                                                </strong>
+
+                                                {project.status.replace("_", " ")}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="project-list-actions">
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setShowCreateForm(false);
+                                                setEditingProject(project);
+                                            }}
+                                        >
+                                            Edit 
+                                        </button>
+
+                                        <button 
+                                            type="button"
+                                            onClick={() => 
+                                                handleDelete(project)
+                                            }
+                                            disabled={
+                                                deletingProjectId === 
+                                                project.id
+                                            }
+                                        >
+                                            {deletingProjectId ===
+                                            project.id 
+                                                ? "Deleting..."
+                                                : "Delete"
+                                            }
+                                        </button>
+
+                                        <Link
+                                            to={`/projects/${project.id}`}
+                                            className="project-list-arrow"
+                                            aria-label={`Open ${project.name}`}
+                                        >
+                                            →
+                                        </Link>
+                                    </div>
+                                </div>
+
+                            ))}
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }
