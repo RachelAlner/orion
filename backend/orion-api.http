@@ -3,6 +3,8 @@
 @tokenA = TOKENA
 @tokenB = TOKENB
 
+@userToken = UTOKEN
+
 ### Register user
 
 POST http://localhost:8080/api/auth/register
@@ -304,7 +306,7 @@ Content-Type: application/json
 
 ### User creates project
 POST {{baseUrl}}/api/projects
-Authorization: Bearer eyJraWQiOiJhWnhHRVpvVjE1c0JhcnhiVlBWeHJjcHdCV1hpYUNNdnhkNkVSTHAzbnBBIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJvcmlvbi1hcGkiLCJzdWIiOiI0ZTYxYjdkNi1mMmZmLTQ3MGUtYWYwOS00N2I1N2M5MTc4NWUiLCJleHAiOjE3OTA1NTkwMjgsImlhdCI6MTc5MDU1NTQyOCwiZW1haWwiOiJvcmlvbi50ZXN0QGV4YW1wbGUuY29tIn0.badXc9Ke0c2Z_ZwHO9TGhb_E7t4x5ZlxrudhJq_uIo4X4j1EC8dOrkhoSZj2gPY2ntzgLrtwVhq2sqASmPVDVevppMxBq_ZJrifDSlStrKO1511prhNJkAk2OqurxRNeANUiP56y8jMnwD327NWhYcE7OEWymcbXm_P9spc-TXHGRqHQgd9GSKSvj1iEfqk4cggOGxd-CIvHivwXab918VXEjUSeFAh2HFdGzWScPesAkz3FyqinHlb1M4aItYciU3NJJwCSzcsTXNYJ7lcAZ-B0EgWaLptizLVql2oztlwBDZaZOYKG4bTh9n6dIo_JYhhHO7GI89dFt6_6pn0bqQ
+Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
 {
@@ -316,7 +318,7 @@ Content-Type: application/json
 
 ### User creates task
 POST {{baseUrl}}/api/projects/750de151-7944-4244-8a6a-e5f974d62017/tasks
-Authorization: Bearer eyJraWQiOiJhWnhHRVpvVjE1c0JhcnhiVlBWeHJjcHdCV1hpYUNNdnhkNkVSTHAzbnBBIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJvcmlvbi1hcGkiLCJzdWIiOiI0ZTYxYjdkNi1mMmZmLTQ3MGUtYWYwOS00N2I1N2M5MTc4NWUiLCJleHAiOjE3OTA1NTkwMjgsImlhdCI6MTc5MDU1NTQyOCwiZW1haWwiOiJvcmlvbi50ZXN0QGV4YW1wbGUuY29tIn0.badXc9Ke0c2Z_ZwHO9TGhb_E7t4x5ZlxrudhJq_uIo4X4j1EC8dOrkhoSZj2gPY2ntzgLrtwVhq2sqASmPVDVevppMxBq_ZJrifDSlStrKO1511prhNJkAk2OqurxRNeANUiP56y8jMnwD327NWhYcE7OEWymcbXm_P9spc-TXHGRqHQgd9GSKSvj1iEfqk4cggOGxd-CIvHivwXab918VXEjUSeFAh2HFdGzWScPesAkz3FyqinHlb1M4aItYciU3NJJwCSzcsTXNYJ7lcAZ-B0EgWaLptizLVql2oztlwBDZaZOYKG4bTh9n6dIo_JYhhHO7GI89dFt6_6pn0bqQ
+Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
 {
