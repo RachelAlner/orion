@@ -485,4 +485,16 @@ public class ScheduleControllerTest {
         
         verifyNoInteractions(scheduleService);
     }
+
+    @Test 
+    void rejectsMissingRequestBody() throws Exception{
+        mockMvc.perform(
+                post("/api/schedules/generate")
+                        .principal(authentication)
+                        .contentType(MediaType.APPLICATION_JSON)
+        )
+                .andExpect(status().isBadRequest());
+        
+        verifyNoInteractions(scheduleService);
+    }
 }

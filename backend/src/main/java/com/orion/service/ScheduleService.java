@@ -82,7 +82,11 @@ public class ScheduleService {
                 );
         
         List<ExistingScheduleBlock> existingScheduleBlocks = 
-                loadExistingScheduleBlocks(userId);
+                loadExistingScheduleBlocks(
+                        userId, 
+                        periodStart, 
+                        periodEnd
+                );
         
         SchedulerInput input = new SchedulerInput(
                 tasks, 
@@ -219,7 +223,9 @@ public class ScheduleService {
     }
 
     private List<ExistingScheduleBlock> loadExistingScheduleBlocks(
-            UUID userId
+            UUID userId, 
+            LocalDateTime periodStart,
+            LocalDateTime periodEnd
     ) {
         List<Schedule> schedules = 
                 scheduleRepository
@@ -233,6 +239,10 @@ public class ScheduleService {
 
         return latestSchedule.getBlocks()
                 .stream()
+                .filter(block -> 
+                        block.getStartTime().isBefore(periodEnd)
+                                && block.getEndTime().isAfter(periodStart)
+                )
                 .map(block -> new ExistingScheduleBlock(
                         block.getTask().getId(),
                         block.getStartTime(), 

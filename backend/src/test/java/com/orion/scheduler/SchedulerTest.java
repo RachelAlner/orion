@@ -883,6 +883,408 @@ class SchedulerTest {
         assertTrue(result.unscheduledTasks().isEmpty());
     }
 
+    @Test 
+    void schedulesDependentTaskWhenPrerequisiteIsAlreadyCompleted() {
+        UUID prerequisiteId = UUID.randomUUID();
+        UUID dependentId = UUID.randomUUID();
+
+        SchedulingTask prerequisite = new SchedulingTask(
+                prerequisiteId, 
+                60, 
+                0, 
+                LocalDateTime.of(2026, 9, 21, 17, 0), 
+                3, 
+                TaskStatus.COMPLETED,
+                LocalDateTime.of(2026, 9, 20, 10, 0)
+        );
+
+        SchedulingTask dependent = task(
+                dependentId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0),
+                1, 
+                LocalDateTime.of(2026, 9, 20, 11, 0)
+        );
+
+        TaskDependency dependency = new TaskDependency(
+                dependentId,
+                prerequisiteId
+        );
+
+        AvailabilityWindow availability = new AvailabilityWindow(
+                LocalDateTime.of(2026, 9, 21, 9, 0),
+                LocalDateTime.of(2026, 9, 21, 10, 0)
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(prerequisite, dependent),
+                List.of(dependency),
+                List.of(
+                        availability
+                ),
+                List.of(),
+                LocalDateTime.of(2026, 9, 21, 0, 0), 
+                LocalDateTime.of(2026, 9, 22, 0, 0)
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(1, result.scheduledBlocks().size());
+        assertTrue(result.unscheduledTasks().isEmpty());
+
+        ScheduleCandidate block = 
+                result.scheduledBlocks().getFirst();
+        
+        assertEquals(dependentId, block.taskId());
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 9, 0),
+                block.startTime()
+        );
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 10, 0),
+                block.endTime()
+        );
+    }
+
+    @Test 
+    void schedulesTasksInDependencyChainOrder() {
+        UUID researchId = UUID.randomUUID();
+        UUID analysisId = UUID.randomUUID();
+        UUID writeId = UUID.randomUUID();
+
+        SchedulingTask research = task(
+                researchId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0), 
+                3, 
+                LocalDateTime.of(2026, 9, 20, 10, 0)
+        );
+
+        SchedulingTask analysis = task(
+                analysisId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0),
+                3, 
+                LocalDateTime.of(2026, 9, 20, 11, 0)
+        );
+
+        SchedulingTask write = task(
+                writeId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0),
+                3, 
+                LocalDateTime.of(2026, 9, 20, 12, 0)
+        );
+
+        TaskDependency analysisDependency = 
+                new TaskDependency(
+                        analysisId, 
+                        researchId
+                );
+        
+        TaskDependency writeDependency = 
+                new TaskDependency(
+                        writeId, 
+                        analysisId
+                );
+
+        AvailabilityWindow availability = 
+                new AvailabilityWindow(
+                        LocalDateTime.of(2026, 9, 21, 9, 0),
+                        LocalDateTime.of(2026, 9, 21, 12, 0)
+                );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(write, analysis, research),
+                List.of(
+                        analysisDependency, 
+                        writeDependency
+                ),
+                List.of(availability),
+                List.of(),
+                LocalDateTime.of(2026, 9, 21, 0, 0),
+                LocalDateTime.of(2026, 9, 22, 0, 0)
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(3, result.scheduledBlocks().size());
+        assertTrue(result.unscheduledTasks().isEmpty());
+
+        ScheduleCandidate first = 
+                result.scheduledBlocks().get(0);
+        
+        ScheduleCandidate second = 
+                result.scheduledBlocks().get(1);
+        
+        ScheduleCandidate third = 
+                result.scheduledBlocks().get(2);
+        
+        assertEquals(researchId, first.taskId());
+        assertEquals(analysisId, second.taskId());
+        assertEquals(writeId, third.taskId());
+
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 9, 0),
+                first.startTime()
+        );
+
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 10, 0),
+                first.endTime()
+        );
+
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 10, 0),
+                second.startTime()
+        );
+
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 11, 0),
+                second.endTime()
+        );
+
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 11, 0),
+                third.startTime()
+        );
+
+        assertEquals(
+                LocalDateTime.of(2026, 9, 21, 12, 0),
+                third.endTime()
+        );
+    }
+
+    @Test 
+    void schedulesTaskOnlyAfterAllDependenciesAreSatisfied() {
+        UUID researchId = UUID.randomUUID();
+        UUID analysisId = UUID.randomUUID();
+        UUID writeId = UUID.randomUUID();
+
+        SchedulingTask research = task(
+                researchId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0), 
+                3, 
+                LocalDateTime.of(2026, 9, 20, 10, 0)
+        );
+
+        SchedulingTask analysis = task(
+                analysisId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0),
+                3, 
+                LocalDateTime.of(2026, 9, 20, 11, 0)
+        );
+
+        SchedulingTask write = task(
+                writeId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0),
+                5, 
+                LocalDateTime.of(2026, 9, 20, 12, 0)
+        );
+
+        TaskDependency analysisDependency = 
+                new TaskDependency(
+                        writeId, 
+                        researchId
+                );
+        
+        TaskDependency writeDependency = 
+                new TaskDependency(
+                        writeId, 
+                        analysisId
+                );
+
+        AvailabilityWindow availability = 
+                new AvailabilityWindow(
+                        LocalDateTime.of(2026, 9, 21, 9, 0),
+                        LocalDateTime.of(2026, 9, 21, 12, 0)
+                );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(write, analysis, research),
+                List.of(
+                        analysisDependency, 
+                        writeDependency
+                ),
+                List.of(availability),
+                List.of(),
+                LocalDateTime.of(2026, 9, 21, 0, 0),
+                LocalDateTime.of(2026, 9, 22, 0, 0)
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(3, result.scheduledBlocks().size());
+        assertTrue(result.unscheduledTasks().isEmpty());
+
+        List<ScheduleCandidate> blocks = 
+                result.scheduledBlocks();
+        
+        int researchIndex = findBlockIndex(
+                blocks, 
+                researchId
+        );
+
+        int analysisIndex = findBlockIndex(
+                blocks,
+                analysisId
+        );
+
+        int writeIndex = findBlockIndex(
+                blocks, 
+                writeId
+        );
+
+        assertTrue(researchIndex < writeIndex);
+        assertTrue(analysisIndex < writeIndex);
+
+    }
+
+    @Test 
+    void schedulesDependentTaskAfterRemainingPrerequisiteWorkIsCompleted() {
+        UUID prerequisiteId = UUID.randomUUID();
+        UUID dependentId = UUID.randomUUID();
+
+        SchedulingTask prerequisite = new SchedulingTask(
+                prerequisiteId, 
+                120, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0), 
+                3, 
+                TaskStatus.IN_PROGRESS,
+                LocalDateTime.of(2026, 9, 20, 10, 0)
+        );
+
+        SchedulingTask dependent = task(
+                dependentId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0),
+                3, 
+                LocalDateTime.of(2026, 9, 20, 11, 0)
+        );
+
+        TaskDependency dependency = new TaskDependency(
+                dependentId,
+                prerequisiteId
+        );
+
+        AvailabilityWindow availability = new AvailabilityWindow(
+                LocalDateTime.of(2026, 9, 21, 9, 0),
+                LocalDateTime.of(2026, 9, 21, 11, 0)
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(dependent, prerequisite),
+                List.of(dependency),
+                List.of(availability),
+                List.of(),
+                LocalDateTime.of(2026, 9, 21, 0, 0),
+                LocalDateTime.of(2026, 9, 22, 0, 0)
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(2, result.scheduledBlocks().size());
+        assertTrue(result.unscheduledTasks().isEmpty());
+
+        ScheduleCandidate first = 
+                result.scheduledBlocks().get(0);
+        
+        ScheduleCandidate second = 
+                result.scheduledBlocks().get(1);
+        
+        assertEquals(prerequisiteId, first.taskId());
+        assertEquals(dependentId, second.taskId());
+
+        assertEquals(
+                Duration.between(
+                        first.startTime(),
+                        first.endTime()
+                ).toMinutes(),
+                60
+        );
+
+        assertEquals(
+                Duration.between(
+                        second.startTime(),
+                        second.endTime()
+                ).toMinutes(),
+                60
+        );
+    }
+
+    @Test 
+    void dependencyOrderTakesPriorityOverTaskPriority() {
+        UUID prerequisiteId = UUID.randomUUID();
+        UUID dependentId = UUID.randomUUID();
+
+        SchedulingTask prerequisite = task(
+                prerequisiteId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0), 
+                1, 
+                LocalDateTime.of(2026, 9, 20, 10, 0)
+        );
+
+        SchedulingTask dependent = task(
+                dependentId, 
+                60, 
+                LocalDateTime.of(2026, 9, 21, 17, 0),
+                5, 
+                LocalDateTime.of(2026, 9, 20, 11, 0)
+        );
+
+        TaskDependency dependency = new TaskDependency(
+                dependentId,
+                prerequisiteId
+        );
+
+        AvailabilityWindow availability = new AvailabilityWindow(
+                LocalDateTime.of(2026, 9, 21, 9, 0),
+                LocalDateTime.of(2026, 9, 21, 11, 0)
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(dependent, prerequisite),
+                List.of(dependency),
+                List.of(availability),
+                List.of(),
+                LocalDateTime.of(2026, 9, 21, 0, 0),
+                LocalDateTime.of(2026, 9, 22, 0, 0)
+        );
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(2, result.scheduledBlocks().size());
+
+        assertEquals(
+                prerequisiteId, 
+                result.scheduledBlocks().get(0).taskId()
+        );
+
+        assertEquals(
+                dependentId, 
+                result.scheduledBlocks().get(1).taskId()
+        );
+    }
+
+    private int findBlockIndex(
+            List<ScheduleCandidate> blocks, 
+            UUID taskId
+    ) {
+        for (int i = 0; i < blocks.size(); i++) {
+                if (blocks.get(i).taskId().equals(taskId)) {
+                        return i;
+                }
+        }
+
+        fail("No schedule block found for task " + taskId);
+        return -1;
+    }
+
     private SchedulerInput input(
             List<SchedulingTask> tasks, 
             List<AvailabilityWindow> availabilityWindows

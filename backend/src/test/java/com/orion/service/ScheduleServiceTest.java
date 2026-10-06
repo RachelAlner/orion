@@ -4,6 +4,7 @@ import com.orion.model.Availability;
 import com.orion.model.Project;
 import com.orion.model.Schedule;
 import com.orion.model.Task;
+import com.orion.model.TaskDependencyId;
 import com.orion.model.TaskDependency;
 import com.orion.model.TaskStatus;
 import com.orion.model.User;
@@ -37,7 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SchedulerServiceTest {
+class ScheduleServiceTest {
 
     @Mock 
     private ScheduleRepository scheduleRepository;
@@ -149,27 +150,6 @@ class SchedulerServiceTest {
 
         verify(scheduleRepository)
                 .findFirstByUserIdOrderByGeneratedAtDesc(userId);
-    }
-
-    @Test 
-    void returnsLatestScheduleForUser() {
-        Schedule latestSchedule = new Schedule(
-                user, 
-                periodStart, 
-                periodEnd, 
-                LocalDateTime.of(2026, 9, 24, 10, 0)
-        );
-
-        when(scheduleRepository
-                .findFirstByUserIdOrderByGeneratedAtDesc(userId))
-                .thenReturn(Optional.of(latestSchedule));
-        
-        Schedule result = scheduleService.getCurrentSchedule(userId);
-
-        assertEquals(
-                latestSchedule.getGeneratedAt(),
-                result.getGeneratedAt()
-        );
     }
 
     @Test 
@@ -493,7 +473,7 @@ class SchedulerServiceTest {
     }
 
     @Test 
-    void passesEmptyExisitingScheduleWhenNoPerviousScheduleExists() {
+    void passesEmptyExistingScheduleWhenNoPerviousScheduleExists() {
         defaultTask();
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> invocation.getArgument(0));
         
@@ -1144,5 +1124,201 @@ class SchedulerServiceTest {
         );
         
 
+    }
+
+    @Test 
+    void passesTaskDependenciesToScheduler() {
+        defaultTask();
+
+        UUID dependencyTaskId = UUID.randomUUID();
+
+        TaskDependency dependency = mock(TaskDependency.class);
+
+        when(dependency.getId())
+                .thenReturn(
+                        new TaskDependencyId(
+                                taskId, 
+                                dependencyTaskId
+                        )
+                );
+
+        when(dependencyRepository.findByIdTaskId(taskId))
+                .thenReturn(List.of(dependency));
+        
+        when(scheduleRepository.save(any(Schedule.class)))
+                .thenAnswer(invocation -> 
+                        invocation.getArgument(0)
+                );
+
+        when(scheduler.generate(any(SchedulerInput.class)))
+                .thenReturn(
+                        new ScheduleResult(
+                                List.of(),
+                                List.of()
+                        )
+                );
+        
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );
+        
+        scheduleService.generateSchedule(
+                userId, 
+                periodStart, 
+                periodEnd
+        );
+
+        verify(scheduler)
+                .generate(inputCaptor.capture());
+        
+        SchedulerInput input = 
+                inputCaptor.getValue();
+        
+        assertEquals(
+                1, 
+                input.dependencies().size()
+        );
+
+        com.orion.scheduler.TaskDependency schedulerDependency = 
+                input.dependencies().get(0);
+        
+        assertEquals(
+                taskId, 
+                schedulerDependency.taskId()
+        );
+
+        assertEquals(
+                dependencyTaskId,
+                schedulerDependency.dependsOnTaskId()
+        );
+    }
+
+    @Test 
+    void ignoresExistingScheduleBlocksOutsideSchedulingPeriod() {
+        defaultTask();
+
+        when(scheduleRepository.save(any(Schedule.class)))
+                .thenAnswer(invocation -> 
+                        invocation.getArgument(0)
+                );
+        
+        Schedule previousSchedule = mock(Schedule.class);
+        ScheduleBlock previousBlock = mock(ScheduleBlock.class);
+
+        UUID previousTaskId = UUID.randomUUID();
+        Task previousTask = mock(Task.class);
+
+        LocalDateTime blockStart = LocalDateTime.of(2026, 9, 20, 9, 0);
+        LocalDateTime blockEnd = LocalDateTime.of(2026, 9, 20, 10, 0);
+
+        when(previousBlock.getStartTime())
+                .thenReturn(blockStart);
+        
+        when(previousBlock.getEndTime())
+                .thenReturn(blockEnd);
+        
+        when(previousSchedule.getBlocks())
+                .thenReturn(List.of(previousBlock));
+        
+        when(scheduleRepository
+                .findAllByUserIdOrderByGeneratedAtDesc(userId))
+                .thenReturn(List.of(previousSchedule));
+        
+        when(scheduler.generate(any(SchedulerInput.class)))
+                .thenReturn(
+                        new ScheduleResult(
+                                List.of(),
+                                List.of()
+                        )
+                );
+        
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );
+        
+        scheduleService.generateSchedule(
+                userId, 
+                periodStart, 
+                periodEnd
+        );
+
+        verify(scheduler)
+                .generate(inputCaptor.capture());
+        
+        SchedulerInput input = inputCaptor.getValue();
+
+        assertTrue(
+                input.existingScheduleBlocks().isEmpty()
+        );
+
+    }
+
+    @Test 
+    void preservesExistingScheduleBlockThatOverlapsSchedulingPeriod() {
+        defaultTask();
+
+        when(scheduleRepository.save(any(Schedule.class)))
+                .thenAnswer(invocation -> 
+                        invocation.getArgument(0)
+                );
+        
+        Schedule previousSchedule = mock(Schedule.class);
+        ScheduleBlock previousBlock = mock(ScheduleBlock.class);
+
+        UUID previousTaskId = UUID.randomUUID();
+        Task previousTask = mock(Task.class);
+
+        when(previousTask.getId())
+                .thenReturn(previousTaskId);
+        
+        LocalDateTime blockStart = LocalDateTime.of(2026, 9, 20, 23, 0);
+        LocalDateTime blockEnd = LocalDateTime.of(2026, 9, 21, 1, 0);
+
+        when(previousBlock.getTask())
+                .thenReturn(previousTask);
+        
+        when(previousBlock.getStartTime())
+                .thenReturn(blockStart);
+        
+        when(previousBlock.getEndTime())
+                .thenReturn(blockEnd);
+        
+        when(previousSchedule.getBlocks())
+                .thenReturn(List.of(previousBlock));
+        
+        when(scheduleRepository
+                .findAllByUserIdOrderByGeneratedAtDesc(userId))
+                .thenReturn(List.of(previousSchedule));
+        
+        when(scheduler.generate(any(SchedulerInput.class)))
+                .thenReturn(
+                        new ScheduleResult(
+                                List.of(),
+                                List.of()
+                        )
+                );
+        
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );
+        
+        scheduleService.generateSchedule(
+                userId, 
+                periodStart, 
+                periodEnd
+        );
+
+        verify(scheduler)
+                .generate(inputCaptor.capture());
+        
+        SchedulerInput input = inputCaptor.getValue();
+
+        assertEquals(
+                1, 
+                input.existingScheduleBlocks().size()
+        );
     }
 }
