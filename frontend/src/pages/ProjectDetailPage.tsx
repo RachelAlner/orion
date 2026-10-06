@@ -7,11 +7,20 @@ import {
     completeTask,
 } from "../services/taskService";
 
+import { 
+    addTaskDependency,
+    getTaskDependencies,
+    deleteTaskDependency,
+} from "../services/taskDependencyService";
+
+import type { TaskDependency } from "../types/taskDependency";
+
 import TaskForm from "../components/tasks/TaskForm";
 import TaskList from "../components/tasks/TaskList";
 import TaskDetails from "../components/tasks/TaskDetails";
 
 import type { Task } from "../types/task";
+import type { DragEvent } from "react";
 
 import { getProject } from "../services/projectService";
 import type { Project } from "../types/project";
@@ -35,6 +44,21 @@ export default function ProjectDetailPage() {
     const [selectedTask, setSelectedTask] = 
         useState<Task | null>(null);
 
+    const [dependencyError, setDependencyError] =
+        useState<string | null>(null);
+    const [draggedTask, setDraggedTask] = 
+        useState<Task | null>(null);
+    const [dropTarget, setDropTarget] = useState<{
+        taskId: string;
+        position: "above" | "below"
+    } | null>(null);
+    const [dependencies, setDependencies] = 
+        useState<TaskDependency[]>([]);
+    const [isLoadingDependencies, setIsLoadingDependencies] = 
+        useState(false);
+    const [TaskDependencies, setTaskDependencies] = 
+        useState<Record<string, TaskDependency[]>>({});
+
     async function loadTasks() {
         if (!projectId) {
             return;
@@ -46,6 +70,8 @@ export default function ProjectDetailPage() {
             const data = await getTasks(projectId);
 
             setTasks(data);
+
+            await loadAllTaskDependencies(data);
         } catch (error) {
             console.error(error);
 
@@ -54,6 +80,63 @@ export default function ProjectDetailPage() {
             );
         } finally {
             setIsLoadingTasks(false);
+        }
+    }
+
+    async function loadTaskDependencies(taskId: string) {
+        if (!projectId) {
+            return;
+        }
+
+        try {
+            setIsLoadingDependencies(true);
+            setDependencyError(null);
+
+            const data = await getTaskDependencies(
+                projectId,
+                taskId
+            );
+
+            setDependencies(data);
+        } catch (error) {
+            console.error(error);
+
+            setDependencyError(
+                "Unable to load task dependencies."
+            );
+        } finally {
+            setIsLoadingDependencies(false);
+        }
+    }
+    
+    async function loadAllTaskDependencies(
+        projectTasks: Task[]
+    ) {
+        if (!projectId) {
+            return;
+        }
+
+        try {
+            const entries = await Promise.all(
+                projectTasks.map(async (task) => {
+                    const dependencies = 
+                        await getTaskDependencies(
+                            projectId, 
+                            task.id
+                        );
+                    return [task.id, dependencies] as const;
+                })
+            );
+
+            setTaskDependencies(
+                Object.fromEntries(entries)
+            );
+        } catch (error) {
+            console.error(error);
+
+            setDependencyError(
+                "Unable to load task dependencies."
+            );
         }
     }
     
@@ -172,13 +255,55 @@ export default function ProjectDetailPage() {
         }
     }
 
+    async function handleRemoveDependency(
+        dependency: TaskDependency
+    ) {
+        if (!projectId || !selectedTask) {
+            return;
+        }
+
+        try {
+            setDependencyError(null);
+
+            await deleteTaskDependency(
+                projectId, 
+                selectedTask.id,
+                dependency.dependsOnTaskId
+            );
+
+            setDependencies((currentDependencies) => 
+                currentDependencies.filter(
+                    (currentDependency) => 
+                        !(
+                            currentDependency.taskId ===
+                                dependency.taskId &&
+                            currentDependency.dependsOnTaskId === 
+                                dependency.dependsOnTaskId
+                        )
+                )
+            );
+
+            await loadAllTaskDependencies(tasks);
+        } catch (error) {
+            console.error(error);
+
+            setDependencyError(
+                "Unable to remove this dependency."
+            );
+        }
+    }
+
     function handleTaskClick(task: Task) {
         setSelectedTask(task);
+        loadTaskDependencies(task.id);
     }
 
     function handleCloseTaskDetails() {
         setSelectedTask(null);
+        setDependencies([]);
+        setDependencyError(null);
     }
+
 
     function handleTaskCreated() {
         setShowCreateTaskForm(false);
@@ -196,6 +321,131 @@ export default function ProjectDetailPage() {
 
         setSelectedTask(updatedTask);
     }       
+
+    function handleTaskDragStart(task: Task) {
+        setDraggedTask(task);
+        setDropTarget(null);
+        setDependencyError(null);
+    }
+
+    function handleTaskDragEnd() {
+        setDraggedTask(null);
+        setDropTarget(null);
+    }
+
+    function handleTaskDragOver(
+        event: DragEvent<HTMLButtonElement>,
+        targetTask: Task
+    ) {
+        event.preventDefault();
+
+        if (!draggedTask) {
+            return;
+        }
+
+        if (draggedTask.id === targetTask.id) {
+            setDropTarget(null);
+            return;
+        }
+
+        const rect = event.currentTarget.getBoundingClientRect();
+
+        const middle = rect.top + rect.height / 2;
+
+        const position = 
+            event.clientY < middle 
+                ? "above"
+                : "below";
+
+        setDropTarget({
+            taskId: targetTask.id,
+            position
+        });
+    }
+
+    function getTaskDependencyDepth(
+        taskId: string, 
+        visited = new Set<string>()
+    ): number {
+        if (visited.has(taskId)) {
+            return 0;
+        }
+
+        const nextVisited = new Set(visited);
+        nextVisited.add(taskId);
+
+        const dependencies = 
+            TaskDependencies[taskId] ?? [];
+        
+        if (dependencies.length == 0) {
+            return 0;
+        }
+
+        return Math.max(
+            ...dependencies.map((dependency) =>
+                getTaskDependencyDepth(
+                    dependency.dependsOnTaskId, 
+                    nextVisited
+                )
+            )
+        ) + 1;
+    }
+
+    async function handleTaskDrop(
+        event: DragEvent<HTMLButtonElement>,
+        targetTask: Task
+    ) {
+        event.preventDefault();
+
+        if (!draggedTask || !projectId) {
+            return;
+        }
+
+        if (draggedTask.id === targetTask.id) {
+            return;
+        }
+
+        try {
+            setDependencyError(null);
+
+            await addTaskDependency(
+                projectId, 
+                draggedTask.id, 
+                targetTask.id
+            );
+
+            await loadAllTaskDependencies(tasks);
+
+            if (selectedTask?.id === draggedTask.id) {
+                await loadTaskDependencies(draggedTask.id);
+            }
+        } catch (error) {
+            console.error(error);
+            
+            if (
+                error instanceof Error &&
+                error.message.includes("TASK_DEPENDENCY_ALREADY_EXISTS")
+            ) {
+                setDependencyError(
+                    "This dependency already exists."
+                );
+            } else if (
+                error instanceof Error &&
+                    error.message.includes("DEPENDENCY_CYCLE")
+                ) {
+                setDependencyError(
+                    "This dependency would create a cycle."
+                );
+            } else {
+                setDependencyError(
+                    "Unable to create this dependency."
+                );
+            }
+        } finally {
+            setDraggedTask(null);
+            setDropTarget(null);
+        }
+    }
 
     if (isLoading) {
         return (
@@ -305,20 +555,38 @@ export default function ProjectDetailPage() {
                 {isLoadingTasks ? (
                     <p>Loading tasks...</p>
                 ) : (
-                    <TaskList 
-                        tasks={tasks}
-                        onTaskClick={handleTaskClick}
-                    />
+                    <>
+                        {dependencyError && (
+                            <p className="task-error" role="alert">
+                                {dependencyError}
+                            </p>
+                        )}
+                    
+                        <TaskList 
+                            tasks={tasks}
+                            onTaskClick={handleTaskClick}
+                            onDragStart={handleTaskDragStart}
+                            onDragEnd={handleTaskDragEnd}
+                            onDragOver={handleTaskDragOver}
+                            onDrop={handleTaskDrop}
+                            dropTarget={dropTarget}
+                            taskDependencyDepth={getTaskDependencyDepth}
+                        />
+                    </>
                 )}
 
                 {selectedTask && (
                     <TaskDetails
                         task={selectedTask}
+                        tasks={tasks}
+                        dependencies={dependencies}
+                        isLoadingDependencies={isLoadingDependencies}
                         onClose={handleCloseTaskDetails}
                         onSaved={handleTaskSaved}
                         onProgressSaved={handleProgressSaved}
                         onComplete={handleCompleteTask}
                         onDelete={handleDeleteTask}
+                        onRemoveDependency={handleRemoveDependency}
                     />
                 )}
             </section>

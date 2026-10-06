@@ -31,10 +31,17 @@ export async function apiRequest<T>(
     );
 
     if (!response.ok) {
-        throw new Error(
-            `Request failed with status ${response.status}`
+        const errorBody = await response.text();
+
+        console.error(
+            `API request failed (${response.status}):`,
+            errorBody
         );
-    }
+
+        throw new Error(
+            `Request failed with status ${response.status}: ${errorBody}`
+    );
+}
 
     if (response.status === 204) {
         return undefined as T;

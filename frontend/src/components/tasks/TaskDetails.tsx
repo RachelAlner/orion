@@ -2,22 +2,35 @@ import type { Task } from "../../types/task";
 import TaskForm from "./TaskForm";
 import ProgressForm from "./ProgressForm";
 
+import TaskDependencies from "./TaskDependencies";
+import type { TaskDependency } from "../../types/taskDependency";
+
 interface TaskDetailsProps {
     task: Task;
+    tasks: Task[];
+    dependencies: TaskDependency[];
+    isLoadingDependencies: boolean;
     onClose: () => void;
     onSaved: () => void;
     onProgressSaved: (task: Task) => void;
     onComplete: (task: Task) => void;
     onDelete: (task: Task) => void;
+    onRemoveDependency: (
+        dependency: TaskDependency
+    ) => void;
 }
 
 export default function TaskDetails({
     task, 
+    tasks,
+    dependencies,
+    isLoadingDependencies,
     onClose, 
     onSaved, 
     onProgressSaved,
     onComplete,
     onDelete,
+    onRemoveDependency,
 }: TaskDetailsProps) {
     return (
         <div
@@ -45,6 +58,13 @@ export default function TaskDetails({
                     task={task}
                     onSaved={onSaved}
                     onCancel={onClose}
+                />
+
+                <TaskDependencies
+                    tasks={tasks}
+                    dependencies={dependencies}
+                    isLoading={isLoadingDependencies}
+                    onRemove={onRemoveDependency}
                 />
 
                 {task.estimatedMinutes !== null && 
