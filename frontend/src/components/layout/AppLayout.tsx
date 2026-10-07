@@ -95,6 +95,13 @@ function AppLayout() {
                         >
                             Schedule
                         </NavLink>
+
+                        <NavLink 
+                            to="/availability"
+                            className="app-nav-link"
+                        >
+                            Availability
+                        </NavLink>
                     </nav>
                 </aside>
 

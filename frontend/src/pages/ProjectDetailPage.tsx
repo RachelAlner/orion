@@ -52,11 +52,13 @@ export default function ProjectDetailPage() {
         taskId: string;
         position: "above" | "below"
     } | null>(null);
+
     const [dependencies, setDependencies] = 
         useState<TaskDependency[]>([]);
     const [isLoadingDependencies, setIsLoadingDependencies] = 
         useState(false);
-    const [TaskDependencies, setTaskDependencies] = 
+
+    const [taskDependencies, setTaskDependencies] = 
         useState<Record<string, TaskDependency[]>>({});
 
     async function loadTasks() {
@@ -201,11 +203,7 @@ export default function ProjectDetailPage() {
             `Are you sure you want to delete "${task.title}"?`
         );
 
-        if (!confirmed) {
-            return;
-        }
-
-        if (!projectId) {
+        if (!confirmed || !projectId) {
             return;
         }
 
@@ -375,7 +373,7 @@ export default function ProjectDetailPage() {
         nextVisited.add(taskId);
 
         const dependencies = 
-            TaskDependencies[taskId] ?? [];
+            taskDependencies[taskId] ?? [];
         
         if (dependencies.length == 0) {
             return 0;
@@ -537,12 +535,32 @@ export default function ProjectDetailPage() {
                 </div>
 
                 {showCreateTaskForm && projectId && (
-                    <div className="new-task-form">
-                        <TaskForm 
-                            projectId={projectId}
-                            onSaved={handleTaskCreated}
-                            onCancel={() => setShowCreateTaskForm(false)}
-                        />
+                    <div 
+                        className="form-overlay"
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget) {
+                                setShowCreateTaskForm(false);
+                            }
+                        }}
+                    >
+                        <div className="form-overlay-panel">
+                            <button 
+                                type="button"
+                                className="form-overlay-close"
+                                onClick={() => 
+                                    setShowCreateTaskForm(false)
+                                }
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+
+                            <TaskForm 
+                                projectId={projectId}
+                                onSaved={handleTaskCreated}
+                                onCancel={() => setShowCreateTaskForm(false)}
+                            />
+                        </div>
                     </div>
                 )}
 

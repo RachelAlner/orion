@@ -9,6 +9,7 @@ import SchedulePage from "./pages/SchedulePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomeRedirect from "./components/HomeRedirect";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
+import AvailabilityPage from "./pages/AvailabilityPage";
 
 function App() {
   return (
@@ -49,6 +50,11 @@ function App() {
                     <Route 
                         path="/schedule"
                         element={<SchedulePage />}
+                    />
+
+                    <Route 
+                        path="/availability"
+                        element={<AvailabilityPage />}
                     />
                 </Route>
             </Route>

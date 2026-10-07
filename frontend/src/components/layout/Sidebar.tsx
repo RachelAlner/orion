@@ -32,6 +32,13 @@ export default function Sidebar() {
                 >
                     Schedule
                 </Link>
+
+                <Link 
+                    to="/availability"
+                    className="sidebar-link"
+                >
+                    Availability
+                </Link>
             </nav>
         </aside>
     );

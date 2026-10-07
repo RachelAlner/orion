@@ -79,6 +79,14 @@ export default function ProjectsPage() {
         loadProjects();
     }
 
+    function handleCloseCreate() {
+        setShowCreateForm(false);
+    }
+
+    function handleCloseEdit() {
+        setEditingProject(null);
+    }
+
     if (isLoading) {
         return (
             <div className="projects-page">
@@ -99,19 +107,17 @@ export default function ProjectsPage() {
                         Organise your work and track your progress.
                     </p>
                 </div>
-
-                {!showCreateForm && 
-                    editingProject === null && (
-                        <button 
-                            type="button"
-                            className="projects-new-button"
-                            onClick={() => 
-                                setShowCreateForm(true)
-                            }
-                        >
-                            + New Project 
-                        </button>
-                    )}
+            
+                <button 
+                    type="button"
+                    className="projects-new-button"
+                    onClick={() => {
+                        setEditingProject(null);
+                        setShowCreateForm(true);
+                    }}
+                >
+                    + New Project 
+                </button>
             </header>        
 
             {error && (
@@ -121,26 +127,59 @@ export default function ProjectsPage() {
             )}
 
             {showCreateForm && (
-                <section className="project-form-section">
-                    <ProjectForm 
-                        onSaved={handleCreateSaved}
-                        onCancel={() => 
-                            setShowCreateForm(false)
+                <div 
+                    className="form-overlay"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            handleCloseCreate();
                         }
-                    />
-                </section>
+                    }}
+                >
+                    <div className="form-overlay-panel">
+                        <button 
+                            type="button"
+                            className="form-overlay-close"
+                            onClick={handleCloseCreate}
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                        <ProjectForm 
+                            onSaved={handleCreateSaved}
+                            onCancel={handleCloseCreate}
+                        />
+                    </div>
+                </div>
             )}
 
             {editingProject && (
-                <section className="project-form-section">
-                    <ProjectForm
-                        project={editingProject}
-                        onSaved={handleEditSaved}
-                        onCancel={() =>
-                            setEditingProject(null)
+                <div 
+                    className="project-details-overlay"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            handleCloseEdit();
                         }
-                    />
-                </section>
+                    }}
+                >
+                    <aside className="project-details-edit">
+                        <button 
+                            type="button"
+                            className="project-details-close"
+                            onClick={handleCloseEdit}
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+
+                        <ProjectForm
+                            project={editingProject}
+                            onSaved={handleEditSaved}
+                            onCancel={() =>
+                                setEditingProject(null)
+                            }
+                        />
+                    </aside>
+                </div>
             )}
 
             {!showCreateForm && editingProject === null && (
