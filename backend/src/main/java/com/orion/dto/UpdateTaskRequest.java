@@ -10,18 +10,17 @@ import java.time.LocalDateTime;
 public record UpdateTaskRequest(
     @NotBlank
     @Size(max = 255)
-    String title, 
+    String title,
 
     @Size(max = 2000)
-    String description, 
+    String description,
 
-    @Min(1)
-    Integer estimatedMinutes, 
+    Integer estimatedMinutes,
 
     @Min(0)
     Integer workedMinutes,
 
-    LocalDateTime deadline, 
+    LocalDateTime deadline,
 
     @Min(1)
     @Max(5)

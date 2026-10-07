@@ -135,9 +135,9 @@ public class TaskController {
         UUID userId = getUserId(authentication);
 
         Task task = taskService.updateProgress(
-                userId, 
-                taskId, 
-                projectId, 
+                userId,
+                taskId,
+                projectId,
                 request.workedMinutes()
         );
 

@@ -4,5 +4,5 @@ import jakarta.validation.constraints.Min;
 
 public record UpdateTaskProgressRequest(
         @Min(0)
-        int workedMinutes
+        Integer workedMinutes
 ) {}

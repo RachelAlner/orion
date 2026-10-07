@@ -70,21 +70,22 @@ class TaskTest {
         assertNotNull(task.getCompletedAt());
     }
 
-    @Test 
-    void workedMinutesBeyondEstimateKeepsRemainingAtZero() {
-        task.updateProgress(150);
-
-        assertEquals(
-            0, 
-            task.getRemainingMinutes()
+    @Test
+    void rejectsWorkedMinutesBeyondEstimate() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> task.updateProgress(150)
         );
 
         assertEquals(
-            TaskStatus.COMPLETED,
-            task.getStatus()
+                120,
+                task.getRemainingMinutes()
         );
 
-        assertNotNull(task.getCompletedAt());
+        assertEquals(
+                TaskStatus.TODO,
+                task.getStatus()
+        );
     }
 
     @Test 
@@ -128,11 +129,6 @@ class TaskTest {
         task.complete();
 
         assertEquals(
-                120, 
-                task.getWorkedMinutes()
-        );
-
-        assertEquals(
                 0, 
                 task.getRemainingMinutes()
         );
@@ -165,14 +161,14 @@ class TaskTest {
         );
     }
 
-    @Test 
+    @Test
     void updatePreservesWorkedMinutes() {
         Task task = new Task(
-                projectId, 
+                projectId,
                 "Original task",
-                null, 
-                120, 
-                null, 
+                null,
+                120,
+                null,
                 3
         );
 
@@ -182,7 +178,8 @@ class TaskTest {
                 "Updated task",
                 "Updated description",
                 120,
-                null, 
+                50,
+                null,
                 4
         );
 
@@ -192,14 +189,14 @@ class TaskTest {
         assertEquals(4, task.getPriority());
     }
 
-    @Test 
+    @Test
     void updateRecalculatedRemainingUsingWorkedMinutes() {
         Task task = new Task(
-                projectId, 
+                projectId,
                 "Task",
-                null, 
-                120, 
-                null, 
+                null,
+                120,
+                null,
                 3
         );
 
@@ -207,9 +204,10 @@ class TaskTest {
 
         task.update(
                 "Task",
-                null, 
+                null,
                 180,
-                null, 
+                50,
+                null,
                 3
         );
 
@@ -217,14 +215,14 @@ class TaskTest {
         assertEquals(130, task.getRemainingMinutes());
     }
 
-    @Test 
+    @Test
     void updateRemovesRemainingTimeWhenEstimateIsRemoved() {
         Task task = new Task(
-                projectId, 
-                "Task", 
-                null, 
-                120, 
-                null, 
+                projectId,
+                "Task",
+                null,
+                120,
+                null,
                 3
         );
 
@@ -232,9 +230,10 @@ class TaskTest {
 
         task.update(
                 "Task",
-                null, 
-                null, 
-                null, 
+                null,
+                null,
+                50,
+                null,
                 3
         );
 
@@ -242,14 +241,14 @@ class TaskTest {
         assertNull(task.getRemainingMinutes());
     }
 
-    @Test 
+    @Test
     void updateReopensCompletedTaskWhenRemainingMinutesBecomePositive() {
         Task task = new Task(
-                projectId, 
+                projectId,
                 "Task",
-                null, 
-                120, 
-                null, 
+                null,
+                120,
+                null,
                 3
         );
 
@@ -260,9 +259,10 @@ class TaskTest {
 
         task.update(
                 "Task",
-                null, 
-                180, 
-                null, 
+                null,
+                180,
+                120,
+                null,
                 3
         );
 
@@ -275,14 +275,14 @@ class TaskTest {
         assertNull(task.getCompletedAt());
     }
 
-    @Test 
+    @Test
     void updateKeepsCompletedStatusWhenRemainingMinutesAreZero() {
         Task task = new Task(
-                projectId, 
+                projectId,
                 "Task",
-                null, 
-                120, 
-                null, 
+                null,
+                120,
+                null,
                 3
         );
 
@@ -290,9 +290,10 @@ class TaskTest {
 
         task.update(
                 "Updated task",
-                null, 
-                120, 
-                null, 
+                null,
+                120,
+                120,
+                null,
                 3
         );
 
@@ -338,25 +339,28 @@ class TaskTest {
         assertEquals(TaskStatus.IN_PROGRESS, task.getStatus());
     }
 
-    @Test 
-    void updateProgressBeyondEstimateKeepsRemainingAtZero() {
+    @Test
+    void updateProgressBeyondEstimateThrowsException() {
         Task task = new Task(
-                projectId, 
+                projectId,
                 "Test task",
                 "Description",
-                120, 
-                null, 
+                120,
+                null,
                 3
         );
 
-        task.updateProgress(150);
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> task.updateProgress(150)
+        );
 
-        assertEquals(150, task.getWorkedMinutes());
-        assertEquals(0, task.getRemainingMinutes());
-        assertEquals(TaskStatus.COMPLETED, task.getStatus());
+        assertEquals(0, task.getWorkedMinutes());
+        assertEquals(120, task.getRemainingMinutes());
+        assertEquals(TaskStatus.TODO, task.getStatus());
     }
 
-    @Test 
+    @Test
     void increasingEstimateReopensCompletedTask() {
         task.updateProgress(120);
 
@@ -366,7 +370,8 @@ class TaskTest {
                 "Test task",
                 "Description",
                 180,
-                null, 
+                120,
+                null,
                 3
         );
 
@@ -376,24 +381,48 @@ class TaskTest {
         assertNull(task.getCompletedAt());
     }
 
-    @Test 
-    void updateCompletesTaskWhenEstimateIsLessThanWorkedMinutes() {
-        task.updateProgress(100);
-
-        assertEquals(TaskStatus.IN_PROGRESS, task.getStatus());
-
-        task.update(
-                "Test task",
-                "Test description",
-                80, 
-                null, 
-                2
+    @Test
+    void allowsUpdateProgressWithoutEstimate() {
+        Task task = new Task(
+                projectId,
+                "Task without estimate",
+                "Description",
+                null,
+                null,
+                3
         );
 
-        assertEquals(80, task.getEstimatedMinutes());
-        assertEquals(100, task.getWorkedMinutes());
-        assertEquals(0, task.getRemainingMinutes());
-        assertEquals(TaskStatus.COMPLETED, task.getStatus());
-        assertNotNull(task.getCompletedAt());
+        task.updateProgress(30);
+
+        assertEquals(30, task.getWorkedMinutes());
+        assertNull(task.getEstimatedMinutes());
+        assertNull(task.getRemainingMinutes());
+        assertEquals(TaskStatus.TODO, task.getStatus());
+    }
+
+    @Test
+    void allowsUpdateWorkedMinutesWithoutEstimate() {
+        Task task = new Task(
+                projectId,
+                "Task without estimate",
+                "Description",
+                null,
+                null,
+                3
+        );
+
+        task.update(
+                "Task without estimate",
+                "Description",
+                null,
+                45,
+                null,
+                3
+        );
+
+        assertEquals(45, task.getWorkedMinutes());
+        assertNull(task.getEstimatedMinutes());
+        assertNull(task.getRemainingMinutes());
+        assertEquals(TaskStatus.TODO, task.getStatus());
     }
 }

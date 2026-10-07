@@ -118,6 +118,10 @@ public class Task {
     }
 
     public Integer getRemainingMinutes() {
+        if (status == TaskStatus.COMPLETED) {
+            return 0;
+        }
+
         if (estimatedMinutes == null) {
             return null;
         }
@@ -129,30 +133,35 @@ public class Task {
     }
 
     public void update(
-            String title, 
-            String description, 
+            String title,
+            String description,
             Integer estimatedMinutes,
-            LocalDateTime deadline, 
+            Integer workedMinutes,
+            LocalDateTime deadline,
             Integer priority
     ) {
         this.title = title;
         this.description = description;
         this.estimatedMinutes = estimatedMinutes;
+        this.workedMinutes = workedMinutes;
         this.deadline = deadline;
         this.priority = priority;
 
         if (estimatedMinutes == null) {
             this.status = TaskStatus.TODO;
             this.completedAt = null;
-        } else if (getRemainingMinutes() == 0) {
-            this.status = TaskStatus.COMPLETED;
-
-            if (this.completedAt == null) {
-                this.completedAt = OffsetDateTime.now();
-            }
         } else {
-            this.status = TaskStatus.IN_PROGRESS;
-            this.completedAt = null;
+            int remaining = Math.max(0, estimatedMinutes - workedMinutes);
+            if (remaining == 0) {
+                this.status = TaskStatus.COMPLETED;
+
+                if (this.completedAt == null) {
+                    this.completedAt = OffsetDateTime.now();
+                }
+            } else {
+                this.status = TaskStatus.IN_PROGRESS;
+                this.completedAt = null;
+            }
         }
 
         this.updatedAt = OffsetDateTime.now();
@@ -170,38 +179,46 @@ public class Task {
             );
         }
 
-        if (estimatedMinutes == null) {
-            throw new IllegalStateException(
-                "Cannot record progress for a task without an estimated duration"
+        if (estimatedMinutes != null && workedMinutes > estimatedMinutes) {
+            throw new IllegalArgumentException(
+                    "Minutes worked cannot exceed estimated minutes"
             );
         }
 
         this.workedMinutes = workedMinutes;
 
-        if (getRemainingMinutes() == 0) {
-            this.status = TaskStatus.COMPLETED;
-
-            if (this.completedAt == null) {
-                this.completedAt = OffsetDateTime.now();
-            }
-        } else if (workedMinutes == 0) { 
+        if (estimatedMinutes == null) {
             this.status = TaskStatus.TODO;
             this.completedAt = null;
         } else {
-            this.status = TaskStatus.IN_PROGRESS;
-            this.completedAt = null;
+            int remaining = Math.max(0, estimatedMinutes - workedMinutes);
+            if (remaining == 0) {
+                this.status = TaskStatus.COMPLETED;
+
+                if (this.completedAt == null) {
+                    this.completedAt = OffsetDateTime.now();
+                }
+            } else if (workedMinutes == 0) {
+                this.status = TaskStatus.TODO;
+                this.completedAt = null;
+            } else {
+                this.status = TaskStatus.IN_PROGRESS;
+                this.completedAt = null;
+            }
         }
 
         this.updatedAt = OffsetDateTime.now();
     }
 
     public void complete() {
-        if (estimatedMinutes != null) {
-            this.workedMinutes = estimatedMinutes;
-        }
-
         this.status = TaskStatus.COMPLETED;
         this.completedAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
+    }
+
+    public void uncomplete() {
+        this.status = TaskStatus.IN_PROGRESS;
+        this.completedAt = null;
         this.updatedAt = OffsetDateTime.now();
     }
 }

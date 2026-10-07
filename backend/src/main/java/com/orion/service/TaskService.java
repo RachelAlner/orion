@@ -1,8 +1,8 @@
 package com.orion.service;
 
-import com.orion.service.ProjectService;
 import com.orion.exception.TaskNotFoundException;
 import com.orion.model.Task;
+import com.orion.model.TaskStatus;
 import com.orion.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-@Service 
+@Service
 public class TaskService {
     private final ProjectService projectService;
 
@@ -68,28 +68,35 @@ public class TaskService {
 
     public Task updateTask(
             UUID userId,
-            UUID taskId, 
-            UUID projectId, 
-            String title, 
-            String description, 
-            Integer estimatedMinutes, 
+            UUID taskId,
+            UUID projectId,
+            String title,
+            String description,
+            Integer estimatedMinutes,
             Integer workedMinutes,
-            LocalDateTime deadline, 
+            LocalDateTime deadline,
             Integer priority
     ) {
         projectService.findByIdForUser(projectId, userId);
 
         Task task = findByIdForProject(userId, taskId, projectId);
 
+        if (workedMinutes != null && workedMinutes < 0) {
+            throw new IllegalArgumentException("Minutes worked cannot be negative");
+        }
+
+        if (estimatedMinutes != null && workedMinutes != null && workedMinutes > estimatedMinutes) {
+            throw new IllegalArgumentException("Minutes worked cannot exceed estimated minutes");
+        }
+
         task.update(
-                title, 
-                description, 
-                estimatedMinutes, 
-                deadline, 
+                title,
+                description,
+                estimatedMinutes,
+                workedMinutes,
+                deadline,
                 priority
         );
-
-        task.updateProgress(workedMinutes);
 
         return taskRepository.save(task);
     }
@@ -107,7 +114,11 @@ public class TaskService {
                 projectId
         );
 
-        task.complete();
+        if (task.getStatus() == TaskStatus.COMPLETED) {
+            task.uncomplete();
+        } else {
+            task.complete();
+        }
 
         return taskRepository.save(task);
     }
@@ -129,16 +140,20 @@ public class TaskService {
     }
 
     public Task updateProgress(
-            UUID userId, 
-            UUID taskId, 
-            UUID projectId, 
-            int workedMinutes
+            UUID userId,
+            UUID taskId,
+            UUID projectId,
+            Integer workedMinutes
     ) {
         Task task = findByIdForProject(
-                userId, 
-                taskId, 
+                userId,
+                taskId,
                 projectId
         );
+
+        if (workedMinutes == null) {
+            throw new IllegalArgumentException("Worked minutes cannot be null");
+        }
 
         task.updateProgress(workedMinutes);
 

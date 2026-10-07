@@ -43,7 +43,7 @@ class TaskControllerTest {
     private UUID userId;
     private UUID projectId;
     private UUID taskId;
-
+ 
 
     private Task task;
 
@@ -315,7 +315,7 @@ class TaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.estimatedMinutes").value(60))
-                .andExpect(jsonPath("$.workedMinutes").value(60))
+                .andExpect(jsonPath("$.workedMinutes").value(0))
                 .andExpect(jsonPath("$.remainingMinutes").value(0))
                 .andExpect(jsonPath("$.completedAt").exists());
 
