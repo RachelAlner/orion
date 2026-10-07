@@ -233,12 +233,18 @@ export default function ProjectDetailPage() {
     }
 
     async function handleCompleteTask(task: Task) {
+        if (!projectId) {
+            return;
+        }
+
         try {
+            setTaskError(null);
+
             const updatedTask = await completeTask(
-                task.projectId,
+                projectId,
                 task.id
             );
-
+            
             setTasks((currentTasks) => 
                 currentTasks.map((currentTask) => 
                     currentTask.id === updatedTask.id 
@@ -247,9 +253,18 @@ export default function ProjectDetailPage() {
                 )
             );
 
-            setSelectedTask(updatedTask);
+            setSelectedTask((currentTask) =>
+                currentTask?.id === updatedTask.id 
+                    ? updatedTask
+                    : currentTask
+            );
         } catch (error) {
             console.error(error);
+            setTaskError(
+                task.status === "COMPLETED"
+                    ? "Unable to mark the task as incomplete. Please try again."
+                    : "Unable to complete the task. Please try again."
+            );
         }
     }
 
@@ -306,19 +321,7 @@ export default function ProjectDetailPage() {
     function handleTaskCreated() {
         setShowCreateTaskForm(false);
         loadTasks();
-    }
-    
-    function handleProgressSaved(updatedTask: Task) {
-        setTasks((currentTasks) => 
-            currentTasks.map((task) => 
-                task.id === updatedTask.id
-                    ? updatedTask 
-                    : task
-            )
-        );
-
-        setSelectedTask(updatedTask);
-    }       
+    }     
 
     function handleTaskDragStart(task: Task) {
         setDraggedTask(task);
@@ -332,7 +335,7 @@ export default function ProjectDetailPage() {
     }
 
     function handleTaskDragOver(
-        event: DragEvent<HTMLButtonElement>,
+        event: DragEvent<HTMLDivElement>,
         targetTask: Task
     ) {
         event.preventDefault();
@@ -390,7 +393,7 @@ export default function ProjectDetailPage() {
     }
 
     async function handleTaskDrop(
-        event: DragEvent<HTMLButtonElement>,
+        event: DragEvent<HTMLDivElement>,
         targetTask: Task
     ) {
         event.preventDefault();
@@ -583,6 +586,7 @@ export default function ProjectDetailPage() {
                         <TaskList 
                             tasks={tasks}
                             onTaskClick={handleTaskClick}
+                            onComplete={handleCompleteTask}
                             onDragStart={handleTaskDragStart}
                             onDragEnd={handleTaskDragEnd}
                             onDragOver={handleTaskDragOver}
@@ -601,7 +605,6 @@ export default function ProjectDetailPage() {
                         isLoadingDependencies={isLoadingDependencies}
                         onClose={handleCloseTaskDetails}
                         onSaved={handleTaskSaved}
-                        onProgressSaved={handleProgressSaved}
                         onComplete={handleCompleteTask}
                         onDelete={handleDeleteTask}
                         onRemoveDependency={handleRemoveDependency}

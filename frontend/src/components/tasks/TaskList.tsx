@@ -8,14 +8,15 @@ type DropPosition = "above" | "below" | null;
 interface TaskListProps {
     tasks: Task[];
     onTaskClick: (task: Task) => void;
+    onComplete: (task: Task) => void;
     onDragStart: (task: Task) => void;
     onDragEnd: () => void;
     onDragOver: (
-        event: DragEvent<HTMLButtonElement>,
+        event: DragEvent<HTMLDivElement>,
         task: Task
     ) => void;
     onDrop: (
-        event: DragEvent<HTMLButtonElement>,
+        event: DragEvent<HTMLDivElement>,
         task: Task
     ) => void;
     dropTarget: {
@@ -30,6 +31,7 @@ interface TaskListProps {
 export default function TaskList({
     tasks, 
     onTaskClick,
+    onComplete,
     onDragStart,
     onDragEnd,
     onDragOver,
@@ -45,13 +47,22 @@ export default function TaskList({
         );
     }
 
+    const activeTasks = tasks.filter(
+        (task) => task.status !== "COMPLETED"
+    );
+
+    const completedTasks = tasks.filter(
+        (task) => task.status === "COMPLETED"
+    );
+
     return (
         <div className="task-list">
-            {tasks.map((task) => (
+            {activeTasks.map((task) => (
                 <TaskCard 
                     key={task.id}
                     task={task}
                     onClick={onTaskClick}
+                    onComplete={onComplete}
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}
                     onDragOver={onDragOver}
@@ -66,6 +77,31 @@ export default function TaskList({
                     }
                 />
             ))}
+
+            {completedTasks.length > 0 && (
+                <section className="completed-task-section">
+                    <h3 className="completed task-section-title">
+                        Completed
+                    </h3>
+
+                    <div className="completed-task-list">
+                        {completedTasks.map((task) => (
+                            <TaskCard 
+                                key={task.id}
+                                task={task}
+                                onClick={onTaskClick}
+                                onComplete={onComplete}
+                                onDragStart={onDragStart}
+                                onDragEnd={onDragEnd}
+                                onDragOver={onDragOver}
+                                onDrop={onDrop}
+                                dropPosition={null}
+                                dependencyDepth={0}
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
     );
 }

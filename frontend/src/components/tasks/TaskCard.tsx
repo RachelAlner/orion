@@ -9,14 +9,15 @@ type DropPosition = "above" | "below" | null;
 interface TaskCardProps {
     task: Task;
     onClick: (task: Task) => void;
+    onComplete: (task: Task) => void;
     onDragStart: (task: Task) => void;
     onDragEnd: () => void;
     onDragOver: (
-        event: DragEvent<HTMLButtonElement>,
+        event: DragEvent<HTMLDivElement>,
         task: Task
     ) => void;
     onDrop: (
-        event: DragEvent<HTMLButtonElement>,
+        event: DragEvent<HTMLDivElement>,
         task: Task
     ) => void;
     dropPosition: DropPosition;
@@ -26,6 +27,7 @@ interface TaskCardProps {
 export default function TaskCard({
     task, 
     onClick,
+    onComplete,
     onDragStart,
     onDragEnd,
     onDragOver,
@@ -33,45 +35,77 @@ export default function TaskCard({
     dropPosition,
     dependencyDepth,
 }: TaskCardProps) {
+    const isCompleted = task.status === "COMPLETED";
+
     return (
-        <button
-            type="button"
-            className={`task-card ${dropPosition
-                ? "task-card-drop-${dropPosition}"
-                : ""
-            }`}
+        <div
+            className={`task-card 
+                ${isCompleted
+                    ? "task-card-completed"
+                    : ""
+                }
+                ${dropPosition
+                    ? `task-card-drop-${dropPosition}`
+                    : ""
+                }
+            `}
             style={{
                 "--task-depth": dependencyDepth,
             } as CSSProperties} 
-            draggable
-            onClick={() => onClick(task)}
+            draggable={!isCompleted}
             onDragStart={() => onDragStart(task)}
             onDragEnd={onDragEnd}
             onDragOver={(event) => onDragOver(event, task)}
             onDrop={(event) => onDrop(event, task)}
         >
-            <div className="task-card-title">
-                {task.title}
-            </div>
-
-            <div className="task-card-status">
-                {task.status.replace("_", " ")}
-            </div>
-
-            <div className="task-card-time">
-                {task.estimatedMinutes !== null 
-                    ? `${task.workedMinutes} / ${task.estimatedMinutes} min`
-                    : `${task.workedMinutes} min`
+            <button
+                type="button"
+                className={`task-complete-circle ${
+                    isCompleted ? "completed" : ""
+                }`}
+                onClick={(event) => {
+                    event.stopPropagation();
+                    onComplete(task);
+                }}
+                aria-label={
+                    isCompleted
+                        ? "Task completed"
+                        : "Mark task as complete"
                 }
-            </div>
+            >
+                {isCompleted && "✓"}
+            </button>
 
-            <div className="task-card-remaining">
-                {task.remainingMinutes !== null
-                    ? `${task.remainingMinutes} min left`
-                    : "No estimate"
-                }
+            <button
+                type="button"
+                className="task-card-main"
+                onClick={() => onClick(task)}
+            >
 
-            </div>
-        </button>
+                <div className="task-card-title">
+                    {task.title}
+                </div>
+
+                <div className="task-card-status">
+                    {task.status.replace("_", " ")}
+                </div>
+
+                <div className="task-card-time">
+                    {task.estimatedMinutes !== null
+                        ? `${task.workedMinutes} / ${task.estimatedMinutes} min`
+                        : `${task.workedMinutes} min worked`
+                    }
+                </div>
+
+                <div className="task-card-remaining">
+                    {task.remainingMinutes !== null
+                        ? task.remainingMinutes === 0
+                            ? "Completed"
+                            : `${task.remainingMinutes} min left`
+                        : null
+                    }
+                </div>
+            </button>
+        </div>
     );
 }

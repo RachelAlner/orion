@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { SubmitEvent } from "react";
 
 import {
@@ -54,42 +54,74 @@ export default function TaskForm({
         null
     );
 
-    const [isSubmitting, setIsSubmitting] = 
-        useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-    async function handleSubmit(
+    async function handleCreate(
         event: SubmitEvent     
     ) {
         event.preventDefault();
 
         setError(null);
 
+        const validationError = validateFields();
+
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            await createTask(projectId, {
+                title: title.trim(),
+                description: description.trim() || null,
+                estimatedMinutes: estimatedMinutes
+                    ? Number(estimatedMinutes)
+                    : null,
+                deadline: deadline ?? null,
+                priority: priority 
+                    ? Number(priority)
+                    : null,
+            });
+
+            onSaved();
+        } catch (error) {
+            console.error(error);
+
+            setError(
+                "Unable to create the task. Please try again."
+            );
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    function validateFields(): string | null {
         const trimmedTitle = title.trim();
 
         if (!trimmedTitle) {
-            setError("Task title is required.");
-            return;
+            return "Task title is required.";
         }
 
         if (trimmedTitle.length > 255) {
-            setError(
+            return(
                 "Task title must be 255 characters or fewer."
             );
-            return;
         }
 
         if (description.length > 2000) {
-            setError(
+            return(
                 "Description must be 2,000 characters or fewer."
             );
-            return;
         }
 
         const estimatedMinutesValue = 
             estimatedMinutes
                 ? Number(estimatedMinutes)
                 : null;
-        
+            
         if (
             estimatedMinutesValue !== null &&
             (!Number.isInteger(
@@ -97,97 +129,154 @@ export default function TaskForm({
             ) ||
                 estimatedMinutesValue < 1)
         ) {
-            setError(
+            return(
                 "Estimated time must be at least 1 minute."
             );
-
-            return;
         }
 
-        const workedMinutesValue = 
+        const workedMinutesValue =
             workedMinutes
-                ? Number(workedMinutes)
+                ? Number(workedMinutes) 
                 : null;
 
         if (
-            workedMinutesValue !== null && 
+            workedMinutesValue !== null &&
             (!Number.isInteger(workedMinutesValue) ||
             workedMinutesValue < 0)
         ) {
-            setError(
+            return(
                 "Minutes worked must be a whole number."
             );
-            return;
+        }
+
+        if (
+            estimatedMinutesValue !== null &&
+            workedMinutesValue !== null &&
+            workedMinutesValue > estimatedMinutesValue
+        ) {
+            return(
+                "Minutes worked cannot exceed estimated minutes."
+            );
         }
 
         const priorityValue = priority 
             ? Number(priority)
             : null;
-        
+            
         if (
             priorityValue !== null && 
             (!Number.isInteger(priorityValue) ||
                 priorityValue < 1 || 
                 priorityValue > 5)
         ) {
-            setError(
+            return(
                 "Priority must be between 1 and 5."
             );
+        }
+
+        return null;
+    }
+
+    useEffect(() => {
+        if (!isEditing || !hasUnsavedChanges || !task) {
             return;
         }
 
-        setIsSubmitting(true);
+        const timeout = window.setTimeout(async () => {
+            setError(null);
 
-        try {
-            const request = {
-                title: trimmedTitle, 
-                description: description.trim() || null,
-                estimatedMinutes: estimatedMinutesValue || null,
-                workedMinutes: workedMinutesValue || null,
-                deadline: deadline || null, 
-                priority: priorityValue || null,
-            };
+            const validationError = validateFields();
 
-            if (isEditing) {
-                await updateTask(
-                    projectId, 
-                    task.id, 
-                    request
-                );
-            } else {
-                await createTask(
-                    projectId, 
-                    request
-                );
+            if (validationError) {
+                setError(validationError);
+                return;
             }
 
-            onSaved();
-        } catch (error) {
-            console.error(error);
+            setIsSaving(true);
 
-            setError(
-                isEditing 
-                    ? "Unable to update the task. Please try again."
-                    : "Unable to create the task. Please try again."
-            );
-        } finally {
-            setIsSubmitting(false);
+            try {
+                await updateTask(projectId, task.id, {
+                    title: title.trim(),
+                    description: description.trim() || null,
+                    estimatedMinutes: estimatedMinutes
+                        ? Number(estimatedMinutes)
+                        : null,
+                    workedMinutes: workedMinutes
+                        ? Number(workedMinutes) 
+                        : null,
+                    deadline: deadline ?? null,
+                    priority: priority 
+                        ? Number(priority)
+                        : null,
+                });
+
+                setHasUnsavedChanges(false);
+                onSaved();
+            } catch (error) {
+                console.error(error);
+
+                setError(
+                    "Unable to save changes. Please try again."
+                );
+            } finally {
+                setIsSaving(false);
+            }
+        }, 500);
+
+        return () => {
+            window.clearTimeout(timeout);
+        };
+    }, [
+        title, 
+        description, 
+        estimatedMinutes, 
+        workedMinutes, 
+        deadline, 
+        priority, 
+        hasUnsavedChanges, 
+        isEditing, 
+        projectId, 
+        task, 
+        onSaved
+    ]);
+
+    function markChanged(
+        setter: (value: string) => void,
+        value: string
+    ) {
+        setter(value);
+
+        if (isEditing) {
+            setHasUnsavedChanges(true);
         }
     }
 
     return (
         <form 
             className="task-form"
-            onSubmit={handleSubmit}>
+            onSubmit={handleCreate}
+        >
             <div className="task-form-header">
                 <h3>
                     {isEditing
-                        ? "Edit task"
+                        ? title
                         : "New task"}
                 </h3>
+
+                {isEditing && (
+                    <span 
+                        className={`task-save-status ${
+                            isSaving
+                                ? "saving"
+                                : "saved"
+                        }`}
+                    >
+                        {isSaving ? "Saving..." : "Saved"}
+                    </span>
+                )}
             </div>
 
-            <div>
+            <div className="task-form-field">
                 <label htmlFor="task-title">
                     Title
                 </label>
@@ -197,14 +286,17 @@ export default function TaskForm({
                     type="text"
                     value={title}
                     onChange={(event) => 
-                        setTitle(event.target.value)
+                        markChanged(
+                            setTitle,
+                            event.target.value
+                        )
                     }
                     maxLength={255}
                     required
                 />
             </div>
 
-            <div>
+            <div className="task-form-field">
                 <label htmlFor="task-description">
                     Description
                 </label>
@@ -213,7 +305,8 @@ export default function TaskForm({
                     id="task-description"
                     value={description}
                     onChange={(event) => 
-                        setDescription(
+                        markChanged(
+                            setDescription,
                             event.target.value
                         )
                     }
@@ -221,42 +314,51 @@ export default function TaskForm({
                 />
             </div>
 
-            <div>
+            <div className="task-form-field">
                 <label htmlFor="task-estimated-minutes">
-                    Estimated time (minutes)
+                    Estimated time
                 </label>
-
-                <input 
-                    id="task-estimated-minutes"
-                    type="number"
-                    min="1"
-                    value={estimatedMinutes}
-                    onChange={(event) => 
-                        setEstimatedMinutes(
-                            event.target.value
-                        )
-                    }
-                />
+                <div className="task-input-with-unit">
+                    <input 
+                        id="task-estimated-minutes"
+                        type="number"
+                        min="1"
+                        value={estimatedMinutes}
+                        onChange={(event) => 
+                            markChanged(
+                                setEstimatedMinutes,
+                                event.target.value
+                            )
+                        }
+                    />
+                    <span>min</span>
+                </div>
             </div>
 
-            <div>
+            <div className="task-form-field">
                 <label htmlFor="task-worked-minutes">
-                    Time worked (minutes)
+                    Time worked 
                 </label>
 
-                <input 
-                    id="task-worked-minutes"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={workedMinutes}
-                    onChange={(event) => 
-                        setWorkedMinutes(event.target.value)
-                    }
-                />
+                <div className="task-input-with-unit">
+                    <input 
+                        id="task-worked-minutes"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={workedMinutes}
+                        onChange={(event) => 
+                            markChanged(
+                                setWorkedMinutes,
+                                event.target.value
+                            )
+                        }
+                    />
+                    <span>min</span>
+                </div>
             </div>
 
-            <div>
+            <div className="task-form-field">
                 <label htmlFor="task-deadline">
                     Deadline
                 </label>
@@ -266,14 +368,15 @@ export default function TaskForm({
                     type="datetime-local"
                     value={deadline}
                     onChange={(event) =>
-                        setDeadline(
+                        markChanged(
+                            setDeadline,
                             event.target.value
                         )
                     }
                 />
             </div>
 
-            <div>
+            <div className="task-form-field">
                 <label htmlFor="task-priority">
                     Priority
                 </label>
@@ -282,7 +385,8 @@ export default function TaskForm({
                     id="task-priority"
                     value={priority}
                     onChange={(event) =>
-                        setPriority(
+                        markChanged(
+                            setPriority,
                             event.target.value
                         )
                     }
@@ -314,34 +418,37 @@ export default function TaskForm({
             </div>
 
             {error && (
-                <p role="alert">
+                <p 
+                    className="task-form-error"
+                    role="alert"
+                >
                     {error}
                 </p>
             )}
 
-            <div>
-                <button 
-                    type="submit"
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting
-                        ? isEditing 
-                            ? "Saving..."
-                            : "Creating"
-                        : isEditing
-                            ? "Save changes"
+            {!isEditing && (
+                <div className="task-form-actions">
+                    <button
+                        type="submit"
+                        className="task-primary-button"
+                        disabled={isSaving}
+                    >
+                        {isSaving
+                            ? "Creating..."
                             : "Create task"
-                    }
-                </button>
+                        }
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                >
-                    Cancel
-                </button>
-            </div>
+                    <button
+                        type="button"
+                        className="task-secondary-button"
+                        onClick={onCancel}
+                        disabled={isSaving}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            )}
         </form>
     );
 }

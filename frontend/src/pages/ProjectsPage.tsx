@@ -75,7 +75,6 @@ export default function ProjectsPage() {
     }
 
     function handleEditSaved() {
-        setEditingProject(null);
         loadProjects();
     }
 
@@ -174,115 +173,109 @@ export default function ProjectsPage() {
                         <ProjectForm
                             project={editingProject}
                             onSaved={handleEditSaved}
-                            onCancel={() =>
-                                setEditingProject(null)
-                            }
+                            onCancel={handleCloseEdit}
                         />
                     </aside>
                 </div>
             )}
 
-            {!showCreateForm && editingProject === null && (
-                <>
-                    {projects.length === 0 ? (
-                        <div className="projects-empty">
-                            <p>No projects yet.</p>
+            {projects.length === 0 ? (
+                    <div className="projects-empty">
+                        <p>No projects yet.</p>
 
-                            <button 
-                                type="button"
-                                onClick={() =>
-                                    setShowCreateForm(true)
-                                }
+                        <button 
+                            type="button"
+                            onClick={() =>
+                                setShowCreateForm(true)
+                            }
+                        >
+                            Create your first project
+                        </button>
+                    </div>
+                ) : (
+                    <div className="project-list">
+                        {projects.map((project) => (
+                            <div
+                                key={project.id}
+                                className="project-list-item"
                             >
-                                Create your first project
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="project-list">
-                            {projects.map((project) => (
-                                <div
-                                    key={project.id}
-                                    className="project-list-item"
-                                >
-                                    <div className="project-list-main">
-                                        <Link
-                                            to={`/projects/${project.id}`}
-                                            className="project-list-link"
-                                        >
-                                            <h2>{project.name}</h2>
+                                <div className="project-list-main">
+                                    <Link
+                                        to={`/projects/${project.id}`}
+                                        className="project-list-link"
+                                    >
+                                        <h2>{project.name}</h2>
 
-                                            {project.description && (
-                                                <p>{project.description}</p>
-                                            )}
-                                        </Link>
+                                        {project.description && (
+                                            <p>{project.description}</p>
+                                        )}
+                                    </Link>
 
-                                        <div className="project-list-details">
-                                            <span>
-                                                <strong>
-                                                    Deadline
-                                                </strong>
+                                    <div className="project-list-details">
+                                        <span>
+                                            <strong>
+                                                Deadline
+                                            </strong>
 
-                                                {project.deadline
-                                                    ? new Date(
-                                                        project.deadline
-                                                    ).toLocaleDateString()
-                                                    : "No deadline"
-                                                }
-                                            </span>
-
-                                            <span>
-                                                <strong>
-                                                    Status
-                                                </strong>
-
-                                                {project.status.replace("_", " ")}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="project-list-actions">
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                setShowCreateForm(false);
-                                                setEditingProject(project);
-                                            }}
-                                        >
-                                            Edit 
-                                        </button>
-
-                                        <button 
-                                            type="button"
-                                            onClick={() => 
-                                                handleDelete(project)
+                                            {project.deadline
+                                                ? new Date(
+                                                    project.deadline
+                                                ).toLocaleDateString()
+                                                : "No deadline"
                                             }
-                                            disabled={
-                                                deletingProjectId === 
-                                                project.id
-                                            }
-                                        >
-                                            {deletingProjectId ===
-                                            project.id 
-                                                ? "Deleting..."
-                                                : "Delete"
-                                            }
-                                        </button>
+                                         </span>
 
-                                        <Link
-                                            to={`/projects/${project.id}`}
-                                            className="project-list-arrow"
-                                            aria-label={`Open ${project.name}`}
-                                        >
-                                            →
-                                        </Link>
+                                        <span>
+                                            <strong>
+                                                Status
+                                            </strong>
+
+                                               {project.status.replace("_", " ")}
+                                        </span>
                                     </div>
                                 </div>
 
-                            ))}
-                        </div>
-                    )}
-                </>
-            )}
+                                <div className="project-list-actions">
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            setShowCreateForm(false);
+                                            setEditingProject(project);
+                                        }}
+                                    >
+                                        Edit 
+                                     </button>
+
+                                    <button 
+                                        type="button"
+                                        onClick={() => 
+                                            handleDelete(project)
+                                        }
+                                        disabled={
+                                            deletingProjectId === 
+                                            project.id
+                                        }
+                                    >
+                                        {deletingProjectId ===
+                                        project.id 
+                                            ? "Deleting..."
+                                            : "Delete"
+                                        }
+                                    </button>
+
+                                    <Link
+                                        to={`/projects/${project.id}`}
+                                        className="project-list-arrow"
+                                        aria-label={`Open ${project.name}`}
+                                    >
+                                        →
+                                    </Link>
+                                </div>
+                            </div>
+
+                        ))}
+                    </div>
+                )}
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 
 import { createProject, updateProject } from "../../services/projectService";
@@ -32,35 +32,67 @@ export default function ProjectForm({
         project?.priority?.toString() ?? ""
     );
 
-    const [error, setError] = useState<String | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    
+    const [isSaving, setIsSaving] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = 
+        useState(false);
 
-    async function handleSubmit(
+    async function handleCreate(
         event: SubmitEvent
     ) {
         event.preventDefault();
 
         setError(null);
 
+        const validationError = validateFields();
+
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            await createProject({
+                name: name.trim(),
+                description: description.trim() || null,
+                deadline: deadline ?? null,
+                priority: priority 
+                    ? Number(priority)
+                    : null,
+            });
+
+            onSaved();
+        } catch (error) {
+            console.error(error);
+
+            setError(
+                "Unable to create the project. Please try again."
+            );
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    function validateFields(): string | null {
         const trimmedName = name.trim();
 
         if (!trimmedName) {
-            setError("Project name is required.");
-            return;
+            return "Project title is required.";
         }
 
         if (trimmedName.length > 255) {
-            setError(
-                "Project name must be 255 characters or fewer."
+            return (
+                "Project title must be 255 characters or fewer."
             );
-            return;
         }
 
         if (description.length > 2000) {
-            setError(
+            return (
                 "Description must be 2,000 characters or fewer."
             );
-            return;
         }
 
         const priorityValue = priority 
@@ -73,70 +105,131 @@ export default function ProjectForm({
                 priorityValue < 1 ||
                 priorityValue > 5)
         ) {
-            setError(
+            return (
                 "Priority must be between 1 and 5."
             );
+        }
+
+        return null;
+    }
+
+    useEffect(() => {
+        if (
+            !isEditing || 
+            !hasUnsavedChanges || 
+            !project
+        ) {
             return;
         }
 
-        setIsSubmitting(true);
+        const timeout = window.setTimeout(
+            async () => {
+                setError(null);
 
-        try {
-            const request = {
-                name: trimmedName, 
-                description: 
-                    description.trim() || null, 
-                deadline: deadline || null, 
-                priority: priorityValue
-            };
+                const validationError = 
+                    validateFields();
+                
+                if (validationError) {
+                    setError(validationError);
+                    return;
+                }
 
-            if (isEditing) {
-                await updateProject(
-                    project.id, 
-                    request
-                );
-            } else {
-                await createProject(request);
-            }
+                setIsSaving(true);
 
-            onSaved();
-        } catch (error) {
-            console.error(error);
+                try {
+                    await updateProject(
+                        project.id, 
+                        {
+                            name: name.trim(),
+                            description: 
+                                description.trim() || null,
+                            deadline: deadline ?? null,
+                            priority: priority
+                                ? Number(priority)
+                                : null,
+                        }
+                    );
 
-            setError(
-                isEditing
-                    ? "Unable to update the project. Please try again."
-                    : "Unable to create the project. Please try again."
-            );
-        } finally {
-            setIsSubmitting(false);
+                    setHasUnsavedChanges(false);
+
+                    onSaved();
+                } catch (error) {
+                    console.error(error);
+
+                    setError(
+                        "Unable to save changes. Please try again."
+                    );
+                } finally {
+                    setIsSaving(false);
+                }
+            }, 500
+        );
+
+        return () => {
+            window.clearTimeout(timeout);
+        };
+    }, [
+        name, 
+        description, 
+        deadline, 
+        priority, 
+        hasUnsavedChanges, 
+        isEditing, 
+        project,
+    ]);
+
+    function markChanged(
+        setter: (value: string) => void,
+        value: string
+    ) {
+        setter(value);
+
+        if (isEditing) {
+            setHasUnsavedChanges(true);
         }
     }
 
     return (
         <form 
-            onSubmit={handleSubmit}
+            onSubmit={handleCreate}
             className="project-form"
         >
             <div className="project-form-header">
-                <h2> 
-                    {isEditing
-                        ? "Edit project"
-                        : "New project"
-                    }
-                </h2>
+                <div>
+                    <h2> 
+                        {isEditing
+                            ? name
+                            : "New project"
+                        }
+                    </h2>
 
-                <p>
-                    {isEditing
-                        ? "Update the details for this project."
-                        : "Create a project to organise your work."
-                    }
-                </p>    
+                    <p>
+                        {isEditing
+                            ? "Changes are saved automatically."
+                            : "Create a project to organise your work."
+                        }
+                    </p>   
+                </div>
+
+                {isEditing && (
+                    <span
+                        className={`project-save-status ${
+                            isSaving
+                                ? "saving"
+                                : "saved"
+                        }`}
+                    >
+                        {isSaving
+                            ? "Saving..."
+                            : "Saved"
+                        }
+                    </span>
+                )} 
             </div>
 
-            <div>
+            <div className="project-form-field">
                 <label htmlFor="project-name">
-                    Name 
+                    Title
                 </label>
 
                 <input
@@ -144,14 +237,17 @@ export default function ProjectForm({
                     type="text"
                     value={name}
                     onChange={(event) =>
-                        setName(event.target.value)
+                        markChanged(
+                            setName,
+                            event.target.value
+                        )
                     }
-                    maxLength={200}
+                    maxLength={255}
                     required
                 />
             </div>
 
-            <div>
+            <div className="project-form-field">
                 <label htmlFor="project-description">
                     Description
                 </label>
@@ -160,13 +256,16 @@ export default function ProjectForm({
                     id="project-description"
                     value={description}
                     onChange={(event) =>
-                        setDescription(event.target.value)
+                        markChanged(
+                            setDescription,
+                            event.target.value
+                        )
                     }
                     maxLength={2000}
                 />
             </div>
 
-            <div>
+            <div className="project-form-field">
                 <label htmlFor="project-deadline">
                     Deadline
                 </label>
@@ -176,12 +275,15 @@ export default function ProjectForm({
                     type="datetime-local"
                     value={deadline}
                     onChange={(event) => 
-                        setDeadline(event.target.value)
+                        markChanged(
+                            setDeadline,
+                            event.target.value
+                        )
                     }
                 />
             </div>
 
-            <div>
+            <div className="project-form-field">
                 <label htmlFor="project-priority">
                     Priority
                 </label>
@@ -190,7 +292,10 @@ export default function ProjectForm({
                     id="project-priority"
                     value={priority}
                     onChange={(event) =>
-                        setPriority(event.target.value)
+                        markChanged(
+                            setPriority,
+                            event.target.value
+                        )
                     }
                 >
                     <option value="">
@@ -201,40 +306,42 @@ export default function ProjectForm({
                     <option value="2">2</option>
                     <option value="3">3</option>
                     <option value="4">4</option>
-                    <option value="4">5 - Highest</option>
+                    <option value="5">5 - Highest</option>
                 </select>
             </div>
 
             {error && (
-                <p role="aler">
+                <p 
+                    className="project-form-error"
+                    role="alert"
+                >
                     {error}
                 </p>
             )}
 
-
-            <div className="project-form-actions">
-                <button 
-                    type="submit"
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting
-                        ? isEditing 
-                            ? "Saving..."
-                            : "Creating..."
-                        : isEditing 
-                            ? "Save changes"
+            {!isEditing && (
+                <div className="project-form-actions">
+                    <button 
+                        type="submit"
+                        className="project-primary-button"
+                        disabled={isSaving}
+                    >
+                        {isSaving
+                            ? "Creating..."
                             : "Create project"
-                    }
-                </button>
+                        }
+                    </button>
 
-                <button 
-                    type="button"
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                >
-                    Cancel
-                </button>
-            </div>
+                    <button 
+                        type="button"
+                        className="project-secondary-button"
+                        onClick={onCancel}
+                        disabled={isSaving}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            )}
         </form>
     );
 }

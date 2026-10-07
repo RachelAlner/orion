@@ -32,6 +32,7 @@ export interface UpdateTaskRequest {
     title: string;
     description: string | null;
     estimatedMinutes: number | null;
+    workedMinutes: number | null;
     deadline: string | null;
     priority: number | null;
 }

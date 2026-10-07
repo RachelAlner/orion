@@ -11,7 +11,6 @@ interface TaskDetailsProps {
     isLoadingDependencies: boolean;
     onClose: () => void;
     onSaved: () => void;
-    onProgressSaved: (task: Task) => void;
     onComplete: (task: Task) => void;
     onDelete: (task: Task) => void;
     onRemoveDependency: (
@@ -30,6 +29,8 @@ export default function TaskDetails({
     onDelete,
     onRemoveDependency,
 }: TaskDetailsProps) {
+    const isCompleted = task.status === "COMPLETED";
+
     return (
         <div
             className="task-details-overlay"
@@ -49,7 +50,24 @@ export default function TaskDetails({
                     ×
                 </button>
 
-                <h2>{task.title}</h2>
+                <div className="task-details-title">
+                    <button
+                        type="button"
+                        className={`task-complete-circle ${
+                            isCompleted
+                                ? "completed"
+                                : ""
+                        }`}
+                        onClick={() => onComplete(task)}
+                        aria-label={
+                            isCompleted
+                                ? "Task completed"
+                                : "Mark task as complete"
+                        }
+                    >
+                        {isCompleted && "✓"}
+                    </button>
+                </div>
 
                 <TaskForm 
                     projectId={task.projectId}
@@ -66,16 +84,13 @@ export default function TaskDetails({
                 />
 
                 <div className="task-details-actions">
-                    {task.status !== "COMPLETED" &&
-                        task.status !== "CANCELLED" && (
-                            <button
-                                type="button"
-                                onClick={() => onComplete(task)}
-                                className="task-complete-button"
-                            >
-                                Complete
-                            </button>
-                    )}
+                    <button
+                        type="button"
+                        className="task-cancel-button"
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </button>
 
                     <button
                         type="button"
