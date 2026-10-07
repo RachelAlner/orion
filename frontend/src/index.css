@@ -821,7 +821,7 @@ a:hover {
   flex: 1;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
   align-items: center;
   gap: 20px;
   padding: 8px 0;
@@ -836,26 +836,30 @@ a:hover {
 }
 
 .task-card-drop-above {
-    box-shadow: inset 0 2px 0 #222;
+  box-shadow: inset 0 2px 0 #222;
 }
 
 .task-card-drop-below {
-    box-shadow: inset 0 -2px 0 #222;
+  box-shadow: inset 0 -2px 0 #222;
 }
 
 .task-card[draggable="true"] {
-    cursor: grab;
+  cursor: grab;
 }
 
 .task-card[draggable="true"]:active {
-    cursor: grabbing;
+  cursor: grabbing;
 }
 
 .task-card-title {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 13px;
 }
 
 .task-card-status {
@@ -867,6 +871,24 @@ a:hover {
 
 .task-card-time,
 .task-card-remaining {
+  color: #777;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.task-priority {
+  flex-shrink: 0;
+  padding: 2px 5px;
+  border: 1px solid #d5d5d5;
+  border-radius: 4px;
+  color: #666;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.task-card-deadline {
   color: #777;
   font-size: 12px;
   white-space: nowrap;
@@ -1119,6 +1141,34 @@ a:hover {
   color: #777;
 }
 
+.task-duration-fields {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.task-duration-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.task-duration-field label {
+  color: #777;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.task-duration-field input {
+  width: 100%;
+  margin: 0;
+  padding: 8px 7px;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+}
+
 .task-error {
   color: #b42318;
   font-size: 13px;
@@ -1200,7 +1250,8 @@ a:hover {
 
 .task-card-completed .task-card-status,
 .task-card-completed .task-card-time,
-.task-card-completed .task-card-remaining {
+.task-card-completed .task-card-remaining,
+.task-card-completed .task-card-deadline {
     color: #999;
 }
 
@@ -1800,6 +1851,10 @@ a:hover {
   .task-card-time,
   .task-card-remaining {
     grid-column: 2;
+  }
+
+  .task-duration-fields {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .task-details {

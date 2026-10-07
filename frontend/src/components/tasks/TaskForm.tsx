@@ -15,6 +15,116 @@ interface TaskFormProps {
     onCancel: () => void;
 }
 
+interface Duration {
+    years: string;
+    months: string;
+    weeks: string;
+    days: string;
+    hours: string;
+    minutes: string;
+}
+
+const MINUTES_PER_HOUR = 60;
+const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
+const MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY;
+const MINUTES_PER_MONTH = 30 * MINUTES_PER_DAY;
+const MINUTES_PER_YEAR = 365 * MINUTES_PER_DAY;
+
+function emptyDuration(): Duration {
+    return {
+        years: "",
+        months: "",
+        weeks: "",
+        days: "",
+        hours: "",
+        minutes: "",
+    };
+}
+
+function minutesToDuration(totalMinutes: number | null): Duration {
+    if (totalMinutes === null) {
+        return emptyDuration();
+    }
+
+    let remaining = totalMinutes;
+
+    const years = Math.floor(
+        remaining / MINUTES_PER_YEAR
+    );
+    remaining %= MINUTES_PER_YEAR;
+
+    const months = Math.floor(
+        remaining / MINUTES_PER_MONTH
+    );
+    remaining %= MINUTES_PER_MONTH;
+
+    const weeks = Math.floor(
+        remaining / MINUTES_PER_WEEK
+    );
+    remaining %= MINUTES_PER_WEEK;
+
+    const days = Math.floor(
+        remaining / MINUTES_PER_DAY
+    );
+    remaining %= MINUTES_PER_DAY;
+
+    const hours = Math.floor(
+        remaining / MINUTES_PER_HOUR
+    );
+    remaining %= MINUTES_PER_HOUR;
+
+    const minutes = remaining;
+
+    return {
+        years: years > 0 ? years.toString() : "",
+        months: months > 0 ? months.toString() : "",
+        weeks: weeks > 0 ? weeks.toString() : "",
+        days: days > 0 ? days.toString() : "",
+        hours: hours > 0 ? hours.toString() : "",
+        minutes: minutes > 0 ? minutes.toString() : "",
+    };
+}
+
+function durationToMinutes(duration: Duration): number | null {
+    const values = {
+        years: duration.years 
+            ? Number(duration.years)
+            : 0,
+        months: duration.months
+            ? Number(duration.months)
+            : 0,
+        weeks: duration.weeks
+            ? Number(duration.weeks)
+            : 0,
+        days: duration.days
+            ? Number(duration.days)
+            : 0,
+        hours: duration.hours
+            ? Number(duration.hours)
+            : 0,
+        minutes: duration.minutes
+            ? Number(duration.minutes)
+            : 0,
+    }; 
+
+    const hasValue = Object.values(values).some(
+        (value) => value > 0
+    );
+
+    if (!hasValue) {
+        return null;
+    }
+
+    return (
+        values.years * MINUTES_PER_YEAR + 
+        values.months * MINUTES_PER_MONTH + 
+        values.weeks * MINUTES_PER_WEEK + 
+        values.days * MINUTES_PER_DAY + 
+        values.hours * MINUTES_PER_HOUR + 
+        values.minutes
+    );
+}
+
 export default function TaskForm({
     projectId, 
     task, 
@@ -31,13 +141,17 @@ export default function TaskForm({
         task?.description ?? ""
     );
 
-    const [estimatedMinutes, setEstimatedMinutes] = 
-        useState(
-            task?.estimatedMinutes?.toString() ?? ""
+    const [estimatedTime, setEstimatedTime] = 
+        useState<Duration>(
+            minutesToDuration(
+                task?.estimatedMinutes ?? null
+            )
         );
 
-    const [workedMinutes, setWorkedMinutes] = useState(
-        task?.workedMinutes?.toString() ?? ""
+    const [workedTime, setWorkedTime] = useState<Duration>(
+        minutesToDuration(
+            task?.workedMinutes ?? null 
+        )
     );
 
     const [deadline, setDeadline] = useState(
@@ -57,45 +171,87 @@ export default function TaskForm({
     const [isSaving, setIsSaving] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-    async function handleCreate(
-        event: SubmitEvent     
+    function updateEstimatedTime(
+        field: keyof Duration,
+        value: string
     ) {
-        event.preventDefault();
+        setEstimatedTime((current) => ({
+            ...current, 
+            [field]: value,
+        }));
 
-        setError(null);
+        if (isEditing) {
+            setHasUnsavedChanges(true);
+        }
+    }
 
-        const validationError = validateFields();
+    function updateWorkedTime(
+        field: keyof Duration,
+        value: string
+    ) {
+        setWorkedTime((current) => ({
+            ...current, 
+            [field]: value,
+        }));
 
-        if (validationError) {
-            setError(validationError);
-            return;
+        if (isEditing) {
+            setHasUnsavedChanges(true);
+        }
+    }
+
+    function markChanged(
+        setter: (value: string) => void,
+        value: string
+    ) {
+        setter(value);
+
+        if (isEditing) {
+            setHasUnsavedChanges(true);
+        }
+    }
+
+    function validateDuration(
+        duration: Duration,
+        label: string, 
+        allowEmpty: boolean 
+    ): string | null {
+        const fields: Array<
+            [keyof Duration, string]
+        > = [
+            ["years", "Years"],
+            ["months", "Months"],
+            ["weeks", "Weeks"],
+            ["days", "Days"],
+            ["hours", "Hours"],
+            ["minutes", "Minutes"],
+        ];
+
+        let totalMinutes = 0;
+
+        for (const [field, fieldLabel] of fields) {
+            const value = duration[field];
+
+            if (!value) {
+                continue;
+            }
+
+            const numberValue = Number(value);
+
+            if (
+                !Number.isInteger(numberValue) ||
+                numberValue < 0
+            ) {
+                return `${label} ${fieldLabel.toLowerCase()} must be a whole number.`;
+            }
         }
 
-        setIsSaving(true);
+        totalMinutes = durationToMinutes(duration) ?? 0;
 
-        try {
-            await createTask(projectId, {
-                title: title.trim(),
-                description: description.trim() || null,
-                estimatedMinutes: estimatedMinutes
-                    ? Number(estimatedMinutes)
-                    : null,
-                deadline: deadline ?? null,
-                priority: priority 
-                    ? Number(priority)
-                    : null,
-            });
-
-            onSaved();
-        } catch (error) {
-            console.error(error);
-
-            setError(
-                "Unable to create the task. Please try again."
-            );
-        } finally {
-            setIsSaving(false);
+        if (!allowEmpty && totalMinutes < 1) {
+            return `${label} must be at least 1 minute.`;
         }
+
+        return null;
     }
 
     function validateFields(): string | null {
@@ -118,45 +274,40 @@ export default function TaskForm({
         }
 
         const estimatedMinutesValue = 
-            estimatedMinutes
-                ? Number(estimatedMinutes)
-                : null;
+            durationToMinutes(estimatedTime);
             
-        if (
-            estimatedMinutesValue !== null &&
-            (!Number.isInteger(
-                estimatedMinutesValue
-            ) ||
-                estimatedMinutesValue < 1)
-        ) {
-            return(
-                "Estimated time must be at least 1 minute."
-            );
+        const estimatedError = validateDuration(
+            estimatedTime, 
+            "Estimated time",
+            true
+        );
+
+        if (estimatedError) {
+            return estimatedError;
         }
 
         const workedMinutesValue =
-            workedMinutes
-                ? Number(workedMinutes) 
-                : null;
+            durationToMinutes(workedTime) ?? 0;
 
-        if (
-            workedMinutesValue !== null &&
-            (!Number.isInteger(workedMinutesValue) ||
-            workedMinutesValue < 0)
-        ) {
-            return(
-                "Minutes worked must be a whole number."
+        if (isEditing) {
+            const workedError = validateDuration(
+                workedTime, 
+                "Time worked",
+                true
             );
-        }
 
-        if (
-            estimatedMinutesValue !== null &&
-            workedMinutesValue !== null &&
-            workedMinutesValue > estimatedMinutesValue
-        ) {
-            return(
-                "Minutes worked cannot exceed estimated minutes."
-            );
+            if (workedError) {
+                return workedError;
+            }
+
+            if (
+                estimatedMinutesValue !== null && 
+                workedMinutesValue > estimatedMinutesValue
+            ) {
+                return (
+                    "Time worked cannot exceed estimated time."
+                );
+            }
         }
 
         const priorityValue = priority 
@@ -175,6 +326,46 @@ export default function TaskForm({
         }
 
         return null;
+    }
+
+    async function handleCreate(
+        event: SubmitEvent     
+    ) {
+        event.preventDefault();
+
+        setError(null);
+
+        const validationError = validateFields();
+
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            await createTask(projectId, {
+                title: title.trim(),
+                description: description.trim() || null,
+                estimatedMinutes: 
+                    durationToMinutes(estimatedTime),
+                deadline: deadline ?? null,
+                priority: priority 
+                    ? Number(priority)
+                    : null,
+            });
+
+            onSaved();
+        } catch (error) {
+            console.error(error);
+
+            setError(
+                "Unable to create the task. Please try again."
+            );
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     useEffect(() => {
@@ -198,12 +389,10 @@ export default function TaskForm({
                 await updateTask(projectId, task.id, {
                     title: title.trim(),
                     description: description.trim() || null,
-                    estimatedMinutes: estimatedMinutes
-                        ? Number(estimatedMinutes)
-                        : null,
-                    workedMinutes: workedMinutes
-                        ? Number(workedMinutes) 
-                        : null,
+                    estimatedMinutes: 
+                        durationToMinutes(estimatedTime),
+                    workedMinutes: 
+                        durationToMinutes(workedTime) ?? 0,
                     deadline: deadline ?? null,
                     priority: priority 
                         ? Number(priority)
@@ -229,8 +418,8 @@ export default function TaskForm({
     }, [
         title, 
         description, 
-        estimatedMinutes, 
-        workedMinutes, 
+        estimatedTime, 
+        workedTime, 
         deadline, 
         priority, 
         hasUnsavedChanges, 
@@ -240,15 +429,57 @@ export default function TaskForm({
         onSaved
     ]);
 
-    function markChanged(
-        setter: (value: string) => void,
-        value: string
+    function renderDurationFields(
+        duration: Duration,
+        updateDuration: (
+            field: keyof Duration,
+            value: string 
+        ) => void, 
+        prefix: string
     ) {
-        setter(value);
+        const fields: Array<
+            [keyof Duration, string]
+        > = [
+            ["years", "Years"],
+            ["months", "Months"],
+            ["weeks", "Weeks"],
+            ["days", "Days"],
+            ["hours", "Hours"],
+            ["minutes", "Minutes"],
+        ];
 
-        if (isEditing) {
-            setHasUnsavedChanges(true);
-        }
+        return (
+            <div className="task-duration-fields">
+                {fields.map(
+                    ([id, label]) => (
+                        <div 
+                            className="task-duration-field"
+                            key={id}
+                        > 
+                            <label
+                                htmlFor={`${prefix}-${id}`}
+                            >
+                                {label}
+                            </label>
+
+                            <input 
+                                id={`${prefix}-${id}`}
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={duration[id]}
+                                onChange={(event) => 
+                                    updateDuration(
+                                        id, 
+                                        event.target.value
+                                    )
+                                }
+                            />
+                        </div>
+                    )
+                )}
+            </div>
+        );
     }
 
     return (
@@ -315,50 +546,6 @@ export default function TaskForm({
             </div>
 
             <div className="task-form-field">
-                <label htmlFor="task-estimated-minutes">
-                    Estimated time
-                </label>
-                <div className="task-input-with-unit">
-                    <input 
-                        id="task-estimated-minutes"
-                        type="number"
-                        min="1"
-                        value={estimatedMinutes}
-                        onChange={(event) => 
-                            markChanged(
-                                setEstimatedMinutes,
-                                event.target.value
-                            )
-                        }
-                    />
-                    <span>min</span>
-                </div>
-            </div>
-
-            <div className="task-form-field">
-                <label htmlFor="task-worked-minutes">
-                    Time worked 
-                </label>
-
-                <div className="task-input-with-unit">
-                    <input 
-                        id="task-worked-minutes"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={workedMinutes}
-                        onChange={(event) => 
-                            markChanged(
-                                setWorkedMinutes,
-                                event.target.value
-                            )
-                        }
-                    />
-                    <span>min</span>
-                </div>
-            </div>
-
-            <div className="task-form-field">
                 <label htmlFor="task-deadline">
                     Deadline
                 </label>
@@ -416,6 +603,32 @@ export default function TaskForm({
                     </option>
                 </select>
             </div>
+
+            <div className="task-form-field">
+                <label>
+                    Estimated time
+                </label>
+                
+                {renderDurationFields(
+                    estimatedTime, 
+                    updateEstimatedTime, 
+                    "task-estimated"
+                )}
+            </div>
+
+            {isEditing && (
+                <div className="task-form-field">
+                    <label>
+                        Time worked 
+                    </label>
+
+                    {renderDurationFields(
+                        workedTime, 
+                        updateWorkedTime,
+                        "task-worked"
+                    )}
+                </div>
+            )}
 
             {error && (
                 <p 
