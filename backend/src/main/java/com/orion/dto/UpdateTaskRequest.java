@@ -18,6 +18,9 @@ public record UpdateTaskRequest(
     @Min(1)
     Integer estimatedMinutes, 
 
+    @Min(0)
+    Integer workedMinutes,
+
     LocalDateTime deadline, 
 
     @Min(1)

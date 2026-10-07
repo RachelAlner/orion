@@ -222,6 +222,7 @@ class TaskControllerTest {
                         "Updated scheduler", 
                         "Updated description", 
                         180, 
+                        0,
                         LocalDateTime.of(2027, 6, 1, 0, 0), 
                         5
                 );
@@ -242,6 +243,7 @@ class TaskControllerTest {
                 eq("Updated scheduler"), 
                 eq("Updated description"), 
                 eq(180), 
+                eq(0),
                 eq(LocalDateTime.of(2027, 6, 1, 0, 0)), 
                 eq(5)
         )).thenReturn(updatedTask);
@@ -256,6 +258,7 @@ class TaskControllerTest {
                         "title": "Updated scheduler",
                         "description": "Updated description",
                         "estimatedMinutes": 180,
+                        "workedMinutes": 0,
                         "deadline": "2027-06-01T00:00:00",
                         "priority": 5
                     }
@@ -276,6 +279,7 @@ class TaskControllerTest {
                 "Updated scheduler", 
                 "Updated description", 
                 180, 
+                0,
                 LocalDateTime.of(2027, 6, 1, 0, 0), 
                 5
         );
@@ -404,6 +408,7 @@ class TaskControllerTest {
                         "", 
                         "Invalid task", 
                         0, 
+                        0,
                         LocalDateTime.of(2027, 5, 1, 0, 0), 
                         6
                 );
@@ -417,6 +422,7 @@ class TaskControllerTest {
                         "title": "",
                         "description": "Invalid task",
                         "estimatedMinutes": 0,
+                        "workedMinutes": 0,
                         "deadline": "2027-05-01T00:00:00",
                         "priority": 6
                     }
@@ -433,6 +439,7 @@ class TaskControllerTest {
                         anyString(), 
                         anyString(), 
                         anyInt(), 
+                        anyInt(),
                         any(LocalDateTime.class), 
                         anyInt()
                 );

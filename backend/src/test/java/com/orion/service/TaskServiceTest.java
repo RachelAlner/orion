@@ -238,8 +238,6 @@ class TaskServiceTest {
 
         Task task = createTask("Old title");
 
-        task.updateProgress(30);
-
         when(taskRepository.findByIdAndProjectId(
                 task.getId(), 
                 projectId
@@ -255,6 +253,7 @@ class TaskServiceTest {
                         "Updated title", 
                         "Updated description", 
                         120, 
+                        30,
                         LocalDateTime.of(2027, 6, 1, 0, 0), 
                         5
                 );
@@ -623,16 +622,20 @@ class TaskServiceTest {
         
         Task task = createTask("Completed task");
 
-        task.updateProgress(60);
-
-        assertEquals(TaskStatus.COMPLETED, task.getStatus());
-
         when(taskRepository.findByIdAndProjectId(
                 task.getId(), 
                 projectId
         )).thenReturn(Optional.of(task));
 
         when(taskRepository.save(task)).thenReturn(task);
+
+        task = taskService.completeTask(
+                userId,
+                task.getId(),
+                projectId
+        );
+
+        assertEquals(TaskStatus.COMPLETED, task.getStatus());
 
         Task result = taskService.updateTask(
                 userId, 
@@ -641,6 +644,7 @@ class TaskServiceTest {
                 "Completed task",
                 "Test description",
                 120, 
+                60, 
                 LocalDateTime.of(2027, 5, 1, 0, 0),
                 3
         );
@@ -662,6 +666,6 @@ class TaskServiceTest {
 
         assertNull(result.getCompletedAt());
 
-        verify(taskRepository).save(task);
+        verify(taskRepository, times(2)).save(task);
     }
 }

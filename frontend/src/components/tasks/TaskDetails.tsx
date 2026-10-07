@@ -1,6 +1,5 @@
 import type { Task } from "../../types/task";
 import TaskForm from "./TaskForm";
-import ProgressForm from "./ProgressForm";
 
 import TaskDependencies from "./TaskDependencies";
 import type { TaskDependency } from "../../types/taskDependency";
@@ -27,7 +26,6 @@ export default function TaskDetails({
     isLoadingDependencies,
     onClose, 
     onSaved, 
-    onProgressSaved,
     onComplete,
     onDelete,
     onRemoveDependency,
@@ -66,18 +64,6 @@ export default function TaskDetails({
                     isLoading={isLoadingDependencies}
                     onRemove={onRemoveDependency}
                 />
-
-                {task.estimatedMinutes !== null && 
-                    task.status !== "COMPLETED" && 
-                    task.status !== "CANCELLED" && (
-                        <ProgressForm 
-                            projectId={task.projectId}
-                            task={task}
-                            onSaved={onProgressSaved}
-                            onCancel={onClose}
-                        />
-                    )
-                }
 
                 <div className="task-details-actions">
                     {task.status !== "COMPLETED" &&

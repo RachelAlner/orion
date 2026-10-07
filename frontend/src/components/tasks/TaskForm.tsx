@@ -36,6 +36,10 @@ export default function TaskForm({
             task?.estimatedMinutes?.toString() ?? ""
         );
 
+    const [workedMinutes, setWorkedMinutes] = useState(
+        task?.workedMinutes?.toString() ?? ""
+    );
+
     const [deadline, setDeadline] = useState(
         task?.deadline 
             ? task.deadline.slice(0, 16)
@@ -100,6 +104,22 @@ export default function TaskForm({
             return;
         }
 
+        const workedMinutesValue = 
+            workedMinutes
+                ? Number(workedMinutes)
+                : null;
+
+        if (
+            workedMinutesValue !== null && 
+            (!Number.isInteger(workedMinutesValue) ||
+            workedMinutesValue < 0)
+        ) {
+            setError(
+                "Minutes worked must be a whole number."
+            );
+            return;
+        }
+
         const priorityValue = priority 
             ? Number(priority)
             : null;
@@ -123,6 +143,7 @@ export default function TaskForm({
                 title: trimmedTitle, 
                 description: description.trim() || null,
                 estimatedMinutes: estimatedMinutesValue || null,
+                workedMinutes: workedMinutesValue || null,
                 deadline: deadline || null, 
                 priority: priorityValue || null,
             };
@@ -214,6 +235,23 @@ export default function TaskForm({
                         setEstimatedMinutes(
                             event.target.value
                         )
+                    }
+                />
+            </div>
+
+            <div>
+                <label htmlFor="task-worked-minutes">
+                    Time worked (minutes)
+                </label>
+
+                <input 
+                    id="task-worked-minutes"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={workedMinutes}
+                    onChange={(event) => 
+                        setWorkedMinutes(event.target.value)
                     }
                 />
             </div>

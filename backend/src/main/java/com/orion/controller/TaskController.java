@@ -99,7 +99,8 @@ public class TaskController {
                         projectId, 
                         request.title(), 
                         request.description(), 
-                        request.estimatedMinutes(), 
+                        request.estimatedMinutes(),
+                        request.workedMinutes(), 
                         request.deadline(), 
                         request.priority()
                 );

@@ -73,6 +73,7 @@ public class TaskService {
             String title, 
             String description, 
             Integer estimatedMinutes, 
+            Integer workedMinutes,
             LocalDateTime deadline, 
             Integer priority
     ) {
@@ -87,6 +88,8 @@ public class TaskService {
                 deadline, 
                 priority
         );
+
+        task.updateProgress(workedMinutes);
 
         return taskRepository.save(task);
     }
