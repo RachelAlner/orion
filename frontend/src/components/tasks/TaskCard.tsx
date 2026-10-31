@@ -1,10 +1,7 @@
 import type { Task } from "../../types/task";
 import type { 
-    DragEvent, 
-    CSSProperties,
+    DragEvent
 } from "react";
-
-type DropPosition = "above" | "below" | null;
 
 interface TaskCardProps {
     task: Task;
@@ -20,8 +17,9 @@ interface TaskCardProps {
         event: DragEvent<HTMLDivElement>,
         task: Task
     ) => void;
-    dropPosition: DropPosition;
-    dependencyDepth: number;
+    isDropTarget: boolean;
+    prerequisiteCount: number;
+    dependentCount: number;
 }
 
 const MINUTES_PER_HOUR = 60;
@@ -31,11 +29,11 @@ const MINUTES_PER_MONTH = 30 * MINUTES_PER_DAY;
 const MINUTES_PER_YEAR = 365 * MINUTES_PER_DAY;
 
 function formatDuration(minutes: number): string {
-    if (minutes === 0) {
+    if (!Number.isFinite(minutes) || minutes <= 0) {
         return "0m";
     }
 
-    let remaining = minutes;
+    let remaining = Math.floor(minutes);
     const parts: string[] = [];
 
     const years = Math.floor(
@@ -100,8 +98,9 @@ export default function TaskCard({
     onDragEnd,
     onDragOver,
     onDrop,
-    dropPosition,
-    dependencyDepth,
+    isDropTarget,
+    prerequisiteCount,
+    dependentCount,
 }: TaskCardProps) {
     const isCompleted = task.status === "COMPLETED";
 
@@ -112,90 +111,102 @@ export default function TaskCard({
                     ? "task-card-completed"
                     : ""
                 }
-                ${dropPosition
-                    ? `task-card-drop-${dropPosition}`
+                ${isDropTarget
+                    ? `task-card-drop-target`
                     : ""
                 }
             `}
-            style={{
-                "--task-depth": dependencyDepth,
-            } as CSSProperties} 
             draggable={!isCompleted}
             onDragStart={() => onDragStart(task)}
             onDragEnd={onDragEnd}
             onDragOver={(event) => onDragOver(event, task)}
             onDrop={(event) => onDrop(event, task)}
         >
-            <button
-                type="button"
-                className={`task-complete-circle ${
-                    isCompleted ? "completed" : ""
-                }`}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    onComplete(task);
-                }}
-                aria-label={
-                    isCompleted
-                        ? "Task completed"
-                        : "Mark task as complete"
-                }
-            >
-                {isCompleted && "✓"}
-            </button>
-
-            <button
-                type="button"
-                className="task-card-main"
-                onClick={() => onClick(task)}
-            >
-
-                <div className="task-card-title">
-                    <span>{task.title}</span>
-                    {task.priority !== null && (
-                        <span
-                            className={`task-priority task-priority-${task.priority}`}
-                        >
-                            P{task.priority}
-                        </span>
-                    )}
+            {prerequisiteCount > 0 && (
+                <div className="task-card-dependency-block task-card-prerequisites">
+                    {prerequisiteCount} prerequisite
+                    {prerequisiteCount !== 1 ? "s" : ""}
                 </div>
+            )}
 
-                <div className="task-card-status">
-                    {task.status.replace("_", " ")}
-                </div>
-
-                <div className="task-card-time">
-                    {task.estimatedMinutes !== null
-                        ? `${formatDuration(task.workedMinutes)} / ${formatDuration(task.estimatedMinutes)}`
-                        : `${formatDuration(task.workedMinutes)} worked`
+            <div className="task-card-content">
+                <button
+                    type="button"
+                    className={`task-complete-circle ${
+                        isCompleted ? "completed" : ""
+                    }`}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onComplete(task);
+                    }}
+                    aria-label={
+                        isCompleted
+                            ? "Task completed"
+                            : "Mark task as complete"
                     }
-                </div>
+                >
+                    {isCompleted && "✓"}
+                </button>
 
-                <div className="task-card-remaining">
-                    {task.remainingMinutes !== null
-                        ? task.remainingMinutes === 0
-                            ? "Completed"
-                            : `${formatDuration(task.remainingMinutes)} left`
-                        : null
-                    }
-                </div>
+                <button
+                    type="button"
+                    className="task-card-main"
+                    onClick={() => onClick(task)}
+                >
 
-                <div className="task-card-deadline">
-                    {task.deadline
-                        ? new Date(task.deadline).toLocaleDateString(
-                            undefined,
-                            {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                            }
-                        )
-                        : "No deadline"
-                    }
+                    <div className="task-card-title">
+                        <span>{task.title}</span>
+                        {task.priority !== null && (
+                            <span
+                                className={`task-priority task-priority-${task.priority}`}
+                            >
+                                P{task.priority}
+                            </span>
+                        )}
+                    </div>
 
+                    <div className="task-card-status">
+                        {task.status.replace("_", " ")}
+                    </div>
+
+                    <div className="task-card-time">
+                        {task.estimatedMinutes !== null
+                            ? `${formatDuration(task.workedMinutes)} / ${formatDuration(task.estimatedMinutes)}`
+                            : `${formatDuration(task.workedMinutes)} worked`
+                        }
+                    </div>
+
+                    <div className="task-card-remaining">
+                        {task.remainingMinutes !== null
+                            ? task.remainingMinutes === 0
+                                ? "Completed"
+                                : `${formatDuration(task.remainingMinutes)} left`
+                            : null
+                        }
+                    </div>
+
+                    <div className="task-card-deadline">
+                        {task.deadline
+                            ? new Date(task.deadline).toLocaleDateString(
+                                undefined,
+                                {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                }
+                            )
+                            : "No deadline"
+                        }
+
+                    </div>
+                </button>
+            </div>
+            {dependentCount > 0 && (
+                <div className="task-card-dependency-block task-card-dependents">
+                    {dependentCount} dependent 
+                    {dependentCount !== 1 ? "s": ""}
                 </div>
-            </button>
+            )}
         </div>
     );
 }

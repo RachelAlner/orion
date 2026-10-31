@@ -4,11 +4,17 @@ import TaskForm from "./TaskForm";
 import TaskDependencies from "./TaskDependencies";
 import type { TaskDependency } from "../../types/taskDependency";
 
+import PrerequisiteSelector from "./PrerequisiteSelector";
+
 interface TaskDetailsProps {
     task: Task;
     tasks: Task[];
     dependencies: TaskDependency[];
+    allDependencies: Record<string, TaskDependency[]>;
     isLoadingDependencies: boolean;
+    showPrerequisiteSelector: boolean;
+    dependencyError: string | null;
+    onTaskClick: (task: Task) => void;
     onClose: () => void;
     onSaved: () => void;
     onComplete: (task: Task) => void;
@@ -16,20 +22,34 @@ interface TaskDetailsProps {
     onRemoveDependency: (
         dependency: TaskDependency
     ) => void;
+    onTogglePrerequisite: (task: Task) => void;
+    onTogglePrerequisiteSelector: () => void;
 }
 
 export default function TaskDetails({
-    task, 
+    task,
     tasks,
     dependencies,
+    allDependencies,
     isLoadingDependencies,
-    onClose, 
-    onSaved, 
+    showPrerequisiteSelector,
+    dependencyError,
+    onTaskClick,
+    onClose,
+    onSaved,
     onComplete,
     onDelete,
     onRemoveDependency,
+    onTogglePrerequisite,
+    onTogglePrerequisiteSelector,
 }: TaskDetailsProps) {
     const isCompleted = task.status === "COMPLETED";
+
+    const existingPrerequisiteIds = new Set(
+        dependencies.map(
+            (dependency) => dependency.dependsOnTaskId
+        )
+    );
 
     return (
         <div
@@ -40,6 +60,19 @@ export default function TaskDetails({
                 }
             }}
         >
+            {showPrerequisiteSelector && (
+                <div className="prerequisite-selector-positioner">
+                    <PrerequisiteSelector
+                        tasks={tasks}
+                        currentTask={task}
+                        existingPrerequisiteIds={existingPrerequisiteIds}
+                        allDependencies={allDependencies}
+                        onToggle={onTogglePrerequisite}
+                        onClose={onTogglePrerequisiteSelector}
+                    />
+                </div>
+            )}
+
             <section className="task-details">
                 <button
                     type="button"
@@ -69,18 +102,29 @@ export default function TaskDetails({
                     </button>
                 </div>
 
-                <TaskForm 
+                <TaskForm
                     projectId={task.projectId}
                     task={task}
                     onSaved={onSaved}
                     onCancel={onClose}
                 />
 
+                {dependencyError && (
+                    <p className="task-error" role="alert">
+                        {dependencyError}
+                    </p>
+                )}
+
                 <TaskDependencies
+                    task={task}
                     tasks={tasks}
                     dependencies={dependencies}
+                    allDependencies={allDependencies}
                     isLoading={isLoadingDependencies}
+                    showPrerequisiteSelector={showPrerequisiteSelector}
+                    onTogglePrerequisiteSelector={onTogglePrerequisiteSelector}
                     onRemove={onRemoveDependency}
+                    onTaskClick={onTaskClick}
                 />
 
                 <div className="task-details-actions">

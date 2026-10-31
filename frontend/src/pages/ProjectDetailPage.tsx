@@ -39,27 +39,33 @@ export default function ProjectDetailPage() {
         useState(true);
     const [taskError, setTaskError] = 
         useState<string | null>(null);
+
     const [showCreateTaskForm, setShowCreateTaskForm] = 
         useState(false);
+
     const [selectedTask, setSelectedTask] = 
         useState<Task | null>(null);
 
     const [dependencyError, setDependencyError] =
         useState<string | null>(null);
+
     const [draggedTask, setDraggedTask] = 
         useState<Task | null>(null);
-    const [dropTarget, setDropTarget] = useState<{
-        taskId: string;
-        position: "above" | "below"
-    } | null>(null);
 
+    const [dropTargetTaskId, setDropTargetTaskId] = 
+        useState<string | null>(null);
+        
     const [dependencies, setDependencies] = 
         useState<TaskDependency[]>([]);
-    const [isLoadingDependencies, setIsLoadingDependencies] = 
+
+    const [isLoadingDependencies, setIsLoadingDependencies] =
         useState(false);
 
-    const [taskDependencies, setTaskDependencies] = 
+    const [taskDependencies, setTaskDependencies] =
         useState<Record<string, TaskDependency[]>>({});
+
+    const [showPrerequisiteSelector, setShowPrerequisiteSelector] =
+        useState(false);
 
     async function loadTasks() {
         if (!projectId) {
@@ -141,6 +147,65 @@ export default function ProjectDetailPage() {
             );
         }
     }
+
+    async function handleTogglePrerequisite(
+        prerequisiteTask: Task
+    ) {
+        if (!projectId || !selectedTask) {
+            return;
+        }
+
+        const existingDependency = dependencies.find(
+            (dependency) => 
+                dependency.dependsOnTaskId === 
+                prerequisiteTask.id
+        );
+
+        try {
+            setDependencyError(null);
+
+            if (existingDependency) {
+                await deleteTaskDependency(
+                    projectId, 
+                    selectedTask.id,
+                    prerequisiteTask.id
+                );
+            } else {
+                await addTaskDependency(
+                    projectId, 
+                    selectedTask.id, 
+                    prerequisiteTask.id
+                );
+            }
+
+            await loadAllTaskDependencies(tasks);
+            await loadTaskDependencies(selectedTask.id);
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                error.message.includes("DEPENDENCY_CYCLE")
+            ) {
+                setDependencyError(
+                    "This dependency would create a cycle."
+                );
+            } else if (
+                error instanceof Error &&
+                error.message.includes(
+                    "TASK_DEPENDENCY_ALREADY_EXISTS"
+                )
+            ) {
+                setDependencyError(
+                    "This prerequisite already exists."
+                );
+            } else {
+                setDependencyError(
+                    "Unable to update this prerequisite."
+                );
+            }
+        }
+    }
     
     useEffect(() => {
         async function loadProject() {
@@ -182,12 +247,18 @@ export default function ProjectDetailPage() {
 
             setTasks(updatedTasks);
 
-            const updatedTask = updatedTasks.find(
-                (task) => task.id === selectedTask?.id
-            );
+            await loadAllTaskDependencies(updatedTasks);
 
-            if (updatedTask) {
-                setSelectedTask(updatedTask);
+            if (selectedTask) {
+                const updatedTask = updatedTasks.find(
+                    (task) => task.id === selectedTask.id
+                );
+
+                if (updatedTask) {
+                    setSelectedTask(updatedTask);
+                } else {
+                    handleCloseTaskDetails();
+                }
             }
         } catch (error) {
             console.error(error);
@@ -222,7 +293,29 @@ export default function ProjectDetailPage() {
                 )
             );
 
+            setTaskDependencies((currentDependencies) => {
+                const updatedDependencies = {
+                    ...currentDependencies,
+                }; 
+
+                delete updatedDependencies[task.id];
+
+                for (const [dependentTaskId, dependencies] of Object.entries(
+                    updatedDependencies
+                )) {
+                    updatedDependencies[dependentTaskId] = 
+                        dependencies.filter(
+                            (dependency) => 
+                                dependency.dependsOnTaskId !== task.id
+                        );
+                }
+
+                return updatedDependencies;
+            })
+
             setSelectedTask(null);
+            setDependencies([]);
+            setShowPrerequisiteSelector(false);
         } catch (error) {
             console.error(error);
 
@@ -308,6 +401,7 @@ export default function ProjectDetailPage() {
 
     function handleTaskClick(task: Task) {
         setSelectedTask(task);
+        setShowPrerequisiteSelector(false);
         loadTaskDependencies(task.id);
     }
 
@@ -315,6 +409,7 @@ export default function ProjectDetailPage() {
         setSelectedTask(null);
         setDependencies([]);
         setDependencyError(null);
+        setShowPrerequisiteSelector(false);
     }
 
 
@@ -325,13 +420,13 @@ export default function ProjectDetailPage() {
 
     function handleTaskDragStart(task: Task) {
         setDraggedTask(task);
-        setDropTarget(null);
+        setDropTargetTaskId(null);
         setDependencyError(null);
     }
 
     function handleTaskDragEnd() {
         setDraggedTask(null);
-        setDropTarget(null);
+        setDropTargetTaskId(null);
     }
 
     function handleTaskDragOver(
@@ -345,51 +440,11 @@ export default function ProjectDetailPage() {
         }
 
         if (draggedTask.id === targetTask.id) {
-            setDropTarget(null);
+            setDropTargetTaskId(null);
             return;
         }
 
-        const rect = event.currentTarget.getBoundingClientRect();
-
-        const middle = rect.top + rect.height / 2;
-
-        const position = 
-            event.clientY < middle 
-                ? "above"
-                : "below";
-
-        setDropTarget({
-            taskId: targetTask.id,
-            position
-        });
-    }
-
-    function getTaskDependencyDepth(
-        taskId: string, 
-        visited = new Set<string>()
-    ): number {
-        if (visited.has(taskId)) {
-            return 0;
-        }
-
-        const nextVisited = new Set(visited);
-        nextVisited.add(taskId);
-
-        const dependencies = 
-            taskDependencies[taskId] ?? [];
-        
-        if (dependencies.length == 0) {
-            return 0;
-        }
-
-        return Math.max(
-            ...dependencies.map((dependency) =>
-                getTaskDependencyDepth(
-                    dependency.dependsOnTaskId, 
-                    nextVisited
-                )
-            )
-        ) + 1;
+        setDropTargetTaskId(targetTask.id);
     }
 
     async function handleTaskDrop(
@@ -444,7 +499,7 @@ export default function ProjectDetailPage() {
             }
         } finally {
             setDraggedTask(null);
-            setDropTarget(null);
+            setDropTargetTaskId(null);
         }
     }
 
@@ -585,14 +640,14 @@ export default function ProjectDetailPage() {
                     
                         <TaskList 
                             tasks={tasks}
+                            taskDependencies={taskDependencies}
                             onTaskClick={handleTaskClick}
                             onComplete={handleCompleteTask}
                             onDragStart={handleTaskDragStart}
                             onDragEnd={handleTaskDragEnd}
                             onDragOver={handleTaskDragOver}
                             onDrop={handleTaskDrop}
-                            dropTarget={dropTarget}
-                            taskDependencyDepth={getTaskDependencyDepth}
+                            dropTargetTaskId={dropTargetTaskId}
                         />
                     </>
                 )}
@@ -602,12 +657,22 @@ export default function ProjectDetailPage() {
                         task={selectedTask}
                         tasks={tasks}
                         dependencies={dependencies}
+                        allDependencies={taskDependencies}
                         isLoadingDependencies={isLoadingDependencies}
+                        showPrerequisiteSelector={showPrerequisiteSelector}
+                        dependencyError={dependencyError}
+                        onTaskClick={handleTaskClick}
                         onClose={handleCloseTaskDetails}
                         onSaved={handleTaskSaved}
                         onComplete={handleCompleteTask}
                         onDelete={handleDeleteTask}
                         onRemoveDependency={handleRemoveDependency}
+                        onTogglePrerequisite={handleTogglePrerequisite}
+                        onTogglePrerequisiteSelector={() =>
+                            setShowPrerequisiteSelector(
+                                (current) => !current
+                            )
+                        }
                     />
                 )}
             </section>
