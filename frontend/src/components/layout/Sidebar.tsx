@@ -1,4 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import styles from "./Sidebar.module.css";
+
 
 export default function Sidebar() {
     const location = useLocation();
@@ -7,35 +9,31 @@ export default function Sidebar() {
         location.pathname.startsWith("/projects");
         
     return (
-        <aside className="sidebar">
-            <div className="sidebar-logo">
+        <aside className={styles.sidebar}>
+            <div className={styles.sidebarLogo}>
                 <Link to="/projects">
                     Orion
                 </Link>
             </div>
 
-            <nav className="sidebar-navigation">
+            <nav className={styles.sidebarNavigation}>
                 <Link
                     to="/projects"
-                    className={
-                        isProjectsActive 
-                            ? "sidebar-link active"
-                            : "sidebar-link"
-                    }
+                    className={`${styles.sidebarProjectLink} ${isProjectsActive ? styles.active : ''}`}
                 >
                     Projects
                 </Link>
 
                 <Link
                     to="/schedule"
-                    className="sidebar-link"
+                    className={styles.sidebarLink}
                 >
                     Schedule
                 </Link>
 
                 <Link 
                     to="/availability"
-                    className="sidebar-link"
+                    className={styles.sidebarLink}
                 >
                     Availability
                 </Link>

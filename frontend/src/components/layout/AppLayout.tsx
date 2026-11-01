@@ -5,6 +5,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/AuthContext";
 import { getProjects } from "../../services/projectService";
 import type { Project } from "../../types/project";
+import styles from "./AppLayout.module.css";
 
 function AppLayout() {
     const { logout } = useAuth();
@@ -34,45 +35,45 @@ function AppLayout() {
     }
 
     return (
-        <div className="app-layout">
-            <header className="app-header">
+        <div className={styles.appLayout}>
+            <header className={styles.appHeader}>
                 <h1>Orion.</h1>
 
-                <button 
+                <button
                     type="button"
-                    className="logout-button"
+                    className={styles.logoutButton}
                     onClick={handleLogout}
                 >
                     Log out
                 </button>
             </header>
 
-            <div className="app-body">
-                <aside className="app-sidebar">
+            <div className={styles.appBody}>
+                <aside className={styles.appSidebar}>
                     <nav>
-                        <NavLink 
+                        <NavLink
                             to="/dashboard"
-                            className="app-nav-link"
+                            className={({ isActive }) => `${styles.appNavLink} ${isActive ? styles.active : ''}`}
                         >
                             Dashboard
                         </NavLink>
 
-                        <div className="sidebar-projects">
-                            <div className="sidebar-section-header">
+                        <div className={styles.sidebarProjects}>
+                            <div className={styles.sidebarSectionHeader}>
                                 <span>Projects</span>
 
                                 <NavLink
                                     to="/projects"
-                                    className="sidebar-add-project"
+                                    className={styles.sidebarAddProject}
                                     aria-label="View projects"
                                 >
                                     +
                                 </NavLink>
                             </div>
 
-                            <div className="sidebar-project-list">
+                            <div className={styles.sidebarProjectList}>
                                 {projectsError && (
-                                    <p className="sidebar-error">
+                                    <p className={styles.sidebarError}>
                                         {projectsError}
                                     </p>
                                 )}
@@ -81,7 +82,7 @@ function AppLayout() {
                                     <NavLink
                                         key={project.id}
                                         to={`/projects/${project.id}`}
-                                        className="sidebar-project-link"
+                                        className={({ isActive }) => `${styles.sidebarProjectLink} ${isActive ? styles.active : ''}`}
                                     >
                                         {project.name}
                                     </NavLink>
@@ -89,23 +90,23 @@ function AppLayout() {
                             </div>
                         </div>
 
-                        <NavLink 
+                        <NavLink
                             to="/schedule"
-                            className="app-nav-link"
+                            className={({ isActive }) => `${styles.appNavLink} ${isActive ? styles.active : ''}`}
                         >
                             Schedule
                         </NavLink>
 
-                        <NavLink 
+                        <NavLink
                             to="/availability"
-                            className="app-nav-link"
+                            className={({ isActive }) => `${styles.appNavLink} ${isActive ? styles.active : ''}`}
                         >
                             Availability
                         </NavLink>
                     </nav>
                 </aside>
 
-                <main className="app-main">
+                <main className={styles.appMain}>
                     <Outlet />
                 </main>
             </div>

@@ -3,6 +3,8 @@ import type {
     UnscheduledReason, 
     UnscheduledTask,
 } from "../../types/schedule";
+import styles from "./UnscheduledTaskList.module.css";
+
 
 interface UnscheduledTaskListProps {
     tasks: Task[];
@@ -43,28 +45,30 @@ export default function UnscheduledTaskList({
     tasks, 
     unscheduledTasks,
 }: UnscheduledTaskListProps) {
+
     if (unscheduledTasks.length === 0) {
         return null;
     }
 
+    const tasksById = new Map(
+        tasks.map((task) => [task.id, task])
+    );
+
     return (
-        <section className="schedule-section schedule-warning-section">
-            <div className="schedule-section-header">
+        <section className={`${styles.scheduleSection} ${styles.scheduleWarningSection}`}>
+            <div className={styles.scheduleSectionHeader}>
                 <h2>Needs attention</h2>
                 <span>{unscheduledTasks.length}</span>
             </div>
 
-            <div className="unscheduled-task-list">
+            <div className={styles.unscheduledTaskList}>
                 {unscheduledTasks.map((unscheduledTask) => {
-                    const task = tasks.find(
-                        (candidate) => 
-                            candidate.id === unscheduledTask.taskId
-                    );
+                    const task = tasksById.get(unscheduledTask.taskId);
 
                     return (
                         <div 
                             key={unscheduledTask.taskId}
-                            className="unscheduled-task"
+                            className={styles.unscheduledTask}
                         > 
                             <div>
                                 <strong>
@@ -79,7 +83,7 @@ export default function UnscheduledTaskList({
                                 </span>
                             </div>
 
-                            <span className="unscheduled-task-reason">
+                            <span className={styles.unscheduledTaskReason}>
                                 {getReasonLabel(
                                     unscheduledTask.reason
                                 )}

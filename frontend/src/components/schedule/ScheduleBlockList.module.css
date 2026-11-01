@@ -1,0 +1,95 @@
+
+.scheduleSection {
+    margin-top: 32px;
+}
+
+.scheduleSectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.scheduleSectionHeader h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.scheduleSectionHeader span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.scheduleEmpty {
+    margin: 0;
+    color: #999;
+    font-size: 12px;
+}
+
+.scheduleBlockList {
+    display: flex;
+    flex-direction: column;
+}
+
+.scheduleDate {
+    margin-top: 20px;
+    margin-bottom: 8px;
+    color: #777;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.scheduleDate:first-child {
+    margin-top: 0;
+}
+
+.scheduleBlock {
+    display: flex;
+    gap: 18px;
+    padding: 12px 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.scheduleBlockTime {
+    display: flex;
+    flex-direction: column;
+    width: 70px;
+    flex-shrink: 0;
+    gap: 3px;
+    color: #888;
+    font-size: 11px;
+}
+
+.scheduleBlockContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.scheduleBlockContent strong {
+    color: #222;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.scheduleBlockContent span {
+    color: #999;
+    font-size: 11px;
+}
+
+.scheduleWarningSection {
+    margin-top: 40px;
+}

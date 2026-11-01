@@ -1,0 +1,52 @@
+
+.unscheduledTaskList {
+    display: flex;
+    flex-direction: column;
+}
+
+.unscheduledTask {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 11px 10px;
+    border: 1px solid #e5e5e5;
+    border-bottom: none;
+    background: #fafafa;
+}
+
+.unscheduledTask:first-child {
+    border-radius: 6px 6px 0 0;
+}
+
+.unscheduledTask:last-child {
+    border-bottom: 1px solid #e5e5e5;
+    border-radius: 0 0 6px 6px;
+}
+
+.unscheduledTask > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.unscheduledTask strong {
+    overflow: hidden;
+    color: #333;
+    font-size: 12px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.unscheduledTask > div span {
+    color: #999;
+    font-size: 11px;
+}
+
+.unscheduledTaskReason {
+    flex-shrink: 0;
+    color: #777;
+    font-size: 11px;
+}

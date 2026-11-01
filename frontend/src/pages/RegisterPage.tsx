@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { register } from "../services/authService";
 import { useAuth } from "../hooks/AuthContext";
+import styles from "./RegisterPage.module.css";
 
 export default function RegisterPage() {
     const navigate = useNavigate();
@@ -52,16 +53,16 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="auth-page">
-                <div className="auth-container">
-                    <div className="auth-header">
+        <div className={styles.authPage}>
+                <div className={styles.authContainer}>
+                    <div className={styles.authHeader}>
                         <h1>Orion</h1>
                         <p>Create your account</p>
                     </div>
 
             
 
-                    <form className="auth-form" onSubmit={handleSubmit}>
+                    <form className={styles.authForm} onSubmit={handleSubmit}>
                         <div>
                             <label htmlFor="email">
                                 Email
@@ -113,14 +114,14 @@ export default function RegisterPage() {
                         </div>
 
                         {error && (
-                            <p className="auth-error" role="alert">
+                            <p className={styles.authError} role="alert">
                                 {error}
                             </p>
                         )}
 
                         <button
                             type="submit"
-                            className="auth-submit"
+                            className={styles.authSubmit}
                             disabled={isSubmitting}
                         >
                             {isSubmitting
@@ -130,7 +131,7 @@ export default function RegisterPage() {
                         </button>
                     </form>
                 
-                    <p className="auth-footer">
+                    <p className={styles.authFooter}>
                         Already have an account?{" "}
                         <Link to="/login">
                             Sign in

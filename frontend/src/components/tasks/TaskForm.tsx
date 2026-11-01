@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import type { SubmitEvent } from "react";
 
 import {
-    createTask, 
+    createTask,
     updateTask,
 } from "../../services/taskService";
 
 import type { Task } from "../../types/task";
+import styles from "./TaskForm.module.css";
 
 interface TaskFormProps {
     projectId: string;
@@ -449,28 +450,28 @@ export default function TaskForm({
         ];
 
         return (
-            <div className="task-duration-fields">
+            <div className={styles.taskDurationFields}>
                 {fields.map(
                     ([id, label]) => (
-                        <div 
-                            className="task-duration-field"
+                        <div
+                            className={styles.taskDurationField}
                             key={id}
-                        > 
+                        >
                             <label
                                 htmlFor={`${prefix}-${id}`}
                             >
                                 {label}
                             </label>
 
-                            <input 
+                            <input
                                 id={`${prefix}-${id}`}
                                 type="number"
                                 min="0"
                                 step="1"
                                 value={duration[id]}
-                                onChange={(event) => 
+                                onChange={(event) =>
                                     updateDuration(
-                                        id, 
+                                        id,
                                         event.target.value
                                     )
                                 }
@@ -483,11 +484,11 @@ export default function TaskForm({
     }
 
     return (
-        <form 
-            className="task-form"
+        <form
+            className={styles.taskForm}
             onSubmit={handleCreate}
         >
-            <div className="task-form-header">
+            <div className={styles.taskFormHeader}>
                 <h3>
                     {isEditing
                         ? title
@@ -495,11 +496,11 @@ export default function TaskForm({
                 </h3>
 
                 {isEditing && (
-                    <span 
-                        className={`task-save-status ${
+                    <span
+                        className={`${styles.taskSaveStatus} ${
                             isSaving
-                                ? "saving"
-                                : "saved"
+                                ? styles.saving
+                                : styles.saved
                         }`}
                     >
                         {isSaving ? "Saving..." : "Saved"}
@@ -507,16 +508,16 @@ export default function TaskForm({
                 )}
             </div>
 
-            <div className="task-form-field">
+            <div className={styles.taskFormField}>
                 <label htmlFor="task-title">
                     Title
                 </label>
 
-                <input 
+                <input
                     id="task-title"
                     type="text"
                     value={title}
-                    onChange={(event) => 
+                    onChange={(event) =>
                         markChanged(
                             setTitle,
                             event.target.value
@@ -527,15 +528,15 @@ export default function TaskForm({
                 />
             </div>
 
-            <div className="task-form-field">
+            <div className={styles.taskFormField}>
                 <label htmlFor="task-description">
                     Description
                 </label>
 
-                <textarea 
+                <textarea
                     id="task-description"
                     value={description}
-                    onChange={(event) => 
+                    onChange={(event) =>
                         markChanged(
                             setDescription,
                             event.target.value
@@ -545,12 +546,12 @@ export default function TaskForm({
                 />
             </div>
 
-            <div className="task-form-field">
+            <div className={styles.taskFormField}>
                 <label htmlFor="task-deadline">
                     Deadline
                 </label>
 
-                <input 
+                <input
                     id="task-deadline"
                     type="datetime-local"
                     value={deadline}
@@ -563,12 +564,12 @@ export default function TaskForm({
                 />
             </div>
 
-            <div className="task-form-field">
+            <div className={styles.taskFormField}>
                 <label htmlFor="task-priority">
                     Priority
                 </label>
 
-                <select 
+                <select
                     id="task-priority"
                     value={priority}
                     onChange={(event) =>
@@ -599,31 +600,31 @@ export default function TaskForm({
                     </option>
 
                     <option value="5">
-                        5 - Highest 
+                        5 - Highest
                     </option>
                 </select>
             </div>
 
-            <div className="task-form-field">
+            <div className={styles.taskFormField}>
                 <label>
                     Estimated time
                 </label>
-                
+
                 {renderDurationFields(
-                    estimatedTime, 
-                    updateEstimatedTime, 
+                    estimatedTime,
+                    updateEstimatedTime,
                     "task-estimated"
                 )}
             </div>
 
             {isEditing && (
-                <div className="task-form-field">
+                <div className={styles.taskFormField}>
                     <label>
-                        Time worked 
+                        Time worked
                     </label>
 
                     {renderDurationFields(
-                        workedTime, 
+                        workedTime,
                         updateWorkedTime,
                         "task-worked"
                     )}
@@ -631,8 +632,8 @@ export default function TaskForm({
             )}
 
             {error && (
-                <p 
-                    className="task-form-error"
+                <p
+                    className={styles.taskFormError}
                     role="alert"
                 >
                     {error}
@@ -640,10 +641,10 @@ export default function TaskForm({
             )}
 
             {!isEditing && (
-                <div className="task-form-actions">
+                <div className={styles.taskFormActions}>
                     <button
                         type="submit"
-                        className="task-primary-button"
+                        className={styles.taskPrimaryButton}
                         disabled={isSaving}
                     >
                         {isSaving
@@ -654,7 +655,7 @@ export default function TaskForm({
 
                     <button
                         type="button"
-                        className="task-secondary-button"
+                        className={styles.taskSecondaryButton}
                         onClick={onCancel}
                         disabled={isSaving}
                     >

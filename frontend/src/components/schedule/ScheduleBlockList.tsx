@@ -1,5 +1,6 @@
 import type { Task } from "../../types/task";
 import type { ScheduleBlock } from "../../types/schedule";
+import styles from "./ScheduleBlockList.module.css";
 
 interface ScheduleBlockListProps {
     blocks: ScheduleBlock[];
@@ -50,12 +51,12 @@ export default function ScheduleBlockList({
 }: ScheduleBlockListProps) {
     if (blocks.length === 0) {
         return (
-            <section className="schedule-section">
-                <div className="schedule-section-header">
+            <section className={styles.scheduleSection}>
+                <div className={styles.scheduleSectionHeader}>
                     <h2>Schedule</h2>
                 </div>
 
-                <p className="schedule-empty">
+                <p className={styles.scheduleEmpty}>
                     No work was scheduled for this period.
                 </p>
             </section>
@@ -71,13 +72,13 @@ export default function ScheduleBlockList({
     let previousDate = "";
 
     return (
-        <section className="schedule-section">
-            <div className="schedule-section-header">
+        <section className={styles.scheduleSection}>
+            <div className={styles.scheduleSectionHeader}>
                 <h2>Schedule</h2>
                 <span>{blocks.length}</span>
             </div>
 
-            <div className="schedule-block-list">
+            <div className={styles.scheduleBlockList}>
                 {sortedBlocks.map((block) => {
                     const task = tasks.find(
                         (candidate) => 
@@ -94,13 +95,13 @@ export default function ScheduleBlockList({
                     return (
                         <div key={`${block.taskId}-${block.startTime}`}>
                             {showDate && (
-                                <div className="schedule-date">
+                                <div className={styles.scheduleDate}>
                                     {formatDate(block.startTime)}
                                 </div>
                             )}
 
-                            <div className="schedule-block">
-                                <div className="schedule-block-time">
+                            <div className={styles.scheduleBlock}>
+                                <div className={styles.scheduleBlockTime}>
                                     <span>
                                         {formatTime(block.startTime)}
                                     </span>
@@ -109,7 +110,7 @@ export default function ScheduleBlockList({
                                     </span>
                                 </div>
 
-                                <div className="schedule-block-content">
+                                <div className={styles.scheduleBlockContent}>
                                     <strong>
                                         {task?.title ??
                                             "Unknown task"}

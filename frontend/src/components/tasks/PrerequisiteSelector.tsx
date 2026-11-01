@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Task } from "../../types/task";
 import type { TaskDependency } from "../../types/taskDependency";
+import styles from "./PrerequisiteSelector.module.css";
 
 interface PrerequisiteSelectorProps {
     tasks: Task[];
@@ -66,8 +67,8 @@ export default function PrerequisiteSelector({
 
     if (availableTasks.length === 0) {
         return (
-            <div className="prerequisite-selector-panel">
-                <p className="prerequisite-selector-empty">
+            <div className={styles.prerequisiteSelectorPanel}>
+                <p className={styles.prerequisiteSelectorEmpty}>
                     No other tasks available.
                 </p>
             </div>
@@ -75,55 +76,55 @@ export default function PrerequisiteSelector({
     }
 
     return (
-        <div className="prerequisite-selector-panel">
-            <div className="prerequisite-selector-header">
+        <div className={styles.prerequisiteSelectorPanel}>
+            <div className={styles.prerequisiteSelectorHeader}>
                 <h3>Prerequisites</h3>
                 <button
                     type="button"
-                    className="prerequisite-selector-close"
+                    className={styles.prerequisiteSelectorClose}
                     onClick={onClose}
                     aria-label="Close prerequisite selector"
                 >
                     ×
                 </button>
             </div>
-            <div className="prerequisite-selector-search">
+            <div className={styles.prerequisiteSelectorSearch}>
                 <input
                     type="text"
                     placeholder="Search tasks..."
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    className="prerequisite-selector-input"
+                    className={styles.prerequisiteSelectorInput}
                     aria-label="Search tasks"
                 />
             </div>
 
             {filteredTasks.length === 0 ? (
-                <p className="prerequisite-selector-empty">
+                <p className={styles.prerequisiteSelectorEmpty}>
                     No tasks match your search.
                 </p>
             ) : (
                 <>
                     {selectedTasks.length > 0 && (
-                        <div className="prerequisite-selector-group">
-                            <h4 className="prerequisite-selector-group-title">
+                        <div className={styles.prerequisiteSelectorGroup}>
+                            <h4 className={styles.prerequisiteSelectorGroupTitle}>
                                 Selected ({selectedTasks.length})
                             </h4>
                             {selectedTasks.map((task) => (
                                 <label
                                     key={task.id}
-                                    className="prerequisite-selector-item prerequisite-selector-item-selected"
+                                    className={`${styles.prerequisiteSelectorItem} ${styles.prerequisiteSelectorItemSelected}`}
                                 >
                                     <input
                                         type="checkbox"
                                         checked
                                         onChange={() => onToggle(task)}
                                     />
-                                    <div className="prerequisite-selector-item-content">
-                                        <span className="prerequisite-selector-item-title">
+                                    <div className={styles.prerequisiteSelectorItemContent}>
+                                        <span className={styles.prerequisiteSelectorItemTitle}>
                                             {task.title}
                                         </span>
-                                        <span className="prerequisite-selector-item-status">
+                                        <span className={styles.prerequisiteSelectorItemStatus}>
                                             {task.status.replace("_", " ")}
                                         </span>
                                     </div>
@@ -133,8 +134,8 @@ export default function PrerequisiteSelector({
                     )}
 
                     {unselectedTasks.length > 0 && (
-                        <div className="prerequisite-selector-group">
-                            <h4 className="prerequisite-selector-group-title">
+                        <div className={styles.prerequisiteSelectorGroup}>
+                            <h4 className={styles.prerequisiteSelectorGroupTitle}>
                                 Available ({unselectedTasks.length})
                             </h4>
                             {unselectedTasks.map((task) => {
@@ -143,13 +144,13 @@ export default function PrerequisiteSelector({
                                 return (
                                     <label
                                         key={task.id}
-                                        className={`prerequisite-selector-item ${
+                                        className={`${styles.prerequisiteSelectorItem} ${
                                             isBlocked
-                                                ? "prerequisite-selector-item-blocked"
+                                                ? styles.prerequisiteSelectorItemBlocked
                                                 : ""
                                         } ${
                                             task.status === "COMPLETED"
-                                                ? "prerequisite-selector-item-completed"
+                                                ? styles.prerequisiteSelectorItemCompleted
                                                 : ""
                                         }`}
                                     >
@@ -159,16 +160,16 @@ export default function PrerequisiteSelector({
                                             disabled={isBlocked}
                                             onChange={() => onToggle(task)}
                                         />
-                                        <div className="prerequisite-selector-item-content">
-                                            <span className="prerequisite-selector-item-title">
+                                        <div className={styles.prerequisiteSelectorItemContent}>
+                                            <span className={styles.prerequisiteSelectorItemTitle}>
                                                 {task.title}
                                             </span>
-                                            <span className="prerequisite-selector-item-status">
+                                            <span className={styles.prerequisiteSelectorItemStatus}>
                                                 {task.status.replace("_", " ")}
                                             </span>
                                         </div>
                                         {isBlocked && (
-                                            <span className="prerequisite-selector-item-warning">
+                                            <span className={styles.prerequisiteSelectorItemWarning}>
                                                 Would create cycle
                                             </span>
                                         )}

@@ -3,6 +3,7 @@ import type { SubmitEvent } from "react";
 
 import { createProject, updateProject } from "../../services/projectService";
 import type { Project } from "../../types/project";
+import styles from "./ProjectForm.module.css";
 
 interface ProjectFormProps {
     project?: Project;
@@ -190,13 +191,13 @@ export default function ProjectForm({
     }
 
     return (
-        <form 
+        <form
             onSubmit={handleCreate}
-            className="project-form"
+            className={styles.projectForm}
         >
-            <div className="project-form-header">
+            <div className={styles.projectFormHeader}>
                 <div>
-                    <h2> 
+                    <h2>
                         {isEditing
                             ? name
                             : "New project"
@@ -208,15 +209,15 @@ export default function ProjectForm({
                             ? "Changes are saved automatically."
                             : "Create a project to organise your work."
                         }
-                    </p>   
+                    </p>
                 </div>
 
                 {isEditing && (
                     <span
-                        className={`project-save-status ${
+                        className={`${styles.projectSaveStatus} ${
                             isSaving
-                                ? "saving"
-                                : "saved"
+                                ? styles.saving
+                                : styles.saved
                         }`}
                     >
                         {isSaving
@@ -224,10 +225,10 @@ export default function ProjectForm({
                             : "Saved"
                         }
                     </span>
-                )} 
+                )}
             </div>
 
-            <div className="project-form-field">
+            <div className={styles.projectFormField}>
                 <label htmlFor="project-name">
                     Title
                 </label>
@@ -247,12 +248,12 @@ export default function ProjectForm({
                 />
             </div>
 
-            <div className="project-form-field">
+            <div className={styles.projectFormField}>
                 <label htmlFor="project-description">
                     Description
                 </label>
 
-                <textarea 
+                <textarea
                     id="project-description"
                     value={description}
                     onChange={(event) =>
@@ -265,16 +266,16 @@ export default function ProjectForm({
                 />
             </div>
 
-            <div className="project-form-field">
+            <div className={styles.projectFormField}>
                 <label htmlFor="project-deadline">
                     Deadline
                 </label>
 
-                <input 
+                <input
                     id="project-deadline"
                     type="datetime-local"
                     value={deadline}
-                    onChange={(event) => 
+                    onChange={(event) =>
                         markChanged(
                             setDeadline,
                             event.target.value
@@ -283,12 +284,12 @@ export default function ProjectForm({
                 />
             </div>
 
-            <div className="project-form-field">
+            <div className={styles.projectFormField}>
                 <label htmlFor="project-priority">
                     Priority
                 </label>
 
-                <select 
+                <select
                     id="project-priority"
                     value={priority}
                     onChange={(event) =>
@@ -311,8 +312,8 @@ export default function ProjectForm({
             </div>
 
             {error && (
-                <p 
-                    className="project-form-error"
+                <p
+                    className={styles.projectFormError}
                     role="alert"
                 >
                     {error}
@@ -320,10 +321,10 @@ export default function ProjectForm({
             )}
 
             {!isEditing && (
-                <div className="project-form-actions">
-                    <button 
+                <div className={styles.projectFormActions}>
+                    <button
                         type="submit"
-                        className="project-primary-button"
+                        className={styles.projectPrimaryButton}
                         disabled={isSaving}
                     >
                         {isSaving
@@ -332,9 +333,9 @@ export default function ProjectForm({
                         }
                     </button>
 
-                    <button 
+                    <button
                         type="button"
-                        className="project-secondary-button"
+                        className={styles.projectSecondaryButton}
                         onClick={onCancel}
                         disabled={isSaving}
                     >

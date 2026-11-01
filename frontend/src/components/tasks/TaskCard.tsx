@@ -1,7 +1,8 @@
 import type { Task } from "../../types/task";
-import type { 
+import type {
     DragEvent
 } from "react";
+import styles from "./TaskCard.module.css";
 
 interface TaskCardProps {
     task: Task;
@@ -106,13 +107,13 @@ export default function TaskCard({
 
     return (
         <div
-            className={`task-card 
+            className={`${styles.taskCard}
                 ${isCompleted
-                    ? "task-card-completed"
+                    ? styles.taskCardCompleted
                     : ""
                 }
                 ${isDropTarget
-                    ? `task-card-drop-target`
+                    ? styles.taskCardDropTarget
                     : ""
                 }
             `}
@@ -123,17 +124,17 @@ export default function TaskCard({
             onDrop={(event) => onDrop(event, task)}
         >
             {prerequisiteCount > 0 && (
-                <div className="task-card-dependency-block task-card-prerequisites">
+                <div className={`${styles.taskCardDependencyBlock} ${styles.taskCardPrerequisites}`}>
                     {prerequisiteCount} prerequisite
                     {prerequisiteCount !== 1 ? "s" : ""}
                 </div>
             )}
 
-            <div className="task-card-content">
+            <div className={styles.taskCardContent}>
                 <button
                     type="button"
-                    className={`task-complete-circle ${
-                        isCompleted ? "completed" : ""
+                    className={`${styles.taskCompleteCircle} ${
+                        isCompleted ? styles.completed : ""
                     }`}
                     onClick={(event) => {
                         event.stopPropagation();
@@ -150,33 +151,33 @@ export default function TaskCard({
 
                 <button
                     type="button"
-                    className="task-card-main"
+                    className={styles.taskCardMain}
                     onClick={() => onClick(task)}
                 >
 
-                    <div className="task-card-title">
+                    <div className={styles.taskCardTitle}>
                         <span>{task.title}</span>
                         {task.priority !== null && (
                             <span
-                                className={`task-priority task-priority-${task.priority}`}
+                                className={styles.taskPriority}
                             >
                                 P{task.priority}
                             </span>
                         )}
                     </div>
 
-                    <div className="task-card-status">
+                    <div className={styles.taskCardStatus}>
                         {task.status.replace("_", " ")}
                     </div>
 
-                    <div className="task-card-time">
+                    <div className={styles.taskCardTime}>
                         {task.estimatedMinutes !== null
                             ? `${formatDuration(task.workedMinutes)} / ${formatDuration(task.estimatedMinutes)}`
                             : `${formatDuration(task.workedMinutes)} worked`
                         }
                     </div>
 
-                    <div className="task-card-remaining">
+                    <div className={styles.taskCardRemaining}>
                         {task.remainingMinutes !== null
                             ? task.remainingMinutes === 0
                                 ? "Completed"
@@ -185,7 +186,7 @@ export default function TaskCard({
                         }
                     </div>
 
-                    <div className="task-card-deadline">
+                    <div className={styles.taskCardDeadline}>
                         {task.deadline
                             ? new Date(task.deadline).toLocaleDateString(
                                 undefined,
@@ -202,8 +203,8 @@ export default function TaskCard({
                 </button>
             </div>
             {dependentCount > 0 && (
-                <div className="task-card-dependency-block task-card-dependents">
-                    {dependentCount} dependent 
+                <div className={`${styles.taskCardDependencyBlock} ${styles.taskCardDependents}`}>
+                    {dependentCount} dependent
                     {dependentCount !== 1 ? "s": ""}
                 </div>
             )}

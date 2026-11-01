@@ -5,6 +5,7 @@ import TaskDependencies from "./TaskDependencies";
 import type { TaskDependency } from "../../types/taskDependency";
 
 import PrerequisiteSelector from "./PrerequisiteSelector";
+import styles from "./TaskDetails.module.css";
 
 interface TaskDetailsProps {
     task: Task;
@@ -53,7 +54,7 @@ export default function TaskDetails({
 
     return (
         <div
-            className="task-details-overlay"
+            className={styles.taskDetailsOverlay}
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
                     onClose();
@@ -61,7 +62,7 @@ export default function TaskDetails({
             }}
         >
             {showPrerequisiteSelector && (
-                <div className="prerequisite-selector-positioner">
+                <div className={styles.prerequisiteSelectorPositioner}>
                     <PrerequisiteSelector
                         tasks={tasks}
                         currentTask={task}
@@ -73,22 +74,22 @@ export default function TaskDetails({
                 </div>
             )}
 
-            <section className="task-details">
+            <section className={styles.taskDetails}>
                 <button
                     type="button"
-                    className="task-details-close"
+                    className={styles.taskDetailsClose}
                     onClick={onClose}
                     aria-label="Close tasks details"
                 >
                     ×
                 </button>
 
-                <div className="task-details-title">
+                <div className={styles.taskDetailsTitle}>
                     <button
                         type="button"
-                        className={`task-complete-circle ${
+                        className={`${styles.taskCompleteCircle} ${
                             isCompleted
-                                ? "completed"
+                                ? styles.completed
                                 : ""
                         }`}
                         onClick={() => onComplete(task)}
@@ -110,7 +111,7 @@ export default function TaskDetails({
                 />
 
                 {dependencyError && (
-                    <p className="task-error" role="alert">
+                    <p className={styles.taskError} role="alert">
                         {dependencyError}
                     </p>
                 )}
@@ -127,10 +128,10 @@ export default function TaskDetails({
                     onTaskClick={onTaskClick}
                 />
 
-                <div className="task-details-actions">
+                <div className={styles.taskDetailsActions}>
                     <button
                         type="button"
-                        className="task-cancel-button"
+                        className={styles.taskCancelButton}
                         onClick={onClose}
                     >
                         Cancel
@@ -139,7 +140,7 @@ export default function TaskDetails({
                     <button
                         type="button"
                         onClick={() => onDelete(task)}
-                        className="task-delete-button"
+                        className={styles.taskDeleteButton}
                     >
                         Delete
                     </button>

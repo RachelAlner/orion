@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 import type { DayOfWeek } from "../../types/dayOfWeek";
 import type {
-    Availability, 
-    CreateAvailabilityRequest, 
+    Availability,
+    CreateAvailabilityRequest,
 } from "../../types/availability";
+import styles from "./AvailabilityForm.module.css";
 
 interface AvailabilityFormProps {
     availability?: Availability;
@@ -100,11 +101,11 @@ export default function AvailabilityForm({
     }
 
     return (
-        <form 
-            className="availability-form"
+        <form
+            className={styles.availabilityForm}
             onSubmit={handleSubmit}
         >
-            <div className="availability-form-header">
+            <div className={styles.availabilityFormHeader}>
                 <h2>
                     {availability
                         ? "Edit availability"
@@ -112,9 +113,9 @@ export default function AvailabilityForm({
                     }
                 </h2>
 
-                <button 
+                <button
                     type="button"
-                    className="availability-form-close"
+                    className={styles.availabilityFormClose}
                     onClick={onCancel}
                     aria-label="Close"
                 >
@@ -122,7 +123,7 @@ export default function AvailabilityForm({
                 </button>
             </div>
 
-            <div className="availability-form-fields">
+            <div className={styles.availabilityFormFields}>
                 <div>
                     <label htmlFor="availability-day">
                         Day
@@ -131,14 +132,14 @@ export default function AvailabilityForm({
                     <select
                         id="availability-day"
                         value={dayOfWeek}
-                        onChange={(event) => 
+                        onChange={(event) =>
                             setDayOfWeek(
                                 event.target.value as DayOfWeek
                             )
-                        }   
+                        }
                     >
                         {days.map((day) => (
-                            <option 
+                            <option
                                 key={day}
                                 value={day}
                             >
@@ -158,7 +159,7 @@ export default function AvailabilityForm({
                         id="availability-start"
                         type="time"
                         value={startTime}
-                        onChange={(event) => 
+                        onChange={(event) =>
                             setStartTime(
                                 event.target.value
                             )
@@ -185,12 +186,12 @@ export default function AvailabilityForm({
             </div>
 
             {error && (
-                <p className="availability-form-error">
+                <p className={styles.availabilityFormError}>
                     {error}
                 </p>
             )}
 
-            <div className="availability-form-actions">
+            <div className={styles.availabilityFormActions}>
                 <button
                     type="button"
                     onClick={onCancel}
@@ -199,7 +200,7 @@ export default function AvailabilityForm({
                     Cancel
                 </button>
 
-                <button 
+                <button
                     type="submit"
                     disabled={isSaving}
                 >

@@ -1,0 +1,187 @@
+
+.taskDependencies {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.taskDependenciesHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.taskDependenciesHeader h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.taskDependenciesCount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 12px;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.taskDependenciesGroup {
+    margin-bottom: 16px;
+}
+
+.taskDependenciesGroup:last-child {
+    margin-bottom: 0;
+}
+
+.taskDependenciesGroupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.taskDependenciesGroupHeader h4 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+}
+
+.taskDependenciesGroupCount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+
+.taskDependenciesList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.taskDependencyItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 10px;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+.taskDependencyItemBlocks {
+    background: #f5f5f5;
+}
+
+.taskDependencyTask {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    min-width: 0;
+}
+
+.taskDependencyTask:hover {
+    background: transparent;
+}
+
+.taskDependencyTaskTitle {
+    flex: 1;
+    overflow: hidden;
+    color: #333;
+    font-size: 12px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.taskDependencyTaskStatus {
+    flex-shrink: 0;
+    font-size: 10px;
+    color: #999;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.taskDependencyRemove {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #999;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.taskDependencyRemove:hover {
+    background: #eee;
+    color: #222;
+}
+
+.taskDependenciesEmpty {
+    margin: 0;
+    color: #999;
+    font-size: 12px;
+}
+
+.taskPrerequisiteControl {
+  margin: 16px 0;
+}
+
+.taskAddPrerequisite {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    margin: 16px 0;
+    padding: 10px 14px;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    background: #fafafa;
+    color: #666;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.taskAddPrerequisite:hover {
+    border-color: #999;
+    background: #f5f5f5;
+    color: #333;
+}
+
+.taskAddPrerequisite span {
+    font-size: 12px;
+    color: #999;
+}

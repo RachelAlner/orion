@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Task } from "../../types/task";
 import type { TaskDependency } from "../../types/taskDependency";
+import styles from "./TaskDependencies.module.css";
 
 interface TaskDependenciesProps {
     task: Task;
@@ -63,36 +64,36 @@ export default function TaskDependencies({
     const dependentCount = dependentTasks.length;
 
     return (
-        <section className="task-dependencies">
-            <div className="task-dependencies-header">
+        <section className={styles.taskDependencies}>
+            <div className={styles.taskDependenciesHeader}>
                 <h3>Dependencies</h3>
-                <span className="task-dependencies-count">
+                <span className={styles.taskDependenciesCount}>
                     {prerequisiteCount + dependentCount}
                 </span>
             </div>
 
             {isLoading ? (
-                <p className="task-dependencies-empty">
+                <p className={styles.taskDependenciesEmpty}>
                     Loading dependencies...
                 </p>
             ) : (
                 <>
-                    <div className="task-dependencies-group">
-                        <div className="task-dependencies-group-header">
+                    <div className={styles.taskDependenciesGroup}>
+                        <div className={styles.taskDependenciesGroupHeader}>
                             <h4>Requires</h4>
                             {prerequisiteCount > 0 && (
-                                <span className="task-dependencies-group-count">
+                                <span className={styles.taskDependenciesGroupCount}>
                                     {prerequisiteCount}
                                 </span>
                             )}
                         </div>
 
                         {prerequisiteCount === 0 ? (
-                            <p className="task-dependencies-empty">
+                            <p className={styles.taskDependenciesEmpty}>
                                 No prerequisites.
                             </p>
                         ) : (
-                            <div className="task-dependencies-list">
+                            <div className={styles.taskDependenciesList}>
                                 {prerequisiteTasks.map(
                                     (prerequisiteTask) => {
                                         const dependency =
@@ -109,21 +110,21 @@ export default function TaskDependencies({
                                         return (
                                             <div
                                                 key={prerequisiteTask.id}
-                                                className="task-dependency-item"
+                                                className={styles.taskDependencyItem}
                                             >
                                                 <button
                                                     type="button"
-                                                    className="task-dependency-task"
+                                                    className={styles.taskDependencyTask}
                                                     onClick={() =>
                                                         onTaskClick(
                                                             prerequisiteTask
                                                         )
                                                     }
                                                 >
-                                                    <span className="task-dependency-task-title">
+                                                    <span className={styles.taskDependencyTaskTitle}>
                                                         {prerequisiteTask.title}
                                                     </span>
-                                                    <span className="task-dependency-task-status">
+                                                    <span className={styles.taskDependencyTaskStatus}>
                                                         {prerequisiteTask.status.replace(
                                                             "_", " "
                                                         )}
@@ -132,7 +133,7 @@ export default function TaskDependencies({
 
                                                 <button
                                                     type="button"
-                                                    className="task-dependency-remove"
+                                                    className={styles.taskDependencyRemove}
                                                     onClick={() =>
                                                         onRemove(dependency)
                                                     }
@@ -148,10 +149,10 @@ export default function TaskDependencies({
                         )}
                     </div>
 
-                    <div className="task-prerequisite-control">
+                    <div className={styles.taskPrerequisiteControl}>
                         <button
                             type="button"
-                            className="task-add-prerequisite"
+                            className={styles.taskAddPrerequisite}
                             onClick={onTogglePrerequisiteSelector}
                             aria-expanded={showPrerequisiteSelector}
                         >
@@ -163,34 +164,34 @@ export default function TaskDependencies({
 
                         {showPrerequisiteSelector && children}
                     </div>
-                    
+
 
                     {dependentCount > 0 && (
-                        <div className="task-dependencies-group">
-                            <div className="task-dependencies-group-header">
+                        <div className={styles.taskDependenciesGroup}>
+                            <div className={styles.taskDependenciesGroupHeader}>
                                 <h4>Blocks</h4>
-                                <span className="task-dependencies-group-count">
+                                <span className={styles.taskDependenciesGroupCount}>
                                     {dependentCount}
                                 </span>
                             </div>
 
-                            <div className="task-dependencies-list">
+                            <div className={styles.taskDependenciesList}>
                                 {dependentTasks.map((dependentTask) => (
                                     <div
                                         key={dependentTask.id}
-                                        className="task-dependency-item task-dependency-item-blocks"
+                                        className={`${styles.taskDependencyItem} ${styles.taskDependencyItemBlocks}`}
                                     >
                                         <button
                                             type="button"
-                                            className="task-dependency-task"
+                                            className={styles.taskDependencyTask}
                                             onClick={() =>
                                                 onTaskClick(dependentTask)
                                             }
                                         >
-                                            <span className="task-dependency-task-title">
+                                            <span className={styles.taskDependencyTaskTitle}>
                                                 {dependentTask.title}
                                             </span>
-                                            <span className="task-dependency-task-status">
+                                            <span className={styles.taskDependencyTaskStatus}>
                                                 {dependentTask.status.replace(
                                                     "_"," "
                                                 )}

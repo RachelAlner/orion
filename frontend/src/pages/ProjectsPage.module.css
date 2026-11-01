@@ -1,0 +1,228 @@
+.projectsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.projectsHeader h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.projectsHeader p {
+  margin: 6px 0 0;
+  color: #777;
+  font-size: 13px;
+}
+
+.projectsPage {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.projectsNewButton {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #222;
+  color: #fff;
+  font-size: 13px;
+}
+
+.projectsNewButton:hover {
+  background: #111;
+}
+
+.projectsError {
+  margin: 0 0 20px;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.projectsEmpty {
+  padding: 40px 0;
+  border-top: 1px solid #e5e5e5;
+  text-align: center;
+}
+
+.projectsEmpty p {
+  margin: 0 0 12px;
+  color: #777;
+}
+
+.projectsEmpty button {
+  margin: 0;
+  background: #222;
+  color: #fff;
+}
+
+.projectListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 8px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.projectListItem:hover {
+  background: #f8f8f8;
+}
+
+.projectListMain {
+  min-width: 0;
+  flex: 1;
+}
+
+.projectListLink {
+  display: block;
+  padding: 0;
+  color: inherit;
+}
+
+.projectListLink h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.projectListLink p {
+  max-width: 600px;
+  margin: 0;
+  overflow: hidden;
+  color: #777;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectListDetails {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.projectListDetails span {
+  display: flex;
+  gap: 5px;
+  color: #777;
+  font-size: 11px;
+}
+
+.projectListDetails strong {
+  color: #999;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
+.projectListActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.projectListActions button {
+  margin: 0;
+  padding: 6px 9px;
+  color: #555;
+  font-size: 12px;
+}
+
+.projectListActions button:hover {
+  background: #eaeaea;
+}
+
+.projectListArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  color: #777;
+  font-size: 16px;
+}
+
+.projectListArrow:hover {
+  color: #222;
+}
+
+.projectDetailsOverlay { 
+  position: fixed; 
+  inset: 0; 
+  z-index: 1000; 
+  background: rgba(0, 0, 0, 0.08); 
+}
+
+.projectDetailsEdit { 
+  position: absolute; 
+  top: 0; 
+  right: 0; 
+  width: min(440px, 100%); 
+  height: 100%; 
+  max-height: 100vh; 
+  overflow-y: auto; 
+  padding: 28px; 
+  border-left: 1px solid #ddd; 
+  background: #fff; 
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.08); 
+}
+
+.projectDetailsClose { 
+  position: absolute; 
+  top: 12px; 
+  right: 12px; 
+  padding: 4px 8px;
+  background: transparent; 
+  color: #666; 
+  font-size: 22px; 
+  line-height: 1; 
+} 
+
+.projectDetailsClose:hover
+{
+  background: #f0f0f0;
+  color: #111;
+}
+
+@media (max-width: 700px) {
+  .projectsHeader {
+    flex-direction: column;
+  }
+
+  .projectsNewButton {
+    width: 100%;
+  }
+
+  .projectListItem {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .projectListDetails {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+
+  .projectListActions {
+    width: 100%;
+  }
+
+  .projectListActions button {
+    flex: 1;
+  }
+
+  .projectListArrow {
+    width: auto;
+    padding: 6px 9px;
+  }
+}

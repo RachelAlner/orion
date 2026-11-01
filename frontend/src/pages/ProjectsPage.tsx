@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import ProjectForm from "../components/projects/ProjectForm";
 import { deleteProject, getProjects } from "../services/projectService";
 import type { Project } from "../types/project";
+import styles from "./ProjectsPage.module.css";
+import formOverlayStyles from "../components/shared/FormOverlay.module.css";
 
 export default function ProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -88,7 +90,7 @@ export default function ProjectsPage() {
 
     if (isLoading) {
         return (
-            <div className="projects-page">
+            <div className={styles.projectsPage}>
                 <div>
                     <h1>Projects</h1>
                     <p>Loading projects...</p>
@@ -98,52 +100,52 @@ export default function ProjectsPage() {
     }
 
     return (
-        <div className="projects-page">
-            <header className="projects-header">
+        <div className={styles.projectsPage}>
+            <header className={styles.projectsHeader}>
                 <div>
                     <h1>Projects</h1>
                     <p>
                         Organise your work and track your progress.
                     </p>
                 </div>
-            
-                <button 
+
+                <button
                     type="button"
-                    className="projects-new-button"
+                    className={styles.projectsNewButton}
                     onClick={() => {
                         setEditingProject(null);
                         setShowCreateForm(true);
                     }}
                 >
-                    + New Project 
+                    + New Project
                 </button>
-            </header>        
+            </header>
 
             {error && (
-                <p className="projects-error" role="alert">
+                <p className={styles.projectsError} role="alert">
                     {error}
                 </p>
             )}
 
             {showCreateForm && (
-                <div 
-                    className="form-overlay"
+                <div
+                    className={formOverlayStyles.formOverlay}
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) {
                             handleCloseCreate();
                         }
                     }}
                 >
-                    <div className="form-overlay-panel">
-                        <button 
+                    <div className={formOverlayStyles.formOverlayPanel}>
+                        <button
                             type="button"
-                            className="form-overlay-close"
+                            className={formOverlayStyles.formOverlayClose}
                             onClick={handleCloseCreate}
                             aria-label="Close"
                         >
                             ×
                         </button>
-                        <ProjectForm 
+                        <ProjectForm
                             onSaved={handleCreateSaved}
                             onCancel={handleCloseCreate}
                         />
@@ -152,18 +154,18 @@ export default function ProjectsPage() {
             )}
 
             {editingProject && (
-                <div 
-                    className="project-details-overlay"
+                <div
+                    className={styles.projectDetailsOverlay}
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) {
                             handleCloseEdit();
                         }
                     }}
                 >
-                    <aside className="project-details-edit">
-                        <button 
+                    <aside className={styles.projectDetailsEdit}>
+                        <button
                             type="button"
-                            className="project-details-close"
+                            className={styles.projectDetailsClose}
                             onClick={handleCloseEdit}
                             aria-label="Close"
                         >
@@ -180,10 +182,10 @@ export default function ProjectsPage() {
             )}
 
             {projects.length === 0 ? (
-                    <div className="projects-empty">
+                    <div className={styles.projectsEmpty}>
                         <p>No projects yet.</p>
 
-                        <button 
+                        <button
                             type="button"
                             onClick={() =>
                                 setShowCreateForm(true)
@@ -193,16 +195,16 @@ export default function ProjectsPage() {
                         </button>
                     </div>
                 ) : (
-                    <div className="project-list">
+                    <div className={styles.projectList}>
                         {projects.map((project) => (
                             <div
                                 key={project.id}
-                                className="project-list-item"
+                                className={styles.projectListItem}
                             >
-                                <div className="project-list-main">
+                                <div className={styles.projectListMain}>
                                     <Link
                                         to={`/projects/${project.id}`}
-                                        className="project-list-link"
+                                        className={styles.projectListLink}
                                     >
                                         <h2>{project.name}</h2>
 
@@ -211,7 +213,7 @@ export default function ProjectsPage() {
                                         )}
                                     </Link>
 
-                                    <div className="project-list-details">
+                                    <div className={styles.projectListDetails}>
                                         <span>
                                             <strong>
                                                 Deadline
@@ -235,29 +237,29 @@ export default function ProjectsPage() {
                                     </div>
                                 </div>
 
-                                <div className="project-list-actions">
-                                    <button 
+                                <div className={styles.projectListActions}>
+                                    <button
                                         type="button"
                                         onClick={() => {
                                             setShowCreateForm(false);
                                             setEditingProject(project);
                                         }}
                                     >
-                                        Edit 
+                                        Edit
                                      </button>
 
-                                    <button 
+                                    <button
                                         type="button"
-                                        onClick={() => 
+                                        onClick={() =>
                                             handleDelete(project)
                                         }
                                         disabled={
-                                            deletingProjectId === 
+                                            deletingProjectId ===
                                             project.id
                                         }
                                     >
                                         {deletingProjectId ===
-                                        project.id 
+                                        project.id
                                             ? "Deleting..."
                                             : "Delete"
                                         }
@@ -265,7 +267,7 @@ export default function ProjectsPage() {
 
                                     <Link
                                         to={`/projects/${project.id}`}
-                                        className="project-list-arrow"
+                                        className={styles.projectListArrow}
                                         aria-label={`Open ${project.name}`}
                                     >
                                         →

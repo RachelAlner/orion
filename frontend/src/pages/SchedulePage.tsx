@@ -6,6 +6,7 @@ import { getProjects } from "../services/projectService";
 import { generateSchedule } from "../services/scheduleService";
 import ScheduleBlockList from "../components/schedule/ScheduleBlockList";
 import UnscheduledTaskList from "../components/schedule/UnscheduledTaskList";
+import styles from "./SchedulePage.module.css";
 
 function getStartOfWeek(): Date {
     const date = new Date();
@@ -166,24 +167,24 @@ export default function SchedulePage() {
     }
 
     return (
-        <div className="schedule-page">
-            <div className="schedule-page-header">
+        <div className={styles.schedulePage}>
+            <div className={styles.schedulePageHeader}>
                 <div>
                     <h1>Schedule</h1>
                     <p>
-                        Plan your available time around 
+                        Plan your available time around
                         your current tasks.
                     </p>
                 </div>
 
-                <button 
+                <button
                     type="button"
                     onClick={handleGenerateSchedule}
                     disabled={
-                        isGenerating || 
+                        isGenerating ||
                         isLoadingTasks
                     }
-                    className="schedule-generate-button"
+                    className={styles.scheduleGenerateButton}
                 >
                     {isGenerating
                         ? "Generating..."
@@ -192,13 +193,13 @@ export default function SchedulePage() {
                 </button>
             </div>
 
-            <section className="schedule-period">
+            <section className={styles.schedulePeriod}>
                 <div>
                     <label htmlFor="schedule-start">
                         Start
                     </label>
 
-                    <input 
+                    <input
                         id="schedule-start"
                         type="date"
                         value={periodStart}
@@ -215,11 +216,11 @@ export default function SchedulePage() {
                         End
                     </label>
 
-                    <input 
+                    <input
                         id="schedule-end"
                         type="date"
                         value={periodEnd}
-                        onChange={(event) => 
+                        onChange={(event) =>
                             setPeriodEnd(
                                 event.target.value
                             )
@@ -229,22 +230,22 @@ export default function SchedulePage() {
             </section>
 
             {isLoadingTasks && (
-                <p className="schedule-empty-page">
+                <p className={styles.scheduleEmptyPage}>
                     Loading tasks...
                 </p>
             )}
 
             {error && (
-                <p className="schedule-error">
+                <p className={styles.scheduleError}>
                     {error}
                 </p>
             )}
 
-            {!isLoadingTasks && 
-                !schedule && 
+            {!isLoadingTasks &&
+                !schedule &&
                 !error && (
-                    <p className="schedule-empty-page">
-                        Generate a schedule to see 
+                    <p className={styles.scheduleEmptyPage}>
+                        Generate a schedule to see
                         your planned work.
                     </p>
                 )}

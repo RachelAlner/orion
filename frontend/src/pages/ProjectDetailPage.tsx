@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
-    deleteTask, 
-    getTasks, 
+    deleteTask,
+    getTasks,
     completeTask,
 } from "../services/taskService";
 
-import { 
+import {
     addTaskDependency,
     getTaskDependencies,
     deleteTaskDependency,
@@ -24,6 +24,8 @@ import type { DragEvent } from "react";
 
 import { getProject } from "../services/projectService";
 import type { Project } from "../types/project";
+import styles from "./ProjectDetailPage.module.css";
+import formOverlayStyles from "../components/shared/FormOverlay.module.css";
 
 export default function ProjectDetailPage() {
     const { projectId } = useParams<{
@@ -530,17 +532,17 @@ export default function ProjectDetailPage() {
     }
 
     return (
-        <div className="project-page">
-            <Link 
+        <div>
+            <Link
                 to="/projects"
-                className="project-back-link"
+                className={styles.projectBackLink}
             >
                 ← Projects
             </Link>
 
-            <section className="project-overview">
+            <section className={styles.projectOverview}>
 
-                <header className="project-header">
+                <header className={styles.projectHeader}>
                     <h1>{project.name}</h1>
 
                     {project.description && (
@@ -549,11 +551,11 @@ export default function ProjectDetailPage() {
 
                 </header>
 
-                <dl className="project-details">
+                <dl className={styles.projectDetails}>
                     <div>
                         <dt>Deadline</dt>
                         <dd>
-                            {project.deadline 
+                            {project.deadline
                                 ? new Date(
                                     project.deadline
                                 ).toLocaleDateString()
@@ -561,7 +563,7 @@ export default function ProjectDetailPage() {
                             }
                         </dd>
                     </div>
-                
+
                     <div>
                         <dt>Priority</dt>
                         <dd>
@@ -578,8 +580,8 @@ export default function ProjectDetailPage() {
                 </dl>
             </section>
 
-            <section className="project-tasks">
-                <div className="project-tasks-header">
+            <section className={styles.projectTasks}>
+                <div className={styles.projectTasksHeader}>
                     <h2>Tasks</h2>
 
                     {!showCreateTaskForm && (
@@ -593,19 +595,19 @@ export default function ProjectDetailPage() {
                 </div>
 
                 {showCreateTaskForm && projectId && (
-                    <div 
-                        className="form-overlay"
+                    <div
+                        className={formOverlayStyles.formOverlay}
                         onMouseDown={(event) => {
                             if (event.target === event.currentTarget) {
                                 setShowCreateTaskForm(false);
                             }
                         }}
                     >
-                        <div className="form-overlay-panel">
-                            <button 
+                        <div className={formOverlayStyles.formOverlayPanel}>
+                            <button
                                 type="button"
-                                className="form-overlay-close"
-                                onClick={() => 
+                                className={formOverlayStyles.formOverlayClose}
+                                onClick={() =>
                                     setShowCreateTaskForm(false)
                                 }
                                 aria-label="Close"
@@ -613,7 +615,7 @@ export default function ProjectDetailPage() {
                                 ×
                             </button>
 
-                            <TaskForm 
+                            <TaskForm
                                 projectId={projectId}
                                 onSaved={handleTaskCreated}
                                 onCancel={() => setShowCreateTaskForm(false)}
@@ -637,8 +639,8 @@ export default function ProjectDetailPage() {
                                 {dependencyError}
                             </p>
                         )}
-                    
-                        <TaskList 
+
+                        <TaskList
                             tasks={tasks}
                             taskDependencies={taskDependencies}
                             onTaskClick={handleTaskClick}

@@ -3,6 +3,7 @@ import type { TaskDependency } from "../../types/taskDependency";
 import TaskCard from "./TaskCard";
 
 import type { DragEvent } from "react";
+import styles from "./TaskList.module.css";
 
 interface TaskListProps {
     tasks: Task[];
@@ -72,15 +73,15 @@ export default function TaskList({
     }
 
     return (
-        <div className="task-list">
+        <div className={styles.taskList}>
             {activeTasks.map((task) => {
                 const {
-                    prerequisiteCount, 
+                    prerequisiteCount,
                     dependentCount,
                 } = getDependencyCounts(task.id);
 
                 return (
-                    <TaskCard 
+                    <TaskCard
                         key={task.id}
                         task={task}
                         onClick={onTaskClick}
@@ -99,20 +100,20 @@ export default function TaskList({
                 })}
 
                 {completedTasks.length > 0 && (
-                    <section className="completed-task-section">
-                        <h3 className="completed-task-section-title">
+                    <section className={styles.completedTaskSection}>
+                        <h3 className={styles.completedTaskSectionTitle}>
                             Completed
                         </h3>
 
-                        <div className="completed-task-list">
+                        <div className={styles.completedTaskList}>
                             {completedTasks.map((task) => {
                                 const {
-                                    prerequisiteCount, 
+                                    prerequisiteCount,
                                     dependentCount,
                                 } = getDependencyCounts(task.id);
 
                                 return (
-                                    <TaskCard 
+                                    <TaskCard
                                         key={task.id}
                                         task={task}
                                         onClick={onTaskClick}

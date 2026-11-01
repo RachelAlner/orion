@@ -1,5 +1,6 @@
 import type { Availability } from "../../types/availability";
 import type { DayOfWeek } from "../../types/dayOfWeek";
+import styles from "./AvailabilityList.module.css";
 
 interface AvailabilityListProps {
     availability: Availability[];
@@ -46,33 +47,33 @@ export default function AvailabilityList({
     onDelete,
 }: AvailabilityListProps) {
     return (
-        <div className="availability-list">
+        <div className={styles.availabilityList}>
             {days.map((day) => {
-                const dayAvailability = 
+                const dayAvailability =
                     availability
                         .filter(
-                            (item) => 
+                            (item) =>
                                     item.dayOfWeek === day
                         )
-                        .sort((a, b) => 
+                        .sort((a, b) =>
                             a.startTime.localeCompare(
                                 b.startTime
                             )
                         );
-                
+
                 return (
-                    <section 
+                    <section
                         key={day}
-                        className="availability-day"
+                        className={styles.availabilityDay}
                     >
-                        <div className="availability-day-header">
+                        <div className={styles.availabilityDayHeader}>
                             <h2>
                                 {formatDay(day)}
                             </h2>
 
                             <button
                                 type="button"
-                                onClick={() => 
+                                onClick={() =>
                                     onAdd(day)
                                 }
                             >
@@ -80,19 +81,19 @@ export default function AvailabilityList({
                             </button>
                         </div>
 
-                        {dayAvailability.length === 
+                        {dayAvailability.length ===
                         0 ? (
-                            <p className="availability-day-empty">
+                            <p className={styles.availabilityDayEmpty}>
                                 No availability
                             </p>
                         ) : (
-                            <div className="availability-windows">
+                            <div className={styles.availabilityWindows}>
                                 {dayAvailability.map(
                                     (item) => (
                                         <div
                                             key={item.id}
-                                            className="availability-window"
-                                            onClick={() => 
+                                            className={styles.availabilityWindow}
+                                            onClick={() =>
                                                 onEdit(item)
                                             }
                                         >
@@ -102,7 +103,7 @@ export default function AvailabilityList({
                                                 )}
                                             </span>
 
-                                            <span className="availability-window-line" />
+                                            <span className={styles.availabilityWindowLine} />
 
                                             <span>
                                                 {formatTime(
@@ -112,7 +113,7 @@ export default function AvailabilityList({
 
                                             <button
                                                 type="button"
-                                                className="availability-delete"
+                                                className={styles.availabilityDelete}
                                                 onClick={(event) => {
                                                     event.stopPropagation();
 

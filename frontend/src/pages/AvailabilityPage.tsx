@@ -9,6 +9,8 @@ import {
 } from "../services/availabilityService";
 import AvailabilityForm from "../components/availability/AvailabilityForm";
 import AvailabilityList from "../components/availability/AvailabilityList";
+import styles from "./AvailabilityPage.module.css";
+import formOverlayStyles from "../components/shared/FormOverlay.module.css";
 
 export default function AvailabilityPage() {
     const [availability, setAvailability] = 
@@ -155,30 +157,30 @@ export default function AvailabilityPage() {
     }
 
     return (
-        <div className="availability-page">
-            <div className="availability-page-header">
+        <div className={styles.availabilityPage}>
+            <div className={styles.availabilityPageHeader}>
                 <div>
                     <h1>Availability</h1>
 
                     <p>
-                        Set the times when you are 
+                        Set the times when you are
                         available to work.
                     </p>
                 </div>
             </div>
 
             {error && (
-                <p className="availability-error">
+                <p className={styles.availabilityError}>
                     {error}
                 </p>
             )}
 
             {isLoading ? (
-                <p className="availability-empty-page">
+                <p className={styles.availabilityEmptyPage}>
                     Loading availability...
                 </p>
             ) : (
-                <AvailabilityList 
+                <AvailabilityList
                     availability={availability}
                     onAdd={handleAdd}
                     onEdit={handleEdit}
@@ -188,11 +190,11 @@ export default function AvailabilityPage() {
             }
 
             {(addingDay || editingAvailability) && (
-                <div className="form-overlay">
-                    <div className="form-overlay-panel">
+                <div className={formOverlayStyles.formOverlay}>
+                    <div className={formOverlayStyles.formOverlayPanel}>
                         <AvailabilityForm
                             availability={
-                                editingAvailability ?? 
+                                editingAvailability ??
                                 undefined
                             }
                             initialDay={
