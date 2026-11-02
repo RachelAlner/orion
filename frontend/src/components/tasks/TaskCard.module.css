@@ -4,60 +4,59 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  margin: 14px 0;
+  margin: var(--space-3) 0;
   padding: 0;
-  border: 1px solid #e2e2e2;
-  border-bottom: 1px solid #eeeeee;
-  border-radius: 8px;
-  background: #fff;
+  border: var(--border-light);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
   text-align: left;
   isolation: isolate;
 }
 
 .taskCard:hover{
-  background: #f7f7f7;
+  background: var(--color-surface-hover);
 }
 
 .taskCardContent {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px;
+  gap: var(--space-3);
+  padding: var(--space-3);
 }
 
 .taskCardDependencyBlock {
   position: absolute;
   z-index: -5;
   align-self: center;
-  padding: 3px 8px;
-  border: 1px solid #e0e0e0;
-  color: #777;
-  background: #fafafa;
-  font-size: 10px;
-  line-height: 1.3;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-light);
+  color: var(--color-text-muted);
+  background: var(--color-surface-hover);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-tight);
   letter-spacing: 0.02em;
   white-space: nowrap;
-  font-weight: 500;
-  border-radius: 4px;
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
 }
 
 .taskCardPrerequisites {
   bottom: -20px;
   left: 50px;
-  border-radius: 0 0 4px 4px;
-  background: #fef6e9;
-  border-color: #f0d9a0;
-  color: #a67c00;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--color-prerequisite-background);
+  border-color: var(--color-prerequisite-border);
+  color: var(--color-prerequisite);
 }
 
 .taskCardDependents {
   bottom: -20px;
   left: 150px;
-  border-radius: 0 0 4px 4px;
-  background: #e9f0fe;
-  border-color: #b3d1ff;
-  color: #4a7cd6;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--color-dependent-background);
+  border-color: var(--color-dependent-border);
+  color: var(--color-dependent);
 }
 
 .taskCardMain {
@@ -66,8 +65,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto auto auto;
   align-items: center;
-  gap: 20px;
-  padding: 8px 0;
+  gap: var(--space-5);
+  padding: var(--space-2) 0;
   border: 0;
   background: transparent;
   text-align: left;
@@ -90,77 +89,77 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .taskCardStatus {
-  color: #777;
-  font-size: 11px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .taskCardTime,
 .taskCardRemaining {
-  color: #777;
-  font-size: 12px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
 .taskPriority {
   flex-shrink: 0;
-  padding: 2px 5px;
-  border: 1px solid #d5d5d5;
-  border-radius: 4px;
-  color: #666;
-  font-size: 9px;
-  font-weight: 600;
+  padding: var(--space-0-5) var(--space-1-5);
+  border: var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.04em;
-  line-height: 1.2;
+  line-height: var(--line-height-tight);
 }
 
 .taskCardDeadline {
-  color: #777;
-  font-size: 12px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
 .taskCardDropTarget {
-    background: #f7f7f7;
-    border-color: #cfcfcf;
+    background: var(--color-surface-hover);
+    border-color: var(--color-drop-target);
 }
 
 
 .taskCompleteCircle {
-  flex: 0 0 22px;
-  width: 22px;
-  height: 22px;
+  flex: 0 0 var(--space-5);
+  width: var(--space-5);
+  height: var(--space-5);
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #aaa;
-  border-radius: 50%;
-  background: #fff;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-surface);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   line-height: 1;
 }
 
 .taskCompleteCircle:hover {
-  border-color: #555;
-  background: #f2f2f2;
+  border-color: var(--color-text-secondary);
+  background: var(--color-surface-hover);
 }
 
 .taskCompleteCircle.completed {
-  border-color: #222;
-  background: #222;
-  color: #fff;
+  border-color: var(--color-secondary-button);
+  background: var(--color-secondary-button);
+  color: var(--color-surface);
 }
 
 
@@ -180,13 +179,13 @@
 .taskCardCompleted .taskCardTime,
 .taskCardCompleted .taskCardRemaining,
 .taskCardCompleted .taskCardDeadline {
-    color: #999;
+    color: var(--color-text-subtle);
 }
 
 @media (max-width: 700px) {
   .taskCard {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 6px 12px;
+    gap: var(--space-1-5) var(--space-3);
   }
 
   .taskCardTitle {

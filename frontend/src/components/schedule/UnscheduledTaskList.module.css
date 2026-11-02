@@ -1,4 +1,39 @@
 
+.scheduleSection {
+    margin-top: var(--space-8);
+}
+
+.scheduleSectionHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.scheduleSectionHeader h2 {
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+}
+
+.scheduleSectionHeader span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--space-5);
+    height: var(--space-5);
+    padding: 0 var(--space-1-5);
+    border-radius: var(--radius-xl);
+    background: var(--color-button);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+}
+
+.scheduleWarningSection {
+    margin-top: var(--space-10);
+}
+
 .unscheduledTaskList {
     display: flex;
     flex-direction: column;
@@ -8,45 +43,45 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 11px 10px;
-    border: 1px solid #e5e5e5;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-3);
+    border: var(--border-light);
     border-bottom: none;
-    background: #fafafa;
+    background: var(--color-surface-hover);
 }
 
 .unscheduledTask:first-child {
-    border-radius: 6px 6px 0 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .unscheduledTask:last-child {
-    border-bottom: 1px solid #e5e5e5;
-    border-radius: 0 0 6px 6px;
+    border-bottom: var(--border-light);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 .unscheduledTask > div {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: var(--space-1);
     min-width: 0;
 }
 
 .unscheduledTask strong {
     overflow: hidden;
-    color: #333;
-    font-size: 12px;
-    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .unscheduledTask > div span {
-    color: #999;
-    font-size: 11px;
+    color: var(--color-text-subtle);
+    font-size: var(--font-size-sm);
 }
 
 .unscheduledTaskReason {
     flex-shrink: 0;
-    color: #777;
-    font-size: 11px;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
 }

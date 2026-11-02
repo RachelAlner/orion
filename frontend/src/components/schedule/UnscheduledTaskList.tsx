@@ -1,6 +1,6 @@
 import type { Task } from "../../types/task";
 import type {
-    UnscheduledReason, 
+    UnscheduledReason,
     UnscheduledTask,
 } from "../../types/schedule";
 import styles from "./UnscheduledTaskList.module.css";

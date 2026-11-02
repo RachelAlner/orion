@@ -19,7 +19,7 @@ export default function Sidebar() {
             <nav className={styles.sidebarNavigation}>
                 <Link
                     to="/projects"
-                    className={`${styles.sidebarProjectLink} ${isProjectsActive ? styles.active : ''}`}
+                    className={`${styles.sidebarLink} ${isProjectsActive ? styles.active : ''}`}
                 >
                     Projects
                 </Link>
@@ -31,7 +31,7 @@ export default function Sidebar() {
                     Schedule
                 </Link>
 
-                <Link 
+                <Link
                     to="/availability"
                     className={styles.sidebarLink}
                 >

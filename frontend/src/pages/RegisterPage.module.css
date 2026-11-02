@@ -3,78 +3,78 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 20px;
-  background: #f6f6f6;
+  padding: var(--space-8) var(--space-5);
+  background: var(--color-background);
 }
 
 .authContainer {
   width: min(380px, 100%);
-  padding: 36px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background: #ffffff;
+  padding: var(--space-8);
+  border: var(--border-light);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
 }
 
 .authHeader {
-  margin-bottom: 28px;
+  margin-bottom: var(--space-6);
 }
 
 .authHeader h1 {
-  margin: 0 0 6px;
-  font-size: 26px;
-  font-weight: 600;
+  margin: 0 0 var(--space-1-5);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: -0.02em;
 }
 
 .authHeader p {
   margin: 0;
-  color: #777;
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
 }
 
 .authForm {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-4);
 }
 
 .authForm > div {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .authForm label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #555;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
 }
 
 .authForm input {
   width: 100%;
   margin: 0;
-  padding: 10px 11px;
-  border: 1px solid #d5d5d5;
-  border-radius: 6px;
-  background: #fff;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
 .authForm input:focus {
-  outline: 2px solid #ccc;
+  outline: 2px solid var(--color-focus);
   outline-offset: 1px;
 }
 
 .authSubmit {
   width: 100%;
-  margin: 4px 0 0;
-  padding: 10px 12px;
-  background: #222;
-  color: #fff;
-  font-weight: 500;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-secondary-button);
+  color: var(--color-surface);
+  font-weight: var(--font-weight-medium);
 }
 
 .authSubmit:hover {
-  background: #111;
+  background: var(--color-secondary-button-last);
 }
 
 .authSubmit:disabled {
@@ -84,19 +84,19 @@
 
 .authError {
   margin: 0;
-  color: #b42318;
-  font-size: 13px;
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
 }
 
 .authFooter {
-  margin: 24px 0 0;
+  margin: var(--space-6) 0 0;
   text-align: center;
-  color: #777;
-  font-size: 13px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }
 
 .authFooter a {
   padding: 0;
-  color: #222;
-  font-weight: 500;
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
 }
