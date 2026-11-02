@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,6 +75,207 @@ class AvailabilityServiceTest {
         verify(availabilityRepository).save(any(Availability.class));
     }
 
+    @Test shouldMergeAdjacentAvailabilityPeriods() {
+        Availability existing = new Availability(
+                userId, 
+                DayOfWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0)
+        );;
+
+        CreateAvailabilityRequest request = 
+                new CreateAvailabilityRequest(
+                        DayOfWeek.MONDAY,
+                        LocalTime.of(12, 0),
+                        LocalTime.of(14, 0)
+                );
+
+        when(availabilityRepository.findByUserIdAndDayOfWeek(userId, DayOfWeek.MONDAY))
+                .thenReturn(List.of(existing));
+
+        when(availabilityRepository.save(any(Availability.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AvailabilityResponse response =
+                availabilityService.create(userId, request);
+
+        assertEquals(LocalTime.of(9, 0), response.startTime());
+        assertEquals(LocalTime.of(14, 0), response.endTime());
+
+        verify(availabilityRepository).deleteAll(List.of(existing));
+        verify(availabilityRepository).flush();
+        verify(availabilityRepository).save(any(Availability.class));
+    }
+
+    @Test
+    void shouldMergeOverlappingAvailabilityPeriods() {
+        Availability existing = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0)
+        );
+
+        CreateAvailabilityRequest request =
+                new CreateAvailabilityRequest(
+                        DayOfWeek.MONDAY,
+                        LocalTime.of(11, 0),
+                        LocalTime.of(14, 0)
+                );
+
+        when(availabilityRepository
+                .findByUserIdAndDayOfWeek(
+                        userId,
+                        DayOfWeek.MONDAY
+                ))
+                .thenReturn(List.of(existing));
+
+        when(availabilityRepository.save(any(Availability.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AvailabilityResponse response =
+                availabilityService.create(userId, request);
+
+        assertEquals(LocalTime.of(9, 0), response.startTime());
+        assertEquals(LocalTime.of(14, 0), response.endTime());
+
+        verify(availabilityRepository).deleteAll(List.of(existing));
+        verify(availabilityRepository).save(any(Availability.class));
+    }
+
+    @Test
+    void shouldMergeMultipleConnectedAvailabilityPeriods() {
+        Availability first = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(10, 0)
+        );
+
+        Availability second = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(12, 0)
+        );
+
+        Availability third = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(13, 0),
+                LocalTime.of(15, 0)
+        );
+
+        CreateAvailabilityRequest request =
+                new CreateAvailabilityRequest(
+                        DayOfWeek.MONDAY,
+                        LocalTime.of(12, 0),
+                        LocalTime.of(13, 0)
+                );
+
+        when(availabilityRepository
+                .findByUserIdAndDayOfWeek(
+                        userId,
+                        DayOfWeek.MONDAY
+                ))
+                .thenReturn(List.of(first, second, third));
+
+        when(availabilityRepository.save(any(Availability.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AvailabilityResponse response =
+                availabilityService.create(userId, request);
+
+        assertEquals(LocalTime.of(9, 0), response.startTime());
+        assertEquals(LocalTime.of(15, 0), response.endTime());
+
+        verify(availabilityRepository).deleteAll(
+                argThat((Iterable<Availability> availabilityList) -> {
+                        List<Availability> actual = new ArrayList<>();
+                        availabilityList.forEach(actual::add);
+
+                        return actual.size() == 3
+                                && actual.containsAll(List.of(first, second, third));
+                })
+        );
+
+        verify(availabilityRepository).save(any(Availability.class));
+    }
+
+    @Test
+    void shouldNotMergeAvailabilityPeriodsWithAGap() {
+        Availability existing = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0)
+        );
+
+        CreateAvailabilityRequest request =
+                new CreateAvailabilityRequest(
+                        DayOfWeek.MONDAY,
+                        LocalTime.of(12, 30),
+                        LocalTime.of(14, 0)
+                );
+
+        when(availabilityRepository
+                .findByUserIdAndDayOfWeek(
+                        userId,
+                        DayOfWeek.MONDAY
+                ))
+                .thenReturn(List.of(existing));
+
+        when(availabilityRepository.save(any(Availability.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AvailabilityResponse response =
+                availabilityService.create(userId, request);
+
+        assertEquals(LocalTime.of(12, 30), response.startTime());
+        assertEquals(LocalTime.of(14, 0), response.endTime());
+
+        verify(availabilityRepository, never()).deleteAll(anyList());
+        verify(availabilityRepository).save(any(Availability.class));
+    }
+
+    @Test
+    void shouldNotMergeAvailabilityOnDifferentDays() {
+        Availability existing = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0)
+        );
+
+        CreateAvailabilityRequest request =
+                new CreateAvailabilityRequest(
+                        DayOfWeek.TUESDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(12, 0)
+                );
+
+        when(availabilityRepository
+                .findByUserIdAndDayOfWeek(
+                        userId,
+                        DayOfWeek.TUESDAY
+                ))
+                .thenReturn(List.of());
+
+        when(availabilityRepository.save(any(Availability.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AvailabilityResponse response =
+                availabilityService.create(userId, request);
+
+        assertEquals(DayOfWeek.TUESDAY, response.dayOfWeek());
+        assertEquals(LocalTime.of(9, 0), response.startTime());
+        assertEquals(LocalTime.of(12, 0), response.endTime());
+
+        verify(availabilityRepository, never()).deleteAll(anyList());
+        verify(availabilityRepository).save(any(Availability.class));
+    }
+
+
     @Test 
     void shouldRejectWhenStartTimeIsAfterEndTime() {
         CreateAvailabilityRequest request = 
@@ -117,69 +321,6 @@ class AvailabilityServiceTest {
         
     }
 
-    @Test 
-    void shouldRejectOverlappingAvailability() {
-        Availability existing = new Availability(
-                userId, 
-                DayOfWeek.MONDAY,
-                LocalTime.of(9, 0),
-                LocalTime.of(12, 0)
-        );
-
-        CreateAvailabilityRequest request = 
-                new CreateAvailabilityRequest(
-                        DayOfWeek.MONDAY,
-                        LocalTime.of(11,0),
-                        LocalTime.of(14,0)
-                );
-        
-        when(availabilityRepository.findByUserIdAndDayOfWeek(
-                userId, 
-                DayOfWeek.MONDAY
-        )).thenReturn(List.of(existing));
-
-        assertThatThrownBy(() -> 
-                availabilityService.create(userId, request)
-        )
-                .isInstanceOf(InvalidAvailabilityException.class)
-                .hasMessage("Availability periods must not overlap");
-
-        verify(availabilityRepository, never())
-                .save(any());
-    }
-
-    @Test 
-    void shouldAllowAdjacentAvailability() {
-        Availability existing = new Availability(
-                userId, 
-                DayOfWeek.MONDAY,
-                LocalTime.of(9, 0),
-                LocalTime.of(12, 0)
-        );
-
-        CreateAvailabilityRequest request = 
-                new CreateAvailabilityRequest(
-                    DayOfWeek.MONDAY,
-                    LocalTime.of(12, 0),
-                    LocalTime.of(15, 0)
-                );
-        
-        when(availabilityRepository.findByUserIdAndDayOfWeek(
-                userId, 
-                DayOfWeek.MONDAY
-        )).thenReturn(List.of(existing));
-
-        when(availabilityRepository.save(any(Availability.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        
-        AvailabilityResponse response = 
-                availabilityService.create(userId, request);
-        
-        assertEquals(response.startTime(), LocalTime.of(12, 0));
-        assertEquals(response.endTime(), LocalTime.of(15, 0));
-
-        verify(availabilityRepository).save(any(Availability.class));
-    }
 
     @Test 
     void shouldAllowAvailabilityOnDifferentDay() {
@@ -245,50 +386,105 @@ class AvailabilityServiceTest {
         verify(availabilityRepository)
                 .findByUserIdOrderByDayOfWeekAscStartTimeAsc(userId);
     }
-
-    @Test 
-    void shouldUpdateAvailability() {
+@Test
+    void shouldUpdateAvailabilityWithoutMergingOtherPeriods() {
         Availability existing = new Availability(
-                userId, 
-                DayOfWeek.MONDAY, 
+                userId,
+                DayOfWeek.MONDAY,
                 LocalTime.of(9, 0),
                 LocalTime.of(12, 0)
         );
 
-
         UUID availabilityId = existing.getId();
 
-        UpdateAvailabilityRequest request = 
+        UpdateAvailabilityRequest request =
                 new UpdateAvailabilityRequest(
-                        DayOfWeek.MONDAY, 
+                        DayOfWeek.MONDAY,
                         LocalTime.of(10, 0),
                         LocalTime.of(13, 0)
                 );
-        
+
         when(availabilityRepository.findByIdAndUserId(
-                availabilityId, 
+                availabilityId,
                 userId
         )).thenReturn(Optional.of(existing));
 
-        when(availabilityRepository.findByUserIdAndDayOfWeek(
-                userId, 
-                DayOfWeek.MONDAY
-        )).thenReturn(List.of(existing));
+        when(availabilityRepository
+                .findByUserIdAndDayOfWeek(
+                        userId,
+                        DayOfWeek.MONDAY
+                ))
+                .thenReturn(List.of(existing));
 
         when(availabilityRepository.save(any(Availability.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        
-        AvailabilityResponse response = 
+
+        AvailabilityResponse response =
                 availabilityService.update(
-                        userId, 
-                        availabilityId, 
+                        userId,
+                        availabilityId,
                         request
                 );
 
-        assertEquals(response.dayOfWeek(), DayOfWeek.MONDAY);
-        assertEquals(response.startTime(), LocalTime.of(10, 0));
-        assertEquals(response.endTime(), LocalTime.of(13, 0));
+        assertEquals(LocalTime.of(10, 0), response.startTime());
+        assertEquals(LocalTime.of(13, 0), response.endTime());
 
+        verify(availabilityRepository).save(existing);
+        verify(availabilityRepository, never()).deleteAll(anyList());
+    }
+
+    @Test
+    void shouldMergeUpdatedAvailabilityWithAdjacentPeriod() {
+        Availability existing = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(12, 0)
+        );
+
+        Availability other = new Availability(
+                userId,
+                DayOfWeek.MONDAY,
+                LocalTime.of(13, 0),
+                LocalTime.of(15, 0)
+        );
+
+        UUID availabilityId = existing.getId();
+
+        UpdateAvailabilityRequest request =
+                new UpdateAvailabilityRequest(
+                        DayOfWeek.MONDAY,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(13, 0)
+                );
+
+        when(availabilityRepository.findByIdAndUserId(
+                availabilityId,
+                userId
+        )).thenReturn(Optional.of(existing));
+
+        when(availabilityRepository
+                .findByUserIdAndDayOfWeek(
+                        userId,
+                        DayOfWeek.MONDAY
+                ))
+                .thenReturn(List.of(existing, other));
+
+        when(availabilityRepository.save(any(Availability.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AvailabilityResponse response =
+                availabilityService.update(
+                        userId,
+                        availabilityId,
+                        request
+                );
+
+        assertEquals(LocalTime.of(10, 0), response.startTime());
+        assertEquals(LocalTime.of(15, 0), response.endTime());
+
+        verify(availabilityRepository).deleteAll(List.of(other));
+        verify(availabilityRepository).flush();
         verify(availabilityRepository).save(existing);
     }
 
@@ -315,54 +511,6 @@ class AvailabilityServiceTest {
                         request
                 ))
                 .isInstanceOf(AvailabilityNotFoundException.class);
-
-        verify(availabilityRepository, never())
-                .save(any());
-    }
-
-    @Test
-    void shouldRejectUpdateWhenItOverlapsAnotherAvailability() {
-        Availability existing = new Availability(
-                userId, 
-                DayOfWeek.MONDAY, 
-                LocalTime.of(9, 0),
-                LocalTime.of(12, 0)
-        );
-
-        UUID availabilityId = existing.getId();
-
-        Availability other = new Availability(
-                userId, 
-                DayOfWeek.MONDAY, 
-                LocalTime.of(14, 0),
-                LocalTime.of(17, 0)
-        );
-
-        UpdateAvailabilityRequest request = 
-                new UpdateAvailabilityRequest(
-                        DayOfWeek.MONDAY,
-                        LocalTime.of(11, 0),
-                        LocalTime.of(15, 0)
-                );
-        
-        when(availabilityRepository.findByIdAndUserId(
-                availabilityId, 
-                userId
-        )).thenReturn(Optional.of(existing));
-
-        when(availabilityRepository.findByUserIdAndDayOfWeek(
-                userId, 
-                DayOfWeek.MONDAY
-        )).thenReturn(List.of(existing, other));
-
-        assertThatThrownBy(() -> 
-                availabilityService.update(
-                        userId, 
-                        availabilityId, 
-                        request
-                ))
-                .isInstanceOf(InvalidAvailabilityException.class)
-                .hasMessage("Availability periods must not overlap");
 
         verify(availabilityRepository, never())
                 .save(any());

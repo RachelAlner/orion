@@ -85,31 +85,15 @@ export default function AvailabilityPage() {
             setError(null);
 
             if (editingAvailability) {
-                const updated = 
-                    await updateAvailability(
-                        editingAvailability.id, 
-                        request
-                    );
-                
-                setAvailability((current) => 
-                    current.map((item) =>
-                        item.id === 
-                        updated.id 
-                            ? updated 
-                            : item
-                    )
+                await updateAvailability(
+                    editingAvailability.id, 
+                    request
                 );
             } else {
-                const created = 
-                    await createAvailability(
-                        request
-                    );
-                
-                setAvailability((current) => [
-                    ...current, 
-                    created,
-                ]);
+                await createAvailability(request);
             }
+
+            await loadAvailability();
 
             handleCancel();
         } catch (error) {

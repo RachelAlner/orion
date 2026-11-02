@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,19 +37,39 @@ public class AvailabilityService {
                 request.endTime()
         );
 
-        validateNoOverlap(
+        LocalTime startTime = request.startTime();
+        LocalTime endTime = request.endTime();
+
+        List<Availability> existingAvailability = availabilityRepository.findByUserIdAndDayOfWeek(
                 userId, 
-                request.dayOfWeek(),
-                request.startTime(),
-                request.endTime(), 
-                null
+                request.dayOfWeek()
         );
 
+        List<Availability> availabilityToMerge = 
+                findMergeCandidates(
+                        existingAvailability,
+                        startTime, 
+                        endTime,
+                        null
+                );
+
+        for (Availability existing : availabilityToMerge) {
+                if (existing.getStartTime().isBefore(startTime)) {
+                        startTime = existing.getStartTime();
+                }
+
+                if (existing.getEndTime().isAfter(endTime)) {
+                        endTime = existing.getEndTime();
+                }
+        }
+
+        deleteAvailability(availabilityToMerge);
+
         Availability availability = new Availability(
-                userId, 
+                userId,
                 request.dayOfWeek(),
-                request.startTime(), 
-                request.endTime()
+                startTime, 
+                endTime
         );
 
         Availability saved = availabilityRepository.save(availability);
@@ -77,18 +100,39 @@ public class AvailabilityService {
                 request.endTime()
         );
 
-        validateNoOverlap(
-                userId, 
-                request.dayOfWeek(),
-                request.startTime(),
-                request.endTime(),
-                availabilityId
-        );
+        LocalTime startTime = request.startTime();
+        LocalTime endTime = request.endTime();
+
+        List<Availability> existingAvailability = 
+                availabilityRepository.findByUserIdAndDayOfWeek(
+                        userId,
+                        request.dayOfWeek()
+                );
+
+        List<Availability> availabilityToMerge = 
+                findMergeCandidates(
+                        existingAvailability, 
+                        startTime, 
+                        endTime, 
+                        availabilityId
+                );
+
+        for (Availability existing : availabilityToMerge) {
+                if (existing.getStartTime().isBefore(startTime)) {
+                        startTime = existing.getStartTime();
+                }
+
+                if (existing.getEndTime().isAfter(endTime)) {
+                        endTime = existing.getEndTime();
+                }
+        }
+
+        deleteAvailability(availabilityToMerge);
 
         availability.update(
                 request.dayOfWeek(),
-                request.startTime(),
-                request.endTime()
+                startTime, 
+                endTime
         );
 
         Availability saved = availabilityRepository.save(availability);
@@ -111,6 +155,12 @@ public class AvailabilityService {
             LocalTime startTime,
             LocalTime endTime
     ) {
+        if (startTime == null || endTime == null) {
+                throw new InvalidAvailabilityException(
+                        "Start time and end time must be provided"
+                );
+        }
+
         if (!startTime.isBefore(endTime)) {
             throw new InvalidAvailabilityException(
                     "Start time must be before end time"
@@ -118,34 +168,70 @@ public class AvailabilityService {
         }
     }
 
-    private void validateNoOverlap(
-            UUID userId, 
-            DayOfWeek dayOfWeek, 
-            LocalTime startTime, 
-            LocalTime endTime, 
-            UUID availabilityIdToIgnore
+    private List<Availability> findMergeCandidates(
+        List<Availability> existingAvailability,
+        LocalTime startTime,
+        LocalTime endTime,
+        UUID availabilityIdToIgnore
     ) {
-        List<Availability> existingAvailability = 
-                availabilityRepository.findByUserIdAndDayOfWeek(
-                        userId,
-                        dayOfWeek
-                );
+        List<Availability> candidates = new ArrayList<>();
 
-        boolean overlaps = existingAvailability.stream()
-                .filter(existing -> 
-                        availabilityIdToIgnore == null 
-                                || !existing.getId().equals(availabilityIdToIgnore)
-                )
-                .anyMatch(existing -> 
-                        startTime.isBefore(existing.getEndTime())
-                                && endTime.isAfter(existing.getStartTime())
-                );
-        
-        if (overlaps) {
-            throw new InvalidAvailabilityException(
-                    "Availability periods must not overlap"
-            );
+        Set<UUID> selectedIds = new HashSet<>();
+
+        LocalTime mergedStartTime = startTime;
+        LocalTime mergedEndTime = endTime;
+
+        boolean foundNewCandidate;
+
+        do {
+                foundNewCandidate = false;
+
+                for (Availability existing : existingAvailability) {
+
+                        if (availabilityIdToIgnore != null
+                                        && existing.getId().equals(availabilityIdToIgnore)) {
+                                continue;
+                        }
+
+                        if (selectedIds.contains(existing.getId())) {
+                                continue;
+                        }
+
+                        boolean overlaps = !existing.getStartTime().isAfter(mergedEndTime)
+                                        && !existing.getEndTime().isBefore(mergedStartTime);
+                        
+                        if (!overlaps) {
+                                continue;
+                        }
+
+                        candidates.add(existing);
+                        selectedIds.add(existing.getId());
+
+                        if (existing.getStartTime().isBefore(mergedStartTime)) {
+                                mergedStartTime = existing.getStartTime();
+                        }
+
+                        if (existing.getEndTime().isAfter(mergedEndTime)) {
+                                mergedEndTime = existing.getEndTime();
+                        }
+
+                        foundNewCandidate = true;
+                }
+        } while (foundNewCandidate);
+
+        return candidates;
+    }
+
+    private void deleteAvailability(
+        List<Availability> availabilityToDelete
+    ) {
+        if (availabilityToDelete.isEmpty()) {
+                return;
         }
+
+        availabilityRepository.deleteAll(availabilityToDelete);
+
+        availabilityRepository.flush();
     }
 
     private AvailabilityResponse toResponse(Availability availability) {
