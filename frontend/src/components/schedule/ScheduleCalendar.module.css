@@ -1,0 +1,126 @@
+.scheduleCalendar {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.calendarHeader {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+}
+
+.calendarHeader h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.calendarHeader button {
+    padding: 8px 14px;
+    border: 1px solid #333334;
+    border-radius: 6px;
+    background: #fff;
+    color: #333334;
+    cursor: pointer;
+}
+
+.calendarHeader button:hover {
+    background: #f0f0f0;
+}
+
+.calendarScroll {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.calendarGrid {
+    display: grid;
+    grid-template-columns: 48px repeat(7, minmax(0, 1fr));
+    grid-template-rows: 48px minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+}
+
+.calendarCorner,
+.calendarDayHeader {
+    min-width: 0;
+    padding: 12px 4px;
+    border-bottom: 1px solid #dedede;
+    background: #fafafa;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.calendarCorner {
+    left: 0;
+    z-index: 3;
+}
+
+.calendarTimeColumn {
+    min-height: 0;
+    background: #fafafa;
+}
+
+.calendarHourLabel {
+    padding: 0 8px;
+    border-bottom: 1px solid #e8e8e8;
+    color: #777;
+    font-size: 11px;
+    text-align: right;
+    transform: translateY(-7px);
+    box-sizing: border-box;
+}
+
+.calendarDayColumn {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.calendarHourCell {
+    border-bottom: 1px solid #e8e8e8;
+    box-sizing: border-box;
+}
+
+.calendarTask {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+    padding: 5px;
+    border-left: 3px solid #333334;
+    border-radius: 4px;
+    background: #e9e9e9;
+    color: #333334;
+    font-size: 11px;
+    box-sizing: border-box;
+}
+
+.calendarTask strong {
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+}
+
+.calendarTask span {
+    font-size: 10px;
+}

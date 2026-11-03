@@ -5,18 +5,9 @@ import { getTasks } from "../services/taskService";
 import { getProjects } from "../services/projectService";
 import { generateSchedule, getCurrentSchedule } from "../services/scheduleService";
 import { ApiError } from "../services/api";
-import ScheduleBlockList from "../components/schedule/ScheduleBlockList";
+import ScheduleCalendar from "../components/schedule/ScheduleCalendar";
 import UnscheduledTaskList from "../components/schedule/UnscheduledTaskList";
 import styles from "./SchedulePage.module.css";
-
-function formatPeriodDate(value: string): string {
-    return new Date(value).toLocaleDateString([], {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    });
-}
-
 
 export default function SchedulePage() {
     const [tasks, setTasks] = 
@@ -154,26 +145,19 @@ export default function SchedulePage() {
 
             {schedule && (
                 <>
-                    <p>
-                        Schedule period:{" "}
-                        {formatPeriodDate(schedule.periodStart)}
-                        {" - "}
-                        {formatPeriodDate(schedule.periodEnd)}
-                    </p>
-
-                    <ScheduleBlockList
-                        blocks={
-                            schedule.scheduledBlocks
-                        }
+                    <ScheduleCalendar
+                        schedule={schedule}
                         tasks={tasks}
                     />
 
-                    <UnscheduledTaskList
-                        tasks={tasks}
-                        unscheduledTasks={
-                            schedule.unscheduledTasks
-                        }
-                    />
+                    <div className={styles.scheduleUnscheduled}>
+                        <UnscheduledTaskList
+                            tasks={tasks}
+                            unscheduledTasks={
+                                schedule.unscheduledTasks
+                            }
+                        />
+                    </div>
                 </>
             )}
         </div>
