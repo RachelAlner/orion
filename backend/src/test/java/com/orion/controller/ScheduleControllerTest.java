@@ -3,11 +3,11 @@ package com.orion.controller;
 import com.orion.model.Schedule;
 import com.orion.model.ScheduleBlock;
 import com.orion.model.Task;
-import com.orion.scheduler.ScheduleCandidate;
 import com.orion.scheduler.ScheduleResult;
 import com.orion.scheduler.UnscheduledReason;
 import com.orion.scheduler.UnscheduledTask;
 import com.orion.service.ScheduleService;
+import com.orion.service.GeneratedSchedule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,11 +23,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -72,61 +71,58 @@ public class ScheduleControllerTest {
                 LocalDateTime.of(2026, 9, 24, 11, 0);
         
         ScheduleResult result = new ScheduleResult(
-                List.of(
-                        new ScheduleCandidate(
-                                taskId, 
-                                blockStart, 
-                                blockEnd
-                        )
-                ), 
+                List.of(), 
                 List.of()
         );
 
-        when(scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
-        )).thenReturn(result);
+        Task task = mock(Task.class);
+        when(task.getId()).thenReturn(taskId);
+
+        ScheduleBlock block = mock(ScheduleBlock.class);
+        when(block.getTask()).thenReturn(task);
+        when(block.getStartTime()).thenReturn(blockStart);
+        when(block.getEndTime()).thenReturn(blockEnd);
+
+        Schedule schedule = mock(Schedule.class);
+        when(schedule.getPeriodStart()).thenReturn(periodStart);
+        when(schedule.getPeriodEnd()).thenReturn(periodEnd);
+        when(schedule.getBlocks()).thenReturn(List.of(block));
+
+        GeneratedSchedule generated =
+                new GeneratedSchedule(schedule, result);
+
+        when(scheduleService.generateSchedule(userId))
+                .thenReturn(generated);
 
         mockMvc.perform(
                 post("/api/schedules/generate")
                         .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "periodStart": "2026-09-24T09:00:00",
-                                    "periodEnd": "2026-09-24T17:00:00"
-                                }
-                                """
-                        )
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.periodStart")
-                                    .value("2026-09-24T09:00:00")
+                        .value("2026-09-24T09:00:00")
                 )
                 .andExpect(jsonPath("$.periodEnd")
-                                    .value("2026-09-24T17:00:00")
+                        .value("2026-09-24T17:00:00")
                 )
                 .andExpect(jsonPath("$.scheduledBlocks.length()")
-                                    .value(1)
+                        .value(1)
                 )
                 .andExpect(jsonPath("$.scheduledBlocks[0].taskId")
-                                    .value(taskId.toString())
+                        .value(taskId.toString())
                 )
                 .andExpect(jsonPath("$.scheduledBlocks[0].startTime")
-                                    .value("2026-09-24T10:00:00")
+                        .value("2026-09-24T10:00:00")
                 )
                 .andExpect(jsonPath("$.scheduledBlocks[0].endTime")
-                                    .value("2026-09-24T11:00:00")
+                        .value("2026-09-24T11:00:00")
                 )
                 .andExpect(jsonPath("$.unscheduledTasks.length()")
-                                    .value(0)
+                        .value(0)
                 );
     
         verify(scheduleService).generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
     }
@@ -146,151 +142,70 @@ public class ScheduleControllerTest {
                 )
         );
 
-        when(scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
-        )).thenReturn(result);
+        Schedule schedule = mock(Schedule.class);
+
+        when(schedule.getPeriodStart()).thenReturn(periodStart);
+        when(schedule.getPeriodEnd()).thenReturn(periodEnd);
+        when(schedule.getBlocks()).thenReturn(List.of());
+
+        GeneratedSchedule generated =
+                new GeneratedSchedule(schedule, result);
+
+        when(scheduleService.generateSchedule(userId))
+                .thenReturn(generated);
+
 
         mockMvc.perform(
                 post("/api/schedules/generate")
                         .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(""" 
-                                {
-                                    "periodStart": "2026-09-24T09:00:00",
-                                    "periodEnd": "2026-09-24T17:00:00"
-                                }
-                                """
-                        )
+                        
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.scheduledBlocks.length()")
-                                    .value(0)
+                        .value(0)
                 )
                 .andExpect(jsonPath("$.unscheduledTasks.length()")
-                                    .value(1)
+                        .value(1)
                 )
                 .andExpect(jsonPath("$.unscheduledTasks[0].taskId")
-                                    .value(taskId.toString())
+                        .value(taskId.toString())
                 )
                 .andExpect(jsonPath("$.unscheduledTasks[0].remainingMinutes")
-                                    .value(120)
+                        .value(120)
                 )
                 .andExpect(jsonPath("$.unscheduledTasks[0].reason")
-                                    .value("INSUFFICIENT_AVAILABILITY")
+                        .value("INSUFFICIENT_AVAILABILITY")
                 );
 
-
+        verify(scheduleService).generateSchedule(userId);
     }
 
-    @Test 
-    void passesAuthenticatedUserToService() throws Exception{
+    @Test
+    void passesAuthenticatedUserToService() throws Exception {
+        Schedule schedule = mock(Schedule.class);
+
+        when(schedule.getPeriodStart()).thenReturn(periodStart);
+        when(schedule.getPeriodEnd()).thenReturn(periodEnd);
+        when(schedule.getBlocks()).thenReturn(List.of());
+
         ScheduleResult result = new ScheduleResult(
                 List.of(),
                 List.of()
         );
 
-        when(scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
-        )).thenReturn(result);
+        GeneratedSchedule generated =
+                new GeneratedSchedule(schedule, result);
+
+        when(scheduleService.generateSchedule(userId))
+                .thenReturn(generated);
 
         mockMvc.perform(
                 post("/api/schedules/generate")
                         .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(""" 
-                                {
-                                    "periodStart": "2026-09-24T09:00:00",
-                                    "periodEnd": "2026-09-24T17:00:00"
-                                }
-                                """)
         )
                 .andExpect(status().isOk());
-        
-        verify(scheduleService).generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
-        );
-    }
 
-    @Test 
-    void rejectsMissingPeriodStart() throws Exception {
-        String requestBody = """
-                {
-                    "periodStart": null, 
-                    "periodEnd": "2026-09-24T17:00:00"
-                }
-                """;
-        
-        mockMvc.perform(
-                post("/api/schedules/generate")
-                        .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-        )
-                .andExpect(status().isBadRequest());
-        
-        verify(scheduleService, never())
-                .generateSchedule(
-                    any(), 
-                    any(), 
-                    any()
-                );
-    }
-
-    @Test 
-    void rejectsMissingPeriodEnd() throws Exception {
-        String requestBody = """
-                {
-                    "periodStart": "2026-09-24T09:00:00",
-                    "periodEnd": null
-                }
-                """;
-        
-        mockMvc.perform(
-                post("/api/schedules/generate")
-                        .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-        )
-                .andExpect(status().isBadRequest());
-        
-        verify(scheduleService, never())
-                .generateSchedule(
-                        any(), 
-                        any(), 
-                        any()
-                );
-
-    }
-
-    @Test 
-    void rejectsInvalidPeriod() throws Exception {
-        String requestBody = """
-                {
-                    "periodStart": "2026-09-24T17:00:00",
-                    "periodEnd": "2026-09-24T09:00:00"
-                }
-                """;
-
-        mockMvc.perform(
-                post("/api/schedules/generate")
-                        .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody)
-        )
-                .andExpect(status().isBadRequest());
-        
-        verify(scheduleService, never())
-                .generateSchedule(
-                        any(), 
-                        any(), 
-                        any()
-                );
+        verify(scheduleService).generateSchedule(userId);
     }
 
     @Test 
@@ -301,36 +216,18 @@ public class ScheduleControllerTest {
         mockMvc.perform(
                 post("/api/schedules/generate")
                         .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(""" 
-                                {
-                                    "periodStart": "2026-09-24T09:00:00",
-                                    "periodEnd": "2026-09-24T17:00:00"
-                                }
-                                """)
+                        
         )
                 .andExpect(status().isBadRequest());
 
-        verify(scheduleService, never())
-                .generateSchedule(
-                        any(), 
-                        any(), 
-                        any()
-                );
+        verifyNoInteractions(scheduleService);
     }
 
     @Test 
     void rejectsMissingAuthentication() throws Exception {
         mockMvc.perform(
                 post("/api/schedules/generate")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                        "periodStart": "2026-09-24T09:00:00",
-                                        "periodEnd": "2026-09-24T17:00:00"
-                                } 
-                                """
-                        )
+                        
         )
                 .andExpect(status().isBadRequest());
         
@@ -480,18 +377,6 @@ public class ScheduleControllerTest {
     void rejectsMissingAuthenticationForCurrentSchedule() throws Exception {
         mockMvc.perform(
                 get("/api/schedules/current")
-        )
-                .andExpect(status().isBadRequest());
-        
-        verifyNoInteractions(scheduleService);
-    }
-
-    @Test 
-    void rejectsMissingRequestBody() throws Exception{
-        mockMvc.perform(
-                post("/api/schedules/generate")
-                        .principal(authentication)
-                        .contentType(MediaType.APPLICATION_JSON)
         )
                 .andExpect(status().isBadRequest());
         

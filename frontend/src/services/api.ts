@@ -2,6 +2,19 @@ import { getToken } from "./authStorage";
 
 const API_BASE_URL = "http://localhost:8080";
 
+export class ApiError extends Error {
+    status: number; 
+
+    constructor(
+        status: number,
+        message: string
+    ) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
+    }
+}
+
 export async function apiRequest<T>(
     path: string, 
     options: RequestInit = {}
@@ -10,10 +23,12 @@ export async function apiRequest<T>(
 
     const headers = new Headers(options.headers);
 
-    headers.set(
-        "Content-Type",
-        "application/json"
-    );
+    if (options.body) {
+        headers.set(
+            "Content-Type",
+            "application/json"
+        );
+    }
 
     if (token) {
         headers.set(
@@ -33,19 +48,15 @@ export async function apiRequest<T>(
     if (!response.ok) {
         const errorBody = await response.text();
 
-        console.error(
-            `API request failed (${response.status}):`,
-            errorBody
-        );
-
-        throw new Error(
+        throw new ApiError(
+            response.status,
             `Request failed with status ${response.status}: ${errorBody}`
-    );
-}
+        );
+    }
 
     if (response.status === 204) {
         return undefined as T;
     }
 
-    return response.json();
+    return (await response.json()) as T;
 }

@@ -3,69 +3,20 @@ import type { Task } from "../types/task";
 import type { ScheduleResponse } from "../types/schedule";
 import { getTasks } from "../services/taskService";
 import { getProjects } from "../services/projectService";
-import { generateSchedule } from "../services/scheduleService";
+import { generateSchedule, getCurrentSchedule } from "../services/scheduleService";
+import { ApiError } from "../services/api";
 import ScheduleBlockList from "../components/schedule/ScheduleBlockList";
 import UnscheduledTaskList from "../components/schedule/UnscheduledTaskList";
 import styles from "./SchedulePage.module.css";
 
-function getStartOfWeek(): Date {
-    const date = new Date();
-
-    const day = date.getDay();
-
-    const difference = 
-        day === 0
-            ? -6 
-            : 1 - day;
-    
-    date.setDate(date.getDate() + difference);
-    date.setHours(0, 0, 0, 0);
-
-    return date;
+function formatPeriodDate(value: string): string {
+    return new Date(value).toLocaleDateString([], {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
 }
 
-function getEndOfWeek(): Date {
-    const start = getStartOfWeek();
-
-    const end = new Date(start);
-    end.setDate(end.getDate() + 7);
-
-    return end;
-}
-
-function toLocalDateTimeValue(
-    date: Date
-): string {
-    const year = date.getFullYear();
-    const month = String(
-        date.getMonth() + 1
-    ).padStart(2, "0");
-    const day = String(
-        date.getDate()
-    ).padStart(2, "0");
-    const hours = String(
-        date.getHours()
-    ).padStart(2, "0");
-    const minutes = String(
-        date.getMinutes()
-    ).padStart(2, "0");
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
-function formatDateInputValue(
-    date: Date 
-): string {
-    const year = date.getFullYear();
-    const month = String(
-        date.getMonth() + 1
-    ).padStart(2, "0");
-    const day = String(
-        date.getDate()
-    ).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-}
 
 export default function SchedulePage() {
     const [tasks, setTasks] = 
@@ -73,18 +24,6 @@ export default function SchedulePage() {
 
     const [isLoadingTasks, setIsLoadingTasks] = 
         useState(true);
-
-    const [periodStart, setPeriodStart] = useState(
-        formatDateInputValue(
-            getStartOfWeek()
-        )
-    );
-
-    const [periodEnd, setPeriodEnd] = useState(
-        formatDateInputValue(
-            getEndOfWeek()
-        )
-    );
 
     const [schedule, setSchedule] = 
         useState<ScheduleResponse | null>(null);
@@ -109,10 +48,8 @@ export default function SchedulePage() {
                         )
                     );
                 
-                const allTasks = 
-                    projectTasks.flat();
                     
-                setTasks(allTasks);
+                setTasks(projectTasks.flat());
             } catch (error) {
                 console.error(error);
 
@@ -127,32 +64,33 @@ export default function SchedulePage() {
         loadTasks();
     }, []);
 
+    useEffect(() => {
+        async function loadCurrentSchedule() {
+            try {
+                const result = await getCurrentSchedule();
+                setSchedule(result);
+            } catch (error) {
+                if (error instanceof ApiError && error.status === 404) {
+                    return;
+                }
+
+                console.error(error);
+                setError("Unable to load your current schedule.")
+            }   
+            
+        }
+
+        loadCurrentSchedule();
+    }, []);
+
     async function handleGenerateSchedule() {
         try {
             setError(null);
 
-            const start = new Date(
-                `${periodStart}T00:00:00`
-            );
-
-            const end = new Date(
-                `${periodEnd}T00:00:00`
-            );
-
-            if (start >= end) {
-                setError(
-                    "The schedule start date must be before the end date."
-                );
-                return;
-            }
-
             setIsGenerating(true);
 
             const result = 
-                await generateSchedule(
-                    toLocalDateTimeValue(start),
-                    toLocalDateTimeValue(end)
-                );
+                await generateSchedule();
             
             setSchedule(result);
         } catch (error) {
@@ -193,42 +131,6 @@ export default function SchedulePage() {
                 </button>
             </div>
 
-            <section className={styles.schedulePeriod}>
-                <div>
-                    <label htmlFor="schedule-start">
-                        Start
-                    </label>
-
-                    <input
-                        id="schedule-start"
-                        type="date"
-                        value={periodStart}
-                        onChange={(event) =>
-                            setPeriodStart(
-                                event.target.value
-                            )
-                        }
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="schedule-end">
-                        End
-                    </label>
-
-                    <input
-                        id="schedule-end"
-                        type="date"
-                        value={periodEnd}
-                        onChange={(event) =>
-                            setPeriodEnd(
-                                event.target.value
-                            )
-                        }
-                    />
-                </div>
-            </section>
-
             {isLoadingTasks && (
                 <p className={styles.scheduleEmptyPage}>
                     Loading tasks...
@@ -252,6 +154,13 @@ export default function SchedulePage() {
 
             {schedule && (
                 <>
+                    <p>
+                        Schedule period:{" "}
+                        {formatPeriodDate(schedule.periodStart)}
+                        {" - "}
+                        {formatPeriodDate(schedule.periodEnd)}
+                    </p>
+
                     <ScheduleBlockList
                         blocks={
                             schedule.scheduledBlocks

@@ -1,5 +1,6 @@
 package com.orion.service;
 
+import com.orion.exception.ScheduleNotFoundException;
 import com.orion.model.Schedule;
 import com.orion.model.ScheduleBlock;
 import com.orion.model.User;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,18 +57,18 @@ public class ScheduleService {
         this.scheduler = scheduler;
     }
 
-    public ScheduleResult generateSchedule(
-            UUID userId,
-            LocalDateTime periodStart,
-            LocalDateTime periodEnd
+    public GeneratedSchedule generateSchedule(
+            UUID userId
     ) {
-        validatePeriod(periodStart, periodEnd);
+        LocalDateTime periodStart = LocalDateTime.now();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
         List<Task> taskEntities =
                 getAllUserTasks(userId);
+
+        LocalDateTime periodEnd = determinePeriodEnd(taskEntities, periodStart);
 
         List<SchedulingTask> tasks = 
                 loadSchedulingTasks(taskEntities);
@@ -100,7 +102,7 @@ public class ScheduleService {
         ScheduleResult result = 
                 scheduler.generate(input);
         
-        persistSchedule(
+        Schedule schedule = persistSchedule(
                 user, 
                 periodStart, 
                 periodEnd, 
@@ -108,7 +110,7 @@ public class ScheduleService {
                 taskEntities
         );
 
-        return result;
+        return new GeneratedSchedule(schedule, result);
     }
 
     @Transactional
@@ -116,28 +118,11 @@ public class ScheduleService {
         return scheduleRepository
                 .findFirstByUserIdOrderByGeneratedAtDesc(userId)
                 .orElseThrow(() -> 
-                        new IllegalStateException(
+                        new ScheduleNotFoundException(
                                 "No schedule found for userId"
                         )
                 );
     }
-
-    private void validatePeriod(
-            LocalDateTime periodStart, 
-            LocalDateTime periodEnd
-    ) {
-        if (periodStart == null || periodEnd == null) {
-            throw new IllegalArgumentException(
-                    "Scheduling period must be provided"
-            );
-        }
-
-        if (!periodStart.isBefore(periodEnd)) {
-            throw new IllegalArgumentException(
-                    "Scheduling period start must be before period end"
-            );
-        }
-    } 
 
     private List<Task> getAllUserTasks(UUID userId) {
         List<Project> projects = projectRepository.findByUserId(userId);
@@ -195,25 +180,38 @@ public class ScheduleService {
                 availabilityRepository.findByUserIdOrderByDayOfWeekAscStartTimeAsc(userId);
 
         List<AvailabilityWindow> windows = new ArrayList<>();
-        LocalDateTime currentDay = periodStart; 
+        LocalDate currentDay = periodStart.toLocalDate(); 
 
-        while (!currentDay.isAfter(periodEnd)) { 
+        while (!currentDay.isAfter(periodEnd.toLocalDate())) { 
             DayOfWeek dayOfWeek = currentDay.getDayOfWeek();
 
             for (Availability pattern : availabilityPatterns) {
-                if (pattern.getDayOfWeek() == dayOfWeek) {
-                    LocalDateTime windowStart = currentDay.with(pattern.getStartTime());
-                    LocalDateTime windowEnd = currentDay.with(pattern.getEndTime());
-
-                    if (windowStart.isBefore(periodEnd) && windowEnd.isAfter(periodStart)) {
-                        LocalDateTime actualStart = windowStart.isBefore(periodStart) ? periodStart : windowStart;
-                        LocalDateTime actualEnd = windowEnd.isAfter(periodEnd) ? periodEnd : windowEnd;
-
-                        if (actualStart.isBefore(actualEnd)) {
-                            windows.add(new AvailabilityWindow(actualStart, actualEnd));
-                        }
-                    }
+                if (pattern.getDayOfWeek() != dayOfWeek) {
+                        continue;
                 }
+
+                LocalDateTime windowStart = currentDay.atTime(pattern.getStartTime());
+                LocalDateTime windowEnd = currentDay.atTime(pattern.getEndTime());
+
+                LocalDateTime actualStart = 
+                        windowStart.isBefore(periodStart)
+                                ? periodStart
+                                : windowStart;
+                
+                LocalDateTime actualEnd = 
+                        windowEnd.isAfter(periodEnd)
+                                ? periodEnd
+                                : windowEnd;
+                
+                if (actualStart.isBefore(actualEnd)) {
+                        windows.add(
+                                new AvailabilityWindow(
+                                        actualStart,
+                                        actualEnd
+                                )
+                        );
+                }
+        
             }
 
             currentDay = currentDay.plusDays(1);
@@ -245,8 +243,12 @@ public class ScheduleService {
                 )
                 .map(block -> new ExistingScheduleBlock(
                         block.getTask().getId(),
-                        block.getStartTime(), 
-                        block.getEndTime()
+                        block.getStartTime().isBefore(periodStart)
+                                ? periodStart
+                                : block.getStartTime(), 
+                        block.getEndTime().isAfter(periodEnd)
+                                ? periodEnd
+                                : block.getEndTime()
                 ))
                 .toList();
     }
@@ -292,6 +294,20 @@ public class ScheduleService {
         }
 
         return scheduleRepository.save(schedule);
+    }
+
+    private LocalDateTime determinePeriodEnd(
+        List<Task> tasks, 
+        LocalDateTime periodStart
+    ) {
+        return tasks.stream()
+                .filter(task -> task.getRemainingMinutes() != null)
+                .filter(task -> task.getRemainingMinutes() > 0)
+                .filter(task -> task.getDeadline() != null)
+                .map(Task::getDeadline)
+                .filter(deadline -> deadline.isAfter(periodStart))
+                .max(LocalDateTime::compareTo)
+                .orElse(periodStart.plusDays(30));
     }
 
 }

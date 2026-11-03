@@ -660,6 +660,76 @@ class SchedulerTest {
     }
 
     @Test 
+    void preservesExistingBlockOutsideCurrentAvailability() {
+        UUID existingTaskId = UUID.randomUUID();
+        UUID newTaskId = UUID.randomUUID();
+
+        LocalDateTime periodStart = LocalDateTime.of(2026, 11, 3, 9, 0);
+        LocalDateTime periodEnd = LocalDateTime.of(2026, 11, 3, 17, 0);
+
+        ExistingScheduleBlock existingBlock = new ExistingScheduleBlock(
+                existingTaskId, 
+                LocalDateTime.of(2026, 11, 3, 14, 0),
+                LocalDateTime.of(2026, 11, 3, 15, 0)
+        );
+
+        SchedulingTask newTask = new SchedulingTask(
+                newTaskId, 
+                60,  
+                60, 
+                LocalDateTime.of(2026, 11, 3, 13, 0),
+                1, 
+                TaskStatus.TODO,
+                periodStart
+        );
+
+        List<AvailabilityWindow> availabilityWindows = List.of(
+                new AvailabilityWindow(
+                        LocalDateTime.of(2026, 11, 3, 9, 0),
+                        LocalDateTime.of(2026, 11, 3, 13, 0)
+                )
+        );
+
+        SchedulerInput input = new SchedulerInput(
+                List.of(newTask),
+                List.of(),
+                availabilityWindows,
+                List.of(existingBlock),
+                periodStart,
+                periodEnd
+        );
+
+        Scheduler scheduler = new Scheduler();
+
+        ScheduleResult result = scheduler.generate(input);
+
+        assertEquals(2, result.scheduledBlocks().size());
+
+        assertTrue(result.scheduledBlocks().stream().anyMatch(block -> 
+                block.taskId().equals(existingTaskId)
+                        && block.startTime().equals(
+                                LocalDateTime.of(2026, 11, 3, 14, 0)
+                        )
+                        && block.endTime().equals(
+                                LocalDateTime.of(2026, 11, 3, 15, 0)
+                        )
+        ));
+
+        assertTrue(result.scheduledBlocks().stream().anyMatch(block -> 
+                block.taskId().equals(newTaskId)
+                        && !block.startTime().isBefore(
+                                LocalDateTime.of(2026, 11, 3, 9, 0)
+                        )
+                        && !block.endTime().isAfter(
+                                LocalDateTime.of(2026, 11, 3, 13, 0)
+                        )
+        ));
+
+        assertTrue(result.unscheduledTasks().isEmpty());
+
+    }
+
+    @Test 
     void producesDeterministicResultForSameInput() {
         UUID firstTaskId = UUID.randomUUID();
         UUID secondTaskId = UUID.randomUUID();

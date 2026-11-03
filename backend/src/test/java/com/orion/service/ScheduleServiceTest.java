@@ -1,5 +1,6 @@
 package com.orion.service;
 
+import com.orion.exception.ScheduleNotFoundException;
 import com.orion.model.Availability;
 import com.orion.model.Project;
 import com.orion.model.Schedule;
@@ -27,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
 import java.util.List;
@@ -96,6 +98,7 @@ class ScheduleServiceTest {
     @Test 
     void generatesAndSavesSchedule() {
         defaultTask();
+
         when(scheduleRepository.save(
                 any(Schedule.class)))
                 .thenAnswer(invocation 
@@ -104,8 +107,8 @@ class ScheduleServiceTest {
         ScheduleCandidate candidate = 
                 new ScheduleCandidate(
                         taskId, 
-                        LocalDateTime.of(2026, 9, 21, 9, 0),
-                        LocalDateTime.of(2026, 9, 21, 10, 30)
+                        LocalDateTime.now().plusHours(1),
+                        LocalDateTime.now().plusHours(2).plusMinutes(30)
                 );
         
         ScheduleResult schedulerResult = 
@@ -117,14 +120,10 @@ class ScheduleServiceTest {
         when(scheduler.generate(any(SchedulerInput.class)))
                 .thenReturn(schedulerResult);
 
-        ScheduleResult result = 
-                scheduleService.generateSchedule(
-                        userId, 
-                        periodStart, 
-                        periodEnd
-                );
-        
-        assertSame(schedulerResult, result);
+        GeneratedSchedule generated = scheduleService.generateSchedule(userId);
+
+        assertNotNull(generated.schedule());
+        assertSame(schedulerResult, generated.result());
 
         verify(scheduler).generate(any(SchedulerInput.class));
         verify(scheduleRepository).save(any(Schedule.class));
@@ -158,9 +157,9 @@ class ScheduleServiceTest {
                 .findFirstByUserIdOrderByGeneratedAtDesc(userId))
                 .thenReturn(Optional.empty());
         
-        IllegalStateException exception = 
+        ScheduleNotFoundException exception = 
                 assertThrows(
-                        IllegalStateException.class, 
+                        ScheduleNotFoundException.class, 
                         () -> scheduleService.getCurrentSchedule(userId)
                 );
         
@@ -193,9 +192,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler).generate(inputCaptor.capture());
@@ -237,7 +234,7 @@ class ScheduleServiceTest {
         );
 
         assertEquals(
-                LocalDateTime.of(2026, 9, 25, 17, 0),
+                task.getDeadline(),
                 schedulingTask.deadline()
         );
     }
@@ -273,9 +270,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler).generate(inputCaptor.capture());
@@ -340,9 +335,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler).generate(inputCaptor.capture());
@@ -402,9 +395,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler).generate(inputCaptor.capture());
@@ -443,16 +434,18 @@ class ScheduleServiceTest {
                         )
                 );
 
+        LocalDateTime beforeGeneration = LocalDateTime.now();
+
         ArgumentCaptor<SchedulerInput> inputCaptor = 
                 ArgumentCaptor.forClass(
                         SchedulerInput.class
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
+
+        LocalDateTime afterGeneration = LocalDateTime.now();
 
 
         verify(scheduler)
@@ -460,16 +453,11 @@ class ScheduleServiceTest {
         
         SchedulerInput input = 
                 inputCaptor.getValue();
-        
-        assertEquals(
-                periodStart, 
-                input.periodStart()
-        );
 
-        assertEquals(
-                periodEnd, 
-                input.periodEnd()
-        );
+        assertFalse(input.periodStart().isBefore(beforeGeneration));
+        assertFalse(input.periodStart().isAfter(afterGeneration));
+        
+        assertEquals(task.getDeadline(), input.periodEnd());
     }
 
     @Test 
@@ -495,9 +483,7 @@ class ScheduleServiceTest {
                 );
 
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler).generate(inputCaptor.capture());
@@ -526,9 +512,11 @@ class ScheduleServiceTest {
 
         when(previousTask.getId())
                 .thenReturn(previousTaskId);
+        
+        LocalDateTime periodStart = LocalDateTime.now();
 
-        LocalDateTime blockStart = LocalDateTime.of(2026, 9, 21, 9, 0);
-        LocalDateTime blockEnd = LocalDateTime.of(2026, 9, 21, 10, 0);
+        LocalDateTime blockStart = periodStart.plusHours(1);
+        LocalDateTime blockEnd = periodStart.plusHours(2);
 
         when(previousBlock.getTask())
                 .thenReturn(previousTask);
@@ -560,9 +548,7 @@ class ScheduleServiceTest {
                 );
 
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler).generate(inputCaptor.capture());
@@ -595,11 +581,9 @@ class ScheduleServiceTest {
         defaultTask();
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        LocalDateTime blockStart = 
-                LocalDateTime.of(2026, 9, 21, 9, 0);
+        LocalDateTime blockStart = periodStart.plusHours(1);
 
-        LocalDateTime blockEnd = 
-                LocalDateTime.of(2026, 9, 21, 10, 30);
+        LocalDateTime blockEnd = periodStart.plusHours(2).plusMinutes(30);
 
         ScheduleCandidate candidate = 
                 new ScheduleCandidate(
@@ -618,9 +602,7 @@ class ScheduleServiceTest {
                 .thenReturn(schedulerResult);
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         ArgumentCaptor<Schedule> scheduleCaptor = 
@@ -656,27 +638,30 @@ class ScheduleServiceTest {
                                 List.of()
                         )
                 );
-        
-        scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
-        );
+
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(
+                        SchedulerInput.class
+                );    
 
         ArgumentCaptor<Schedule> scheduleCaptor = 
                 ArgumentCaptor.forClass(
                         Schedule.class
                 );
         
+        scheduleService.generateSchedule(userId);
+        
+        verify(scheduler).generate(inputCaptor.capture());
         verify(scheduleRepository)
                 .save(scheduleCaptor.capture());
         
+        SchedulerInput input = inputCaptor.getValue();
         Schedule savedSchedule = 
                 scheduleCaptor.getValue();
         
         assertEquals(user, savedSchedule.getUser());
-        assertEquals(periodStart, savedSchedule.getPeriodStart());
-        assertEquals(periodEnd, savedSchedule.getPeriodEnd());
+        assertEquals(input.periodStart(), savedSchedule.getPeriodStart());
+        assertEquals(input.periodEnd(), savedSchedule.getPeriodEnd());
         assertNotNull(savedSchedule.getGeneratedAt());
     }
 
@@ -703,12 +688,9 @@ class ScheduleServiceTest {
         when(scheduler.generate(any(SchedulerInput.class)))
                 .thenReturn(schedulerResult);
         
-        ScheduleResult result = 
-                scheduleService.generateSchedule(
-                        userId, 
-                        periodStart, 
-                        periodEnd
-                );
+        GeneratedSchedule generated = scheduleService.generateSchedule(userId);
+
+        ScheduleResult result = generated.result();
         
         assertEquals(
                 1, 
@@ -740,20 +722,20 @@ class ScheduleServiceTest {
     @Test 
     void convertAvailabilityIntoConcreteWindows() {
         defaultTask();
-        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
 
         when(availabilityRepository
                 .findByUserIdOrderByDayOfWeekAscStartTimeAsc(userId))
                 .thenReturn(List.of(availability));
         
         when(availability.getDayOfWeek())
-                .thenReturn(DayOfWeek.MONDAY);
+                .thenReturn(tomorrow.getDayOfWeek());
         
         when(availability.getStartTime())
-                .thenReturn(LocalTime.of(9, 0));
+                .thenReturn(LocalTime.MIDNIGHT);
         
         when(availability.getEndTime())
-                .thenReturn(LocalTime.of(12, 0));
+                .thenReturn(LocalTime.of(23, 59));
         
         when(scheduler.generate(any(SchedulerInput.class)))
                 .thenReturn(
@@ -769,9 +751,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler)
@@ -785,85 +765,16 @@ class ScheduleServiceTest {
                 input.availabilityWindows().get(0);
         
         assertEquals(
-                LocalDateTime.of(2026, 9, 21, 9, 0),
+                tomorrow.atStartOfDay(),
                 window.startTime()
         );
 
         assertEquals(
-                LocalDateTime.of(2026, 9, 21, 12, 0),
+                tomorrow.atTime(23, 59),
                 window.endTime()
         );
 
 
-    }
-
-    @Test 
-    void rejectsNullPeriodStart() {
-        assertThrows(
-                IllegalArgumentException.class, 
-                () -> scheduleService.generateSchedule(
-                        userId, 
-                        null, 
-                        periodEnd
-                )
-        );
-
-        verifyNoInteractions(
-                projectRepository, 
-                taskRepository, 
-                dependencyRepository, 
-                availabilityRepository, 
-                scheduleRepository, 
-                scheduler
-        );
-    }
-
-    @Test 
-    void rejectsNullPeriodEnd() {
-        assertThrows(
-                IllegalArgumentException.class, 
-                () -> scheduleService.generateSchedule(
-                        userId, 
-                        periodStart, 
-                        null
-                )
-        );
-
-        verifyNoInteractions(
-                projectRepository, 
-                taskRepository, 
-                dependencyRepository, 
-                availabilityRepository, 
-                scheduleRepository, 
-                scheduler
-        );
-    }
-
-    @Test 
-    void rejectsPeriodWhenStartIsAfterEnd() {
-        LocalDateTime invalidStart = 
-                LocalDateTime.of(2026, 9, 28, 0, 0);
-        
-        LocalDateTime invalidEnd = 
-                LocalDateTime.of(2026, 9, 21, 0, 0);
-        
-        assertThrows(
-                IllegalArgumentException.class, 
-                () -> scheduleService.generateSchedule(
-                    userId, 
-                    invalidStart, 
-                    invalidEnd
-                )
-        );
-
-        verifyNoInteractions(
-                projectRepository, 
-                taskRepository, 
-                dependencyRepository, 
-                availabilityRepository, 
-                scheduleRepository, 
-                scheduler
-        );
     }
 
     @Test 
@@ -888,9 +799,7 @@ class ScheduleServiceTest {
                 .thenReturn(schedulerResult);
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         ArgumentCaptor<Schedule> scheduleCaptor = 
@@ -913,12 +822,14 @@ class ScheduleServiceTest {
 
         UUID unknownTaskId = UUID.randomUUID();
 
-        ScheduleCandidate candidate = 
-                new ScheduleCandidate(
-                        unknownTaskId, 
-                        LocalDateTime.of(2026, 9, 21, 9, 0),
-                        LocalDateTime.of(2026, 9, 21, 10, 0)
-                );
+        LocalDateTime blockStart = LocalDateTime.now().plusHours(1);
+        LocalDateTime blockEnd = blockStart.plusHours(1);
+
+        ScheduleCandidate candidate = new ScheduleCandidate(
+                unknownTaskId,
+                blockStart,
+                blockEnd
+        );
         
         when(scheduler.generate(any(SchedulerInput.class)))
                 .thenReturn(new ScheduleResult(
@@ -929,9 +840,7 @@ class ScheduleServiceTest {
         assertThrows(
                 IllegalStateException.class, 
                 () -> scheduleService.generateSchedule(
-                        userId, 
-                        periodStart, 
-                        periodEnd
+                        userId
                 )
         );
 
@@ -950,7 +859,7 @@ class ScheduleServiceTest {
                 .thenReturn(90);
         
         when(task.getDeadline())
-                .thenReturn(LocalDateTime.of(2026, 9, 25, 17, 0));
+                .thenReturn(LocalDateTime.now().plusDays(5));
         
         when(task.getPriority())
                 .thenReturn(2);
@@ -1014,13 +923,10 @@ class ScheduleServiceTest {
                 ArgumentCaptor.forClass(
                         Schedule.class
                 );
+
+        GeneratedSchedule generated = scheduleService.generateSchedule(userId);
         
-        ScheduleResult result = 
-                scheduleService.generateSchedule(
-                        userId, 
-                        periodStart,
-                        periodEnd
-                );
+        ScheduleResult result = generated.result();
         
         verify(scheduler)
                 .generate(inputCaptor.capture());
@@ -1091,12 +997,12 @@ class ScheduleServiceTest {
         );
 
         assertEquals(
-                periodStart, 
+                input.periodStart(), 
                 savedSchedule.getPeriodStart()
         );
 
         assertEquals(
-                periodEnd,
+                input.periodEnd(),
                 savedSchedule.getPeriodEnd()
         );
 
@@ -1164,9 +1070,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler)
@@ -1209,8 +1113,8 @@ class ScheduleServiceTest {
         UUID previousTaskId = UUID.randomUUID();
         Task previousTask = mock(Task.class);
 
-        LocalDateTime blockStart = LocalDateTime.of(2026, 9, 20, 9, 0);
-        LocalDateTime blockEnd = LocalDateTime.of(2026, 9, 20, 10, 0);
+        LocalDateTime blockStart = periodStart.minusDays(2);
+        LocalDateTime blockEnd = periodStart.minusDays(2).plusHours(1);
 
         when(previousBlock.getStartTime())
                 .thenReturn(blockStart);
@@ -1239,9 +1143,7 @@ class ScheduleServiceTest {
                 );
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
 
         verify(scheduler)
@@ -1272,9 +1174,11 @@ class ScheduleServiceTest {
 
         when(previousTask.getId())
                 .thenReturn(previousTaskId);
+
+        LocalDateTime periodStart = LocalDateTime.now();
         
-        LocalDateTime blockStart = LocalDateTime.of(2026, 9, 20, 23, 0);
-        LocalDateTime blockEnd = LocalDateTime.of(2026, 9, 21, 1, 0);
+        LocalDateTime blockStart = periodStart.minusHours(1);
+        LocalDateTime blockEnd = periodStart.plusHours(1);
 
         when(previousBlock.getTask())
                 .thenReturn(previousTask);
@@ -1304,12 +1208,14 @@ class ScheduleServiceTest {
                 ArgumentCaptor.forClass(
                         SchedulerInput.class
                 );
+
+        LocalDateTime beforeGeneration = LocalDateTime.now();
         
         scheduleService.generateSchedule(
-                userId, 
-                periodStart, 
-                periodEnd
+                userId
         );
+
+        LocalDateTime afterGeneration = LocalDateTime.now();
 
         verify(scheduler)
                 .generate(inputCaptor.capture());
@@ -1319,6 +1225,46 @@ class ScheduleServiceTest {
         assertEquals(
                 1, 
                 input.existingScheduleBlocks().size()
+        );
+
+        ExistingScheduleBlock existingBlock = input.existingScheduleBlocks().get(0);
+
+        assertFalse(existingBlock.startTime().isBefore(beforeGeneration));
+        assertFalse(existingBlock.startTime().isAfter(afterGeneration));
+        assertEquals(periodStart.plusHours(1), existingBlock.endTime());
+    }
+
+    @Test 
+    void usesThirtyDayFallbackWhenNoFutureDeadlineExists() {
+        defaultTask();
+
+        when(task.getDeadline()).thenReturn(null);
+
+        when(scheduleRepository.save(any(Schedule.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(scheduler.generate(any(SchedulerInput.class)))
+                .thenReturn(new ScheduleResult(List.of(), List.of()));
+
+        ArgumentCaptor<SchedulerInput> inputCaptor = 
+                ArgumentCaptor.forClass(SchedulerInput.class);
+
+        LocalDateTime beforeGeneration = LocalDateTime.now();
+
+        scheduleService.generateSchedule(userId);
+
+        LocalDateTime afterGeneration = LocalDateTime.now();
+
+        verify(scheduler).generate(inputCaptor.capture());
+
+        SchedulerInput input = inputCaptor.getValue();
+
+        assertFalse(input.periodStart().isBefore(beforeGeneration));
+        assertFalse(input.periodStart().isAfter(afterGeneration));
+
+        assertEquals(
+                input.periodStart().plusDays(30),
+                input.periodEnd()
         );
     }
 }

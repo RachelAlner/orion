@@ -75,7 +75,8 @@ class AvailabilityServiceTest {
         verify(availabilityRepository).save(any(Availability.class));
     }
 
-    @Test shouldMergeAdjacentAvailabilityPeriods() {
+    @Test 
+    void shouldMergeAdjacentAvailabilityPeriods() {
         Availability existing = new Availability(
                 userId, 
                 DayOfWeek.MONDAY,

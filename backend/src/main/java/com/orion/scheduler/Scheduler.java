@@ -42,6 +42,8 @@ public class Scheduler {
         
         List<ScheduleCandidate> scheduledBlocks = 
                 initialiseExistingBlocks(input);
+
+        int existingBlockCount = scheduledBlocks.size();
         
         List<AvailabilityWindow> availabilityWindows = 
                 orderAvailability(input);
@@ -77,7 +79,8 @@ public class Scheduler {
         
         validateResult(
                 scheduledBlocks, 
-                input
+                input, 
+                existingBlockCount
         );
 
         return new ScheduleResult(
@@ -450,9 +453,12 @@ public class Scheduler {
 
     private void validateResult(
             List<ScheduleCandidate> scheduledBlocks,
-            SchedulerInput input
+            SchedulerInput input, 
+            int existingBlockCount
     ) {
-        for (ScheduleCandidate block : scheduledBlocks) {
+        for (int i = 0; i < scheduledBlocks.size(); i++) {
+            ScheduleCandidate block = scheduledBlocks.get(i);
+            
             if (!block.startTime().isBefore(block.endTime())) {
                 throw new IllegalStateException(
                         "Schedule block must have a positive duration"
@@ -466,7 +472,8 @@ public class Scheduler {
                 );
             }
 
-            if (!isWithinAvailability(
+            if (i >= existingBlockCount 
+                    && !isWithinAvailability(
                     block, 
                     input.availabilityWindows()
             )) {
